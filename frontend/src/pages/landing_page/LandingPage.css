@@ -1,0 +1,144 @@
+/* ===== Reset básico ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  background-color: #f7f9fc;
+  color: #222;
+}
+
+/* ===== Landing general ===== */
+.landing {
+  text-align: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== Header ===== */
+.landing__header {
+  background: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: auto;
+}
+
+.landing__logo {
+  color: #007bff;
+  font-weight: 700;
+  font-size: 1.5rem;
+  width: auto;
+  height: auto;
+}
+
+.landing__nav {
+  display: flex;
+  gap: 1rem;
+  width: auto;
+  height: auto;
+}
+
+.landing__nav a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  width: auto;
+  height: auto;
+}
+
+.landing__nav a:hover {
+  color: #007bff;
+}
+
+/* ===== Hero ===== */
+.landing__hero {
+  background: linear-gradient(135deg, #007bff, #00bfff);
+  color: white;
+  padding: 5rem 1rem;
+  width: 100%;
+  height: auto;
+}
+
+.landing__hero h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  width: 100%;
+  height: auto;
+}
+
+.landing__hero p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  height: auto;
+}
+
+.btn {
+  background: white;
+  color: #007bff;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  width: auto;
+  height: auto;
+}
+
+.btn:hover {
+  background: #eaf3ff;
+}
+
+/* ===== Features ===== */
+.landing__features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  padding: 4rem 2rem;
+  background: white;
+  width: 100%;
+  height: auto;
+}
+
+.feature {
+  background: #f0f4fa;
+  padding: 2rem 1rem;
+  border-radius: 10px;
+  transition: transform 0.2s ease;
+  width: 100%;
+  height: auto;
+}
+
+.feature:hover {
+  transform: translateY(-5px);
+}
+
+.feature h3 {
+  color: #007bff;
+  margin-bottom: 0.5rem;
+  width: 100%;
+  height: auto;
+}
+
+/* ===== Footer ===== */
+.landing__footer {
+  background: #007bff;
+  color: white;
+  padding: 1rem;
+  font-size: 0.9rem;
+  width: 100%;
+  height: auto;
+}
