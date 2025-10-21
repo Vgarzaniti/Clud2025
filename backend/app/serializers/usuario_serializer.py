@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.serializers import Serializer, CharField
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -58,3 +59,13 @@ class UsuarioSerializer(serializers.ModelSerializer):
                 password=make_password(password)
             )
             return user
+
+class CambiarPasswordSerializer(Serializer):
+    password_actual = CharField(required=True, write_only=True)
+    password_nueva = CharField(required=True, min_length=8, write_only=True)
+    confirmar_password = CharField(required=True, min_length=8, write_only=True)
+
+    def validate(self, data):
+        if data['password_nueva'] != data['confirmar_password']:
+            raise ValueError("Las contraseñas nuevas no coinciden.")
+        return data
