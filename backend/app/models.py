@@ -1,5 +1,6 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
+from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 
@@ -18,15 +19,21 @@ class Carrera(models.Model):
         verbose_name_plural = 'Carreras'
 
 
-class Usuario(models.Model):
+
+class Usuario(AbstractUser):
     idUsuario = models.AutoField(primary_key=True)
     nombreYapellido = models.CharField(max_length=200, null=False, blank=False)
     email = models.EmailField(unique=True, null=False, blank=False)
-    password = models.CharField(max_length=100, null=False, blank=False)
-    userName = models.CharField(max_length=100, unique=True, null=False, blank=False)
+    is_staff = models.BooleanField(default=False)
+    is_activate = models.BooleanField(default=True)
 
+    # Estos ya vienen de AbstractUser:
+    # username
+    # password (se guarda con hash automáticamente)
+    # first_name, last_name, etc. (puedes ignorarlos o usarlos)
+    
     def __str__(self):
-        return self.userName
+        return self.username  # 'username' es el campo de login por defecto
 
     class Meta:
         db_table = 'Usuario'
