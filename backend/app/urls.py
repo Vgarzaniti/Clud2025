@@ -1,11 +1,18 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from app.views.foroView import ForoViewSet
 from .views.userView import UsuarioView, CambiarPasswordView
 from .views.carreraMateriaView import (
      CarreraListCreateView, CarreraRetrieveUpdateDestroyView,
     MateriaListCreateView, MateriaRetrieveUpdateDestroyView
 )
 from rest_framework_simplejwt.views import TokenRefreshView
+
+router = DefaultRouter()
+router.register(r'foros', ForoViewSet, basename='foro')
+
 urlpatterns = [
+    path('', include(router.urls)),
     path('login/', UsuarioView.as_view(), name='auth_usuario'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('cambiar-password/', CambiarPasswordView.as_view(), name='cambiar_password'),
