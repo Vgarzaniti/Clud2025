@@ -1,0 +1,17 @@
+from django.urls import path
+from .views.userView import UsuarioView, CambiarPasswordView
+from .views.carreraMateriaView import (
+     CarreraListCreateView, CarreraRetrieveUpdateDestroyView,
+    MateriaListCreateView, MateriaRetrieveUpdateDestroyView
+)
+from rest_framework_simplejwt.views import TokenRefreshView
+urlpatterns = [
+    path('login/', UsuarioView.as_view(), name='auth_usuario'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('cambiar-password/', CambiarPasswordView.as_view(), name='cambiar_password'),
+    path('carreras/', CarreraListCreateView.as_view(), name='carrera-list'),
+    path('carreras/<int:idCarrera>/', CarreraRetrieveUpdateDestroyView.as_view(), name='carrera-detail'),
+
+    path('materias/', MateriaListCreateView.as_view(), name='materia-list'),
+    path('materias/<int:idMateria>/', MateriaRetrieveUpdateDestroyView.as_view(), name='materia-detail'),
+]
