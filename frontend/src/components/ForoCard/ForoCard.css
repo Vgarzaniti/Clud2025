@@ -1,0 +1,24 @@
+.foro-card {
+  background-color: #1b1d3a;
+  color: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.foro-card-footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-puntaje {
+  background-color: #2d2f50;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+}

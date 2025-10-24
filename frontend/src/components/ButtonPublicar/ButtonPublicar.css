@@ -1,0 +1,13 @@
+.btn-publicar {
+  background-color: #3a49f9;
+  color: white;
+  border: none;
+  padding: 10px 25px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-publicar:hover {
+  background-color: #5b6bff;
+}

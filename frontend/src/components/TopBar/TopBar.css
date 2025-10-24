@@ -1,0 +1,25 @@
+.topbar {
+  background-color: #14162b;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+}
+
+.topbar ul {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+
+.topbar li {
+  cursor: pointer;
+}
+
+.profile-circle {
+  width: 25px;
+  height: 25px;
+  background-color: limegreen;
+  border-radius: 50%;
+}
