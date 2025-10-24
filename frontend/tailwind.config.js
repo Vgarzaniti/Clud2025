@@ -11,6 +11,7 @@ export default {
         panel: "#1B173D", // paneles (sidebar y tarjetas)
         azulUTN: "#4A7CFF", // botones, acentos
         texto: "#E5E7EB", // texto claro
+        perfilPanel: "#38385aff", // panel lateral del perfil
       },
     },
   },
