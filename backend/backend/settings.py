@@ -36,7 +36,6 @@ AUTH_USER_MODEL = 'app.Usuario'
 INSTALLED_APPS = [
     'app',
     'cloudinary',
-    'cloudinary_storage',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -58,7 +57,12 @@ REST_FRAMEWORK = {
 
 
 
-cloudinary.config(cloudinary_url=config('CLOUDINARY_URL'))
+cloudinary.config(
+    cloud_name=config('CLOUD_NAME'),
+    api_key=config('API_KEY'),
+    api_secret=config('API_SECRET'),
+    secure=True
+)
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
