@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        fondo: "#0D0A2C", // fondo general oscuro
+        fondo: "#08061aff", // fondo general oscuro
         panel: "#1B173D", // paneles (sidebar y tarjetas)
         azulUTN: "#4A7CFF", // botones, acentos
         texto: "#E5E7EB", // texto claro
