@@ -5,6 +5,7 @@ import Carreras from "./pages/Carreras.jsx";
 import Materia from "./pages/Materia.jsx";
 import ForoDetalle from "./pages/ForoDetalle.jsx";
 import Perfil from "./pages/Perfil.jsx";
+import Ayuda from "./pages/Ayuda.jsx";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/materia/:nombre" element={<Materia />} />
           <Route path="/foro/:id" element={<ForoDetalle />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/ayuda" element={<Ayuda />} />
         </Routes>
       </div>
     </Router>

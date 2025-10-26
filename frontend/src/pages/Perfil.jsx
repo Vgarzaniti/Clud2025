@@ -2,15 +2,22 @@ import { useState } from "react";
 import ForoTarjeta from "../components/ForoTarjeta.jsx";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
 import { motion, AnimatePresence } from "framer-motion";
+import Modal from "../components/Modal.jsx";
+import EditarRespuesta from "../components/EditarRespuesta.jsx";
+import EditarForo from "../components/EditarForo.jsx";
 
 export default function Perfil() {
     const [vista, setVista] = useState("foros");
+    const [mostrarEditar, setMostrarEditar] = useState(false);
+    const [foroSeleccionado, setForoSeleccionado] = useState(null);
+    const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
 
     const usuario = {
         nombre: "Juan Pérez",
         username: "jperez",
         email: "juanperez@utn.edu.ar",
     };
+
 
     const foros = [
         {
@@ -19,6 +26,9 @@ export default function Perfil() {
             descripcion:
                 "Consulta sobre cómo mejorar el rendimiento en estructuras de datos.",
             autor: "Juan Pérez",
+            carrera: "Ingeniería en Sistemas",
+            materia: "Algoritmos y Estructuras de Datos",
+            archivo: "ejemplo.pdf",
             respuestas: 10,
         },
         {
@@ -26,6 +36,8 @@ export default function Perfil() {
             titulo: "Errores al compilar en Visual Studio",
             descripcion: "¿Alguien tuvo el mismo problema al compilar proyectos?",
             autor: "Juan Pérez",
+            carrera: "Ingeniería en Sistemas",
+            materia: "Programación III",
             respuestas: 3,
         },
     ];
@@ -48,12 +60,21 @@ export default function Perfil() {
         },
     ];
 
+    const handleGuardarForo = (nuevoForo) => {
+        console.log("✅ Foro editado:", nuevoForo);
+        setMostrarEditar(false);
+    };
+
+    const handleGuardarRespuesta = (nuevaRespuesta) => {
+        console.log("✅ Respuesta editada:", nuevaRespuesta);
+        setMostrarEditar(false);
+    };
+
     return (
-        <div className="max-w-7xl mx-auto mt-10 px-4 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="max-w-7xl mx-auto mt-10 px-6 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
         
             {/* Columna lateral: perfil */}
             <aside className=" bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto">
-                
                 <div className="shadow-gray-900 shadow-lg w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-2xl font-bold text-fondo absolute -top-12 left-1/2 transform -translate-x-1/2">
                     US
                 </div>
@@ -85,7 +106,7 @@ export default function Perfil() {
 
             {/* Contenido principal */}
             <div className="lg:col-span-2 space-y-4">
-                <h1 className="text-2xl font-semibold mb-2 text-azulUTN">
+                <h1 className="text-3xl font-semibold mb-2 text-azulUTN">
                     Mi Actividad
                 </h1>
 
@@ -125,8 +146,19 @@ export default function Perfil() {
                             className="space-y-4"
                         >
                             {foros.map((foro) => (
-                                <ForoTarjeta key={foro.id} foro={foro} />
-                            ))}
+                                <div key={foro.id} className="relative">
+                                    <ForoTarjeta foro={foro} />
+                                    <button
+                                        onClick={() => {
+                                        setForoSeleccionado(foro);
+                                        setMostrarEditar("foro");
+                                        }}
+                                        className="absolute top-5 right-5 text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                                    >
+                                        Editar
+                                    </button>
+                                </div>
+                        ))}
                         </motion.div>
                     ) : (
                         <motion.div
@@ -138,12 +170,41 @@ export default function Perfil() {
                             className="space-y-4"
                         >
                             {respuestas.map((res) => (
-                                <RespuestaTarjeta key={res.id} respuesta={res} />
+                                <div key={res.id} className="relative">
+                                    <RespuestaTarjeta respuesta={res} />
+                                    <button
+                                        onClick={() => {
+                                        setRespuestaSeleccionada(res);
+                                        setMostrarEditar("respuesta");
+                                        }}
+                                        className="absolute top-5 right-5 text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                                    >
+                                        Editar
+                                    </button>
+                                </div>
                             ))}
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
+
+            {/* Modales de edición */}
+            <Modal visible={!!mostrarEditar} onClose={() => setMostrarEditar(false)}>
+                {mostrarEditar === "foro" && foroSeleccionado && (
+                <EditarForo
+                    foroActual={foroSeleccionado}
+                    onSave={handleGuardarForo}
+                    onClose={() => setMostrarEditar(false)}
+                />
+                )}
+                {mostrarEditar === "respuesta" && respuestaSeleccionada && (
+                <EditarRespuesta
+                    respuestaActual={respuestaSeleccionada}
+                    onSave={handleGuardarRespuesta}
+                    onClose={() => setMostrarEditar(false)}
+                />
+                )}
+            </Modal>
         </div>
     );
 }

@@ -6,9 +6,9 @@ export default function Carreras() {
       id: 1,
       nombre: "Ingenieria en Sistemas",
       materias: [
-        "Programacion I",
-        "Programacion II",
-        "Redes de Computadoras",
+        "Programacion 1",
+        "Programacion 2",
+        "Redes de Datos",
         "Base de Datos",
         "Sistemas Operativos",
         "Ingenieria de Software",
@@ -18,7 +18,7 @@ export default function Carreras() {
       id: 2,
       nombre: "Ingenieria Electrónica",
       materias: [
-        "Fisica I",
+        "Fisica 1",
         "Circuitos",
         "Microcontroladores",
         "Electronica Digital",
@@ -29,7 +29,7 @@ export default function Carreras() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto mt-8 text-texto">
+    <div className="max-w-7xl mx-auto mt-10 px-6 text-texto">
       <h1 className="text-3xl font-semibold mb-6 text-azulUTN">
         Explorar materias de nuestras carreras
       </h1>

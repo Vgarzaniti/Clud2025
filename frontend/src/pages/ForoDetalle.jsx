@@ -1,8 +1,13 @@
 import { useParams } from "react-router-dom";
+import { useState } from "react";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
+import CrearRespuesta from "../components/CrearRespuesta.jsx";
+import Modal from "../components/Modal.jsx";
+
 
 export default function ForoDetalle() {
     const { foroId } = useParams();
+    const [mostrarRespuesta, setMostrarRespuesta] = useState(false);
 
     const foro = {
         foroId: foroId,
@@ -10,7 +15,7 @@ export default function ForoDetalle() {
         descripcion: "Estoy trabajando en un proyecto donde necesito optimizar un algoritmo de búsqueda. ¿Qué técnicas recomiendan?",
         autor: "Juan Pérez",
         fecha: "15 de Octubre, 2025",
-        materia: "Programación II",
+        materia: "Programación 2",
     }
 
     const respuestas = [
@@ -63,6 +68,7 @@ export default function ForoDetalle() {
         <div className="flex flex-col gap-4">
             {/* Botón fuera del panel */}
             <button
+                onClick={() => setMostrarRespuesta(true)}
                 className="w-full bg-azulUTN text-white py-3 rounded-xl font-semibold hover:bg-blue-500 transition text-lg shadow-lg"
             >
                 Responder
@@ -71,19 +77,24 @@ export default function ForoDetalle() {
             {/* Panel de información */}
             <aside className="bg-panel p-4 rounded-2xl border border-gray-700 h-fit space-y-4">
                 <div className="border border-gray-600 rounded-lg p-3">
-                <h3 className="font-semibold mb-2 text-azulUTN">Información del Foro</h3>
-                <p>
+                <h3 className="text-2xl font-semibold mb-2 text-azulUTN">Información del Foro</h3>
+                <p className="text-xl">
                     <span className="font-semibold">Materia:</span> {foro.materia}
                 </p>
-                <p>
+                <p className="text-lg">
                     <span className="font-semibold">Autor:</span> {foro.autor}
                 </p>
-                <p>
+                <p className="text-lg">
                     <span className="font-semibold">Fecha:</span> {foro.fecha}
                 </p>
                 </div>
             </aside>
         </div>
+
+        {/* Mostrar Modal para Responder */}
+        <Modal visible={mostrarRespuesta} onClose={() => setMostrarRespuesta(false)}>
+            <CrearRespuesta onClose={() => setMostrarRespuesta(false)} />
+        </Modal>
     </div>
   );
 }

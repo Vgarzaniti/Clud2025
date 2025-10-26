@@ -9,8 +9,7 @@ export default function BarraLado() {
                 
                 <div className="mb-4">
                     <p className="font-medium">Carreras</p>
-                    <select className="bg-fondo border border-gray-600 p-2 w-full rounded text-texto">
-                        <option>Seleccionar carrera</option>
+                    <select className="bg-fondo border border-gray-600 p-2 w-full rounded-lg text-texto">
                         <option>Todos</option>
                         <option>Industrial</option>
                         <option>Mecanica</option>
@@ -22,8 +21,7 @@ export default function BarraLado() {
                 
                 <div className="mb-5">
                     <p className="font-medium">Materia</p>
-                    <select className="bg-fondo border border-gray-600 p-2 w-full rounded text-texto">
-                        <option>Seleccionar materia</option>
+                    <select className="bg-fondo border border-gray-600 p-2 w-full rounded-lg text-texto">
                         <option>Todos</option>
                         <option>Algoritmos</option>
                         <option>Redes</option>
