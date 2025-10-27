@@ -11,7 +11,7 @@ export default function Encabezado() {
                 </Link>
                 
                 <div className="flex gap-6 items-center">
-                    <Link to="/" className='hover:text-indigo-600'>Inicio</Link>
+                    <Link to="/home" className='hover:text-indigo-600'>Inicio</Link>
                     <Link to="/carreras" className='hover:text-indigo-600'>Carreras</Link>
                     <Link to="/perfil" className='hover:text-indigo-600'>Mi perfil</Link>
                     <Link to="/ayuda" className='hover:text-indigo-600'>Ayuda</Link>
