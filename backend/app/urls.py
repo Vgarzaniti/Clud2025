@@ -9,6 +9,7 @@ from .views.carreraMateriaView import (
 from .views.respuestaView import RespuestaViewSet
 from .views.foroView import ForoViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
+from .views.respuestaView import RespuestaViewSet
 
 router = DefaultRouter()
 router.register(r'foros', ForoViewSet, basename='foro')

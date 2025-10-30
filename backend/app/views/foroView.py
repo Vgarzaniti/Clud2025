@@ -19,6 +19,8 @@ class ForoViewSet(viewsets.ModelViewSet):
             for archivo in archivos:
                 ForoArchivo.objects.create(foro=foro, archivo=archivo)
 
+            foro.refresh_from_db()  # 🔹 <-- esto refresca las relaciones
             return Response(ForoSerializer(foro).data, status=status.HTTP_201_CREATED)
+
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
