@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import Modal from "../components/Modal.jsx";
 import EditarRespuesta from "../components/EditarRespuesta.jsx";
 import EditarForo from "../components/EditarForo.jsx";
+import { useNavigate } from "react-router-dom";
 
 export default function Perfil() {
     const [vista, setVista] = useState("foros");
     const [mostrarEditar, setMostrarEditar] = useState(false);
     const [foroSeleccionado, setForoSeleccionado] = useState(null);
     const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
+    const navigate = useNavigate();
 
     const usuario = {
         nombre: "Juan Pérez",
@@ -98,7 +100,7 @@ export default function Perfil() {
                     <button className="bg-sky-950 border border-gray-600 py-2 rounded-lg hover:bg-gray-800">
                         Editar
                     </button>
-                    <button className="bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition">
+                    <button onClick={() => navigate("/")} className="bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition">
                         Cerrar sesión
                     </button>
                 </div>
