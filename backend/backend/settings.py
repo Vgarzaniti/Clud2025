@@ -36,6 +36,7 @@ AUTH_USER_MODEL = 'app.Usuario'
 INSTALLED_APPS = [
     'app',
     'cloudinary',
+    'drf_spectacular',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -53,6 +54,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.AllowAny',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+        
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Foro Universitario',
+    'DESCRIPTION': 'Documentación de los endpoints del backend de foros, respuestas y archivos.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 
