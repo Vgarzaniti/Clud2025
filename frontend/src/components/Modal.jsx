@@ -3,7 +3,7 @@ export default function Modal({ visible, onClose, children }) {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="bg-panel p-7 rounded-2xl border border-gray-700 w-[500px] h-[600px] relative shadow-xl">
+            <div className="bg-panel p-7 rounded-2xl border border-gray-700 w-[500px] h-[700px] relative shadow-xl">
                 {/* Botón cerrar */}
                 <button
                     onClick={onClose}
