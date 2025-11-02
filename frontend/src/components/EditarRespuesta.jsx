@@ -1,55 +1,161 @@
 import { useState } from "react";
+import { useRef, useEffect } from "react";
+import { FiTrash2 } from "react-icons/fi";
 
 export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
+    
+    const [archivos, setArchivos] = useState(respuestaActual.archivos || []);
+    const [error, setError] = useState(null);
+    const [erroresCampos, setErroresCampos] = useState({});
+
+    const Limite_Individual_MB = 5;
+    const Limite_Total_MB = 20;
+
+  const textareaRef = useRef(null);
+    
     const [formData, setFormData] = useState({
         respuesta: respuestaActual.respuesta || "",
-        archivo: respuestaActual.archivo || null,
     });
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = "auto";
+            textarea.style.height = textarea.scrollHeight + "px";
+        }
+    }, [formData.respuesta]);
+
+    const hadleArchivoChange = (e) => {
+        const nuevosArchivos = Array.from(e.target.files);
+        let totalSize = archivos.reduce((acc, file) => acc + file.size, 0);
+        let errores = [];
+
+        for (const file of nuevosArchivos) {
+        const sizeMB = file.size / (1024 * 1024);
+        if (sizeMB > Limite_Individual_MB) {
+            errores.push(`❌ ${file.name} excede el límite de ${Limite_Individual_MB}MB.`);
+        }
+        totalSize += file.size;
+        }
+
+        if (totalSize / (1024 * 1024) > Limite_Total_MB) {
+        errores.push(`❌ El tamaño total de archivos no puede superar ${Limite_Total_MB}MB.`);
+        }
+
+        if (errores.length > 0) {
+        setError(errores.join("\n"));
+        } else {
+        setError("");
+        setArchivos((prev) => [...prev, ...nuevosArchivos]);
+        }
+    };
+
+    const handleEliminarArchivo = (index) => {
+        const nuevos = archivos.filter((_, i) => i !== index);
+        setArchivos(nuevos);
+    }
+
+    const validarFormulario = () => {
+        const nuevosErrores = {};
+
+        if (!formData.respuesta.trim()) nuevosErrores.respuesta = "La respuesta no puede estar vacía.";
+
+        setErroresCampos(nuevosErrores);
+        return Object.keys(nuevosErrores).length === 0;
+    }
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        onSave(formData);
+        if (error) {
+            alert("Corrige los errores antes de publicar.");
+            return;
+        }
+
+        if (!validarFormulario()) {
+            return;
+        }
+
+        onSave({
+            ...respuestaActual,
+            respuesta: formData.respuesta,
+            archivos,
+        });
+
+        console.log("Archivos válidos:", archivos);
+        alert("Respuesta publicada correctamente.");
         onClose();
     };
 
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-4 text-white">
+        <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">
         <h2 className="text-xl font-semibold text-center mb-2">Editar Respuesta</h2>
 
         <div>
             <label className="block text-sm mb-1">Respuesta</label>
             <textarea
-                rows="4"
+                ref={textareaRef}
                 value={formData.respuesta}
                 onChange={(e) => setFormData({ ...formData, respuesta: e.target.value })}
-                className="w-full p-2 rounded-lg bg-fondo border border-gray-600 focus:outline-none min-h-[100px] max-h-[320px]"
+                className={`w-full p-2 rounded-xl bg-fondo border ${
+                    erroresCampos.respuesta ? "border-red-500" : "border-gray-600"
+                } focus:outline-none overflow-y-auto min-h-[100px] max-h-[250px]`}
+                placeholder="Escribí tu respuesta..."
             />
+            {erroresCampos.respuesta && (
+                <p className="text-red-500 text-sm mt-1">{erroresCampos.respuesta}</p>
+            )}
         </div>
 
-        <div className="w-full max-w-md">
-            <label className="block text-sm mb-1">Archivo</label>
+        <div className="w-full">
+            <label className="block text-m mb-2">Archivos adjuntos</label>
+
             <label
-                htmlFor="archivo"
-                className={`w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-azulUTN text-white cursor-pointer hover:bg-blue-500 transition ${
-                    formData.archivo
-                    ? "bg-green-600 hover:bg-green-700"
-                    : "bg-cyan-900 hover:bg-blue-500"
-                } text-white`}
+                htmlFor="file-upload"
+                className="flex flex-col items-center justify-center w-full p-2 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800 hover:bg-gray-700 transition"
             >
-                {formData.archivo ? "Archivo cargado" : "Seleccionar archivo"}
-            </label>          
-            
+            <p className="text-gray-300 font-medium">
+                Arrastrá tus archivos o <span className="text-azulUTN">seleccionalos</span>
+            </p>
+            <p className="text-sm text-gray-400 mt-1">
+                Máx. 5MB por archivo — 20MB total
+            </p>
             <input
-                id="archivo"
+                id="file-upload"
                 type="file"
-                onChange={(e) => setFormData({ ...formData, archivo: e.target.files[0] })}
+                multiple
+                onChange={hadleArchivoChange}
                 className="hidden"
             />
+            </label>
 
-            {formData.archivo && (
-            <p className="mt-2 text-sm text-gray-400 truncate">
-                Archivo seleccionado: <span className="font-medium">{formData.archivo.name}</span>
-            </p>
+            {error && (
+            <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>
+            )}
+
+            {archivos.length > 0 && (
+            <ul className="text-sm text-gray-300 mt-3 max-h-[65px] overflow-y-auto">
+                {archivos.map((a, i) => (
+                <li
+                    key={i}
+                    className="flex items-center justify-between bg-gray-800 px-3 py-2 mb-2 rounded-lg"
+                >
+                    <div className="flex flex-col">
+                    <span className="text-s">📎 {a.name}</span>
+                    <span className="text-xs text-gray-400">
+                        {(a.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => handleEliminarArchivo(i)}
+                        className="text-red-400 hover:text-red-600 transition"
+                    >
+                        <FiTrash2 size={18} />
+                    </button>
+                </li>
+                ))}
+            </ul>
             )}
         </div>
 

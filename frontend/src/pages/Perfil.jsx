@@ -24,22 +24,19 @@ export default function Perfil() {
     const foros = [
         {
             id: 1,
-            titulo: "Optimización de algoritmos de búsqueda",
-            descripcion:
-                "Consulta sobre cómo mejorar el rendimiento en estructuras de datos.",
+            pregunta: "Optimización de algoritmos de búsqueda",
             autor: "Juan Pérez",
-            carrera: "Ingeniería en Sistemas",
-            materia: "Algoritmos y Estructuras de Datos",
+            carrera: "Sistemas",
+            materia: "Base De Datos",
             archivo: "ejemplo.pdf",
             respuestas: 10,
         },
         {
             id: 2,
-            titulo: "Errores al compilar en Visual Studio",
-            descripcion: "¿Alguien tuvo el mismo problema al compilar proyectos?",
+            pregunta: "Errores al compilar en Visual Studio",
             autor: "Juan Pérez",
-            carrera: "Ingeniería en Sistemas",
-            materia: "Programación III",
+            carrera: "Sistemas",
+            materia: "Programacion 2",
             respuestas: 3,
         },
     ];

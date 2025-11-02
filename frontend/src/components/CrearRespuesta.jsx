@@ -58,7 +58,7 @@ export default function CrearRespuesta({ onClose }) {
   const validarFormulario = () => {
     const nuevosErrores = {};
 
-    if (!formData.respuesta.trim()) nuevosErrores.pregunta = "La respuesta no puede estar vacía.";
+    if (!formData.respuesta.trim()) nuevosErrores.respuesta = "La respuesta no puede estar vacía.";
 
     setErroresCampos(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
@@ -93,7 +93,7 @@ export default function CrearRespuesta({ onClose }) {
           onChange={(e) => setFormData({ ...formData, respuesta: e.target.value })}
           className={`w-full p-2 rounded-xl bg-fondo border ${
             erroresCampos.respuesta ? "border-red-500" : "border-gray-600"
-          } focus:outline-none overflow-y-auto min-h-[100px] max-h-[270px]`}
+          } focus:outline-none overflow-y-auto min-h-[100px] max-h-[250px]`}
           placeholder="Escribí tu respuesta..."
         />
         {erroresCampos.respuesta && (
