@@ -6,12 +6,14 @@ import Modal from "../components/Modal.jsx";
 import EditarRespuesta from "../components/EditarRespuesta.jsx";
 import EditarForo from "../components/EditarForo.jsx";
 import { useNavigate } from "react-router-dom";
+import EditarUsuario from "../components/EditarUsuario.jsx";
 
 export default function Perfil() {
     const [vista, setVista] = useState("foros");
     const [mostrarEditar, setMostrarEditar] = useState(false);
     const [foroSeleccionado, setForoSeleccionado] = useState(null);
     const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
+    const [mostrarEditarUsuario, setMostrarEditarUsuario] = useState(false);
     const navigate = useNavigate();
 
     const usuario = {
@@ -48,7 +50,7 @@ export default function Perfil() {
             respuesta:
                 "Podrías revisar la versión del compilador, muchas veces genera errores con librerías antiguas.",
             puntaje: 8,
-            archivo: "compilador-fix.txt",
+            archivos: "compilador-fix.txt",
         },
         {
             id: 2,
@@ -69,13 +71,25 @@ export default function Perfil() {
         setMostrarEditar(false);
     };
 
+    const handleGuardarUsuario = (nuevoUsuario) => {
+    console.log("Usuario editado:", nuevoUsuario);
+    setMostrarEditarUsuario(false);
+    };
+
     return (
         <div className="max-w-7xl mx-auto mt-10 px-6 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
         
             {/* Columna lateral: perfil */}
             <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto">
                 <div className="shadow-gray-900 shadow-lg w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-2xl font-bold text-fondo absolute -top-12 left-1/2 transform -translate-x-1/2">
-                    US
+                    {usuario.nombre
+                        ? usuario.nombre
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                        : "US"
+                    }
                 </div>
                 
                 <div className="mt-15 space-y-2 text-left">
@@ -94,7 +108,9 @@ export default function Perfil() {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-3 w-full">
-                    <button className="bg-sky-950 border border-gray-600 py-2 rounded-lg hover:bg-gray-800">
+                    <button 
+                        onClick={() => setMostrarEditarUsuario(true)}
+                        className="bg-sky-950 border border-gray-600 py-2 rounded-lg hover:bg-gray-800">
                         Editar
                     </button>
                     <button onClick={() => navigate("/")} className="bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition">
@@ -115,8 +131,8 @@ export default function Perfil() {
                         onClick={() => setVista("foros")}
                         className={`px-4 py-2 rounded-full font-semibold transition ${
                         vista === "foros"
-                            ? "bg-azulUTN text-white"
-                            : "bg-fondo border border-gray-600 hover:bg-gray-800"
+                            ? "bg-indigo-800 text-white"
+                            : "bg-indigo-950 border border-gray-600 hover:bg-gray-800"
                         }`}
                     >
                         Foros creados
@@ -125,8 +141,8 @@ export default function Perfil() {
                         onClick={() => setVista("respuestas")}
                         className={`px-4 py-2 rounded-full font-semibold transition ${
                         vista === "respuestas"
-                            ? "bg-azulUTN text-white"
-                            : "bg-fondo border border-gray-600 hover:bg-gray-800"
+                            ? "bg-indigo-800 text-white"
+                            : "bg-indigo-950 border border-gray-600 hover:bg-gray-800"
                         }`}
                     >
                         Respuestas realizadas
@@ -204,6 +220,19 @@ export default function Perfil() {
                 />
                 )}
             </Modal>
+
+            {/* Modal para editar usuario */}
+            <Modal
+                visible={mostrarEditarUsuario}
+                onClose={() => setMostrarEditarUsuario(false)}
+            >
+                <EditarUsuario
+                    usuarioActual={usuario}
+                    onSave={handleGuardarUsuario}
+                    onClose={() => setMostrarEditarUsuario(false)}
+                />
+            </Modal>
+
         </div>
     );
 }
