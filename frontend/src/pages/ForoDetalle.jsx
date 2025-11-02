@@ -3,11 +3,13 @@ import { useState } from "react";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
 import CrearRespuesta from "../components/CrearRespuesta.jsx";
 import Modal from "../components/Modal.jsx";
+import { motion, AnimatePresence } from "framer-motion";
 
 
 export default function ForoDetalle() {
     const { foroId } = useParams();
     const [mostrarRespuesta, setMostrarRespuesta] = useState(false);
+    const [modoVista, setModoVista] = useState("normal");
 
     const foro = {
         foroId: foroId,
@@ -22,19 +24,30 @@ export default function ForoDetalle() {
     {
       id: 1,
       autor: "Ana Gómez",
-      respuesta:
-        "Podrías usar estructuras de datos más eficientes como árboles balanceados o índices hash. También revisar la complejidad O(n).",
+      respuesta: "Podrías usar estructuras de datos más eficientes como árboles balanceados o índices hash. También revisar la complejidad O(n).",
       puntaje: 12,
       archivo: "optimizacion.pdf",
     },
     {
       id: 2,
       autor: "Luis Díaz",
-      respuesta:
-        "En mi caso, mejoré bastante el rendimiento usando búsquedas binarias cuando los datos están ordenados.",
+      respuesta:"En mi caso, mejoré bastante el rendimiento usando búsquedas binarias cuando los datos están ordenados.",
       puntaje: 5,
     },
+    {
+      id: 3,
+      autor: "José Martínez",
+      respuesta:"Desarrollar una busqueda ordenada en lo principal para optimizar el rendimiento.",
+      puntaje: 8,
+    },
   ];
+
+  const respuestasOrdenadas = [...respuestas].sort((a, b) => {
+    if (modoVista === "ranking") {
+        return b.puntaje - a.puntaje;
+    }
+    return a.id - b.id;
+  });
 
   return (
     <div className="max-w-7xl mx-auto mt-8 px-4 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -50,18 +63,45 @@ export default function ForoDetalle() {
 
             {/* Filtros */}
             <div className="flex gap-3">
-            <button className="bg-sky-950 border border-gray-600 px-3 py-1 rounded-full hover:bg-gray-800">
-                Filtros
-            </button>
-            <button className="bg-sky-950 border border-gray-600 px-3 py-1 rounded-full hover:bg-gray-800">
-                Ranking
-            </button>
+                <button
+                    onClick={() => setModoVista("normal")}
+                    className={`px-4 py-2 rounded-full font-semibold transition ${
+                    modoVista === "normal"
+                        ? "bg-indigo-800 text-white"
+                        : "bg-indigo-950 border border-gray-600 hover:bg-gray-800"
+                    }`}
+                >
+                    Filtros
+                </button>
+
+                <button
+                    onClick={() => setModoVista("ranking")}
+                    className={`px-4 py-2 rounded-full font-semibold transition ${
+                    modoVista === "ranking"
+                        ? "bg-indigo-800 text-white"
+                        : "bg-indigo-950 border border-gray-600 hover:bg-gray-800"
+                    }`}
+                >
+                    Ranking
+                </button>
             </div>
 
             {/* Lista de respuestas */}
-            {respuestas.map((res) => (
-            <RespuestaTarjeta key={res.id} respuesta={res} />
-            ))}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={modoVista}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -15 }}
+                    transition={{ duration: 0.35, ease: "easeInOut" }}
+                    className="space-y-4"
+                >
+                    {respuestasOrdenadas.map((res) => (
+                        <RespuestaTarjeta key={res.id} respuesta={res} />
+                    ))}
+                </motion.div>
+            </AnimatePresence>
+                
         </div>
 
         {/* Columna lateral */}

@@ -17,17 +17,15 @@ export default function Materia() {
     const foros = [
         {
             id: 1,
-            titulo: "Consulta sobre prácticas de laboratorio",
-            descripcion: "¿Cómo se entrega el informe de la segunda práctica?",
+            pregunta: "Consulta sobre prácticas de laboratorio",
             autor: "María López",
             respuestas: 4,
         },
         {
             id: 2,
-            titulo: "Errores en simulación de red",
-            descripcion: "¿A alguien más le da error en Packet Tracer al conectar el router?",
+            pregunta: "Errores en simulación de red",
             autor: "Luis Díaz",
-            puntaje: 2,
+            respuestas: 2,
         }, 
     ];
 

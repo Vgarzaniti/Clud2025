@@ -12,21 +12,21 @@ export default function Home() {
   const foros = [
     {
       id: 1,
-      titulo: "RespuestaDetalle - Con Respuesta + Archivo + Persona que la realizo",
+      pregunta: "Pregunta de Foro",
       autor: "Juan Pérez",
       materia: "Matemáticas 2",
       respuestas: 5,
     },
     {
       id: 2,
-      titulo: "RespuestaDetalle - Con Respuesta + Archivo + Persona que la realizo",
+      pregunta: "Pregunta de Foro",
       autor: "Ana Gómez",
       materia: "Física 1",
       respuestas: 3,
     },
     {
       id: 3,
-      titulo: "Cómo optimizar código en React",
+      pregunta: "Pregunta de Foro",
       autor: "Carlos Ruiz",
       materia: "Programación Web",
       respuestas: 8,
@@ -34,7 +34,7 @@ export default function Home() {
   ];
 
   const foroBuscador = foros.filter((foro) => 
-    foro.titulo.toLowerCase().includes(busqueda.toLowerCase())
+    foro.pregunta.toLowerCase().includes(busqueda.toLowerCase())
   )
 
   return (

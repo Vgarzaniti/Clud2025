@@ -60,12 +60,12 @@ export default function Perfil() {
     ];
 
     const handleGuardarForo = (nuevoForo) => {
-        console.log("✅ Foro editado:", nuevoForo);
+        console.log("Foro editado:", nuevoForo);
         setMostrarEditar(false);
     };
 
     const handleGuardarRespuesta = (nuevaRespuesta) => {
-        console.log("✅ Respuesta editada:", nuevaRespuesta);
+        console.log("Respuesta editada:", nuevaRespuesta);
         setMostrarEditar(false);
     };
 
@@ -149,8 +149,8 @@ export default function Perfil() {
                                     <ForoTarjeta foro={foro} />
                                     <button
                                         onClick={() => {
-                                        setForoSeleccionado(foro);
-                                        setMostrarEditar("foro");
+                                            setForoSeleccionado(foro);
+                                            setMostrarEditar("foro");
                                         }}
                                         className="absolute top-5 right-5 text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
                                     >
