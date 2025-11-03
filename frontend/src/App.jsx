@@ -11,6 +11,7 @@ import InicioSesion from "./pages/InicioSesion.jsx";
 import Registrar from "./pages/Registrar.jsx";
 import PublicLayout from "./layouts/PublicLayout.jsx";
 import MainLayout from "./layouts/MainLayout.jsx";
+import OlvidarContrasena from "./pages/OlvidarContraseña.jsx";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/" element={<Inicio />} />
           <Route path="/inicio-sesion" element={<InicioSesion />} />
           <Route path="/registrar" element={<Registrar />} />
+          <Route path="/olvidar-contrasena" element={<OlvidarContrasena />} />
         </Route>
         
         {/* Rutas protegidas */}

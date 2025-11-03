@@ -41,22 +41,21 @@ export default function Inicio() {
                     </p>
                 </div>
                 <div  className="bg-panel p-6 rounded-2xl border border-gray-700 w-80 h-fit shadow-md"> 
-                <h2 className="font-semibold text-lg mb-4 text-center">
-                    Foros más populares
-                </h2>
-                    <ul className="space-y-3">
-                        {forosPopulares.map((foro) => (
-                        <li key={foro.id} className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-green-600 rounded-full"></div>
-                            <div>
-                                <p className="font-semibold">{foro.nombre}</p>
-                                <p className="text-sm text-gray-400">
-                                    Respuestas: {foro.respuestas}
-                                </p>
-                            </div>
-                        </li>
-                        ))}
-                    </ul>
+                    <h2 className="font-semibold text-lg mb-4 text-center">
+                        Foros más populares
+                    </h2>
+                        <ul className="space-y-3">
+                            {forosPopulares.map((foro) => (
+                            <li key={foro.id} className="flex items-center gap-3">
+                                <div>
+                                    <p className="font-semibold">{foro.nombre}</p>
+                                    <p className="text-sm text-gray-400">
+                                        Respuestas: {foro.respuestas}
+                                    </p>
+                                </div>
+                            </li>
+                            ))}
+                        </ul>
                 </div>
             </main>
         </div>

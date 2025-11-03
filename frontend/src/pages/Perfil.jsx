@@ -5,12 +5,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import Modal from "../components/Modal.jsx";
 import EditarRespuesta from "../components/EditarRespuesta.jsx";
 import EditarForo from "../components/EditarForo.jsx";
+import { useNavigate } from "react-router-dom";
+import EditarUsuario from "../components/EditarUsuario.jsx";
 
 export default function Perfil() {
     const [vista, setVista] = useState("foros");
     const [mostrarEditar, setMostrarEditar] = useState(false);
     const [foroSeleccionado, setForoSeleccionado] = useState(null);
     const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
+    const [mostrarEditarUsuario, setMostrarEditarUsuario] = useState(false);
+    const navigate = useNavigate();
 
     const usuario = {
         nombre: "Juan Pérez",
@@ -22,22 +26,19 @@ export default function Perfil() {
     const foros = [
         {
             id: 1,
-            titulo: "Optimización de algoritmos de búsqueda",
-            descripcion:
-                "Consulta sobre cómo mejorar el rendimiento en estructuras de datos.",
+            pregunta: "Optimización de algoritmos de búsqueda",
             autor: "Juan Pérez",
-            carrera: "Ingeniería en Sistemas",
-            materia: "Algoritmos y Estructuras de Datos",
+            carrera: "Sistemas",
+            materia: "Base De Datos",
             archivo: "ejemplo.pdf",
             respuestas: 10,
         },
         {
             id: 2,
-            titulo: "Errores al compilar en Visual Studio",
-            descripcion: "¿Alguien tuvo el mismo problema al compilar proyectos?",
+            pregunta: "Errores al compilar en Visual Studio",
             autor: "Juan Pérez",
-            carrera: "Ingeniería en Sistemas",
-            materia: "Programación III",
+            carrera: "Sistemas",
+            materia: "Programacion 2",
             respuestas: 3,
         },
     ];
@@ -49,7 +50,7 @@ export default function Perfil() {
             respuesta:
                 "Podrías revisar la versión del compilador, muchas veces genera errores con librerías antiguas.",
             puntaje: 8,
-            archivo: "compilador-fix.txt",
+            archivos: "compilador-fix.txt",
         },
         {
             id: 2,
@@ -61,13 +62,18 @@ export default function Perfil() {
     ];
 
     const handleGuardarForo = (nuevoForo) => {
-        console.log("✅ Foro editado:", nuevoForo);
+        console.log("Foro editado:", nuevoForo);
         setMostrarEditar(false);
     };
 
     const handleGuardarRespuesta = (nuevaRespuesta) => {
-        console.log("✅ Respuesta editada:", nuevaRespuesta);
+        console.log("Respuesta editada:", nuevaRespuesta);
         setMostrarEditar(false);
+    };
+
+    const handleGuardarUsuario = (nuevoUsuario) => {
+    console.log("Usuario editado:", nuevoUsuario);
+    setMostrarEditarUsuario(false);
     };
 
     return (
@@ -76,7 +82,14 @@ export default function Perfil() {
             {/* Columna lateral: perfil */}
             <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto">
                 <div className="shadow-gray-900 shadow-lg w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-2xl font-bold text-fondo absolute -top-12 left-1/2 transform -translate-x-1/2">
-                    US
+                    {usuario.nombre
+                        ? usuario.nombre
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()
+                        : "US"
+                    }
                 </div>
                 
                 <div className="mt-15 space-y-2 text-left">
@@ -95,10 +108,12 @@ export default function Perfil() {
                 </div>
 
                 <div className="mt-6 flex flex-col gap-3 w-full">
-                    <button className="bg-sky-950 border border-gray-600 py-2 rounded-lg hover:bg-gray-800">
+                    <button 
+                        onClick={() => setMostrarEditarUsuario(true)}
+                        className="bg-sky-950 border border-gray-600 py-2 rounded-lg hover:bg-gray-800">
                         Editar
                     </button>
-                    <button className="bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition">
+                    <button onClick={() => navigate("/")} className="bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition">
                         Cerrar sesión
                     </button>
                 </div>
@@ -116,8 +131,8 @@ export default function Perfil() {
                         onClick={() => setVista("foros")}
                         className={`px-4 py-2 rounded-full font-semibold transition ${
                         vista === "foros"
-                            ? "bg-azulUTN text-white"
-                            : "bg-fondo border border-gray-600 hover:bg-gray-800"
+                            ? "bg-indigo-800 text-white"
+                            : "bg-indigo-950 border border-gray-600 hover:bg-gray-800"
                         }`}
                     >
                         Foros creados
@@ -126,8 +141,8 @@ export default function Perfil() {
                         onClick={() => setVista("respuestas")}
                         className={`px-4 py-2 rounded-full font-semibold transition ${
                         vista === "respuestas"
-                            ? "bg-azulUTN text-white"
-                            : "bg-fondo border border-gray-600 hover:bg-gray-800"
+                            ? "bg-indigo-800 text-white"
+                            : "bg-indigo-950 border border-gray-600 hover:bg-gray-800"
                         }`}
                     >
                         Respuestas realizadas
@@ -150,8 +165,8 @@ export default function Perfil() {
                                     <ForoTarjeta foro={foro} />
                                     <button
                                         onClick={() => {
-                                        setForoSeleccionado(foro);
-                                        setMostrarEditar("foro");
+                                            setForoSeleccionado(foro);
+                                            setMostrarEditar("foro");
                                         }}
                                         className="absolute top-5 right-5 text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
                                     >
@@ -205,6 +220,19 @@ export default function Perfil() {
                 />
                 )}
             </Modal>
+
+            {/* Modal para editar usuario */}
+            <Modal
+                visible={mostrarEditarUsuario}
+                onClose={() => setMostrarEditarUsuario(false)}
+            >
+                <EditarUsuario
+                    usuarioActual={usuario}
+                    onSave={handleGuardarUsuario}
+                    onClose={() => setMostrarEditarUsuario(false)}
+                />
+            </Modal>
+
         </div>
     );
 }

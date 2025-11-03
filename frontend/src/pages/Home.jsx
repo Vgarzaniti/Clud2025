@@ -7,23 +7,35 @@ import "../input.css";
 
 export default function Home() {
   const [mostrarForo, setMostrarForo] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
   
   const foros = [
     {
       id: 1,
-      titulo: "RespuestaDetalle - Con Respuesta + Archivo + Persona que la realizo",
-      descripcion: "Ejemplo de respuesta con archivo y usuario asociado",
+      pregunta: "Pregunta de Foro",
       autor: "Juan Pérez",
+      materia: "Matemáticas 2",
       respuestas: 5,
     },
     {
       id: 2,
-      titulo: "RespuestaDetalle - Con Respuesta + Archivo + Persona que la realizo",
-      descripcion: "Ejemplo de otra publicación con datos y archivo adjunto",
+      pregunta: "Pregunta de Foro",
       autor: "Ana Gómez",
+      materia: "Física 1",
       respuestas: 3,
     },
+    {
+      id: 3,
+      pregunta: "Pregunta de Foro",
+      autor: "Carlos Ruiz",
+      materia: "Programación Web",
+      respuestas: 8,
+    },
   ];
+
+  const foroBuscador = foros.filter((foro) => 
+    foro.pregunta.toLowerCase().includes(busqueda.toLowerCase())
+  )
 
   return (
     <div className="max-w-7xl mx-auto mt-10 px-6 flex gap-6">
@@ -33,18 +45,25 @@ export default function Home() {
           <input
             type="text"
             placeholder="Buscar Foro"
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)} 
             className="bg-panel border border-gray-700 text-white placeholder-gray-400 px-4 py-2 rounded-lg flex-1"
           />
           <button 
             onClick={()=> setMostrarForo(true)}
-            className="bg-azulUTN text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+            className="bg-azulUTN text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
             Publicar
           </button>
         </div>
 
-        {foros.map((foro) => (
-          <ForoTarjeta key={foro.id} foro={foro} />
-        ))}
+        {foroBuscador.length > 0 ? (
+          foroBuscador.map((foro) => (
+            <ForoTarjeta key={foro.id} foro={foro} />
+          ))
+        ) : (
+          <p className="text-gray-400">No se encontraron foros con ese título.</p>
+        )}
       </main>
 
       {/*Mostar Modal para Foro*/}
