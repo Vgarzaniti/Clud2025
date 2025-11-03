@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle
+from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle, Puntaje
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Respuesta
+        model = Puntaje
         fields = ['id', 'usuario', 'respuesta', 'valor']
 
 # 🔹 Serializador para los archivos
