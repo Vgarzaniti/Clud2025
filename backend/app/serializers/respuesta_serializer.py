@@ -1,6 +1,10 @@
 from rest_framework import serializers
 from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle
 
+class PuntajeRespuestaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Respuesta
+        fields = ['id', 'usuario', 'respuesta', 'valor']
 
 # 🔹 Serializador para los archivos
 class RespuestaArchivoSerializer(serializers.ModelSerializer):
@@ -25,7 +29,7 @@ class RespuestaDetalleSerializer(serializers.ModelSerializer):
 class RespuestaSerializer(serializers.ModelSerializer):
     archivos = RespuestaArchivoSerializer(many=True, read_only=True)
     detalles = RespuestaDetalleSerializer(many=True, read_only=True)
-
+    puntaje = PuntajeRespuestaSerializer(many=True, read_only=True)
     class Meta:
         model = Respuesta
         fields = [

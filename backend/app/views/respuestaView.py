@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle, Foro
-from ..serializers.respuesta_serializer import RespuestaSerializer
+from ..serializers.respuesta_serializer import RespuestaSerializer, PuntajeRespuestaSerializer
 
 
 class RespuestaViewSet(viewsets.ModelViewSet):
@@ -46,4 +46,14 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
             return Response(RespuestaSerializer(respuesta).data, status=status.HTTP_201_CREATED)
 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class RespuestaPuntajeViewSet (viewsets.ModelViewSet):
+    queryset = Respuesta.objects.all().order_by('-fecha_creacion')
+    serializer_class = PuntajeRespuestaSerializer
+    def create(self, request, *args, **kwargs):
+        serializer = PuntajeRespuestaSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Puntaje recibido"}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

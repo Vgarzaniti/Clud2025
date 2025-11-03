@@ -125,7 +125,6 @@ class Respuesta(models.Model):
         null=False,
         blank=False
     )
-    puntaje = models.IntegerField(default=0, null=False, blank=False)
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -174,3 +173,29 @@ class RespuestaDetalle(models.Model):
     class Meta:
         db_table = 'RespuestaDetalle'
         verbose_name_plural = 'Detalles de Respuestas'
+        
+
+class Puntaje(models.Model):
+    respuesta = models.ForeignKey(
+        Respuesta,
+        on_delete=models.CASCADE,
+        related_name='puntajes',
+        null=False,
+        blank=False
+    )
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='puntajes',
+        null=False,
+        blank=False
+    )
+    valor = models.IntegerField(default=0, null=False, blank=False)
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"Puntaje {self.valor} - {self.usuario.username} para Respuesta {self.respuesta.idRespuesta}"
+
+    class Meta:
+        db_table = 'Puntaje'
+        verbose_name_plural = 'Puntajes'
