@@ -1,0 +1,22 @@
+# --- Framework principal ---
+Django>=5.0,<6.0
+
+# --- API REST ---
+djangorestframework>=3.15
+django-cors-headers>=4.3.0
+
+# --- Base de datos PostgreSQL (Neon.tech) ---
+psycopg2-binary>=2.9
+dj-database-url>=2.2.0
+python-dotenv>=1.0.0
+
+# --- Almacenamiento en la nube ---
+cloudinary>=1.41.0
+django-cloudinary-storage>=0.3.0
+
+
+
+# --- Servidor de producción ---
+gunicorn>=21.2.0
+
+
