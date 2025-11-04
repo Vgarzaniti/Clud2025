@@ -31,7 +31,7 @@ SECRET_KEY = 'django-insecure-t+a8ge1)-9o6=b)#8kik8_7l7il!df1n8bx-)i2p#59h166g=-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['clud2025.onrender.com', 'localhost', '127.0.0.1']
 
 AUTH_USER_MODEL = 'app.Usuario'
 
