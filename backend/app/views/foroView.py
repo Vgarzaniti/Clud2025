@@ -37,3 +37,15 @@ class ForoViewSet(viewsets.ModelViewSet):
             return Response(ForoSerializer(foro).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None):
+        try:
+            foro = Foro.objects.get(pk=pk)
+        except Foro.DoesNotExist:
+            return Response(
+                {"detail": "El foro no existe."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = ForoSerializer(foro)
+        return Response(serializer.data, status=status.HTTP_200_OK)

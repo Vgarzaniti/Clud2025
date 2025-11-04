@@ -9,7 +9,8 @@ from .views.carreraMateriaView import (
 from .views.respuestaView import RespuestaViewSet
 from .views.foroView import ForoViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
-from .views.respuestaView import RespuestaViewSet
+from .views.respuestaView import RespuestaViewSet, RespuestaPuntajeView
+
 
 router = DefaultRouter()
 router.register(r'foros', ForoViewSet, basename='foro')
@@ -17,6 +18,8 @@ router.register(r'respuestas', RespuestaViewSet, basename='respuesta')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('respuestas/puntaje/<int:respuesta_id>/', RespuestaPuntajeView.as_view(), name='respuesta-puntaje-detail'),
+    path('puntaje/', RespuestaPuntajeView.as_view(), name='respuesta-puntaje'),
     path('login/', UsuarioView.as_view(), name='auth_usuario'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('cambiar-password/', CambiarPasswordView.as_view(), name='cambiar_password'),
