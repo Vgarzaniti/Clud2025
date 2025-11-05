@@ -141,7 +141,13 @@ export default function CrearForo({ onClose, defaultCarrera = "", defaultMateria
         <textarea
           ref={textareaRef}
           value={formData.pregunta}
-          onChange={(e) => setFormData({ ...formData, pregunta: e.target.value })}
+          onChange={(e) => {
+            const limiteCaracteres = e.target.value;
+            if (limiteCaracteres.length <= 1000){
+              setFormData({ ...formData, pregunta: e.target.value })
+            }
+          }}
+          maxLength={1000}
           className={`w-full p-2 rounded-xl bg-fondo border ${
             erroresCampos.pregunta ? "border-red-500" : "border-gray-600"
           } focus:outline-none overflow-y-auto min-h-[50px] max-h-[90px]`}
@@ -150,6 +156,9 @@ export default function CrearForo({ onClose, defaultCarrera = "", defaultMateria
         {erroresCampos.pregunta && (
           <p className="text-red-500 text-sm mt-1">{erroresCampos.pregunta}</p>
         )}
+        <p className={`text-right mr-1 ${formData.pregunta.length >= 1000 ? "text-red-500" : "text-gray-400"}`}>
+          {formData.pregunta.length} / 1000
+        </p>
       </div>
 
       <div className="w-full">

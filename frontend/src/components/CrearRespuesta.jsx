@@ -90,7 +90,13 @@ export default function CrearRespuesta({ onClose }) {
         <textarea
           ref={textareaRef}
           value={formData.respuesta}
-          onChange={(e) => setFormData({ ...formData, respuesta: e.target.value })}
+          onChange={(e) => {
+            const limiteCaracteres = e.target.value;
+            if (limiteCaracteres.length <= 3000){
+              setFormData({ ...formData, respuesta: e.target.value })
+            }
+          }}
+          maxLength={3000}
           className={`w-full p-2 rounded-xl bg-fondo border ${
             erroresCampos.respuesta ? "border-red-500" : "border-gray-600"
           } focus:outline-none overflow-y-auto min-h-[100px] max-h-[250px]`}
@@ -99,6 +105,9 @@ export default function CrearRespuesta({ onClose }) {
         {erroresCampos.respuesta && (
           <p className="text-red-500 text-sm mt-1">{erroresCampos.respuesta}</p>
         )}
+        <p className={`text-right mr-1 ${formData.respuesta.length >= 3000 ? "text-red-500" : "text-gray-400"}`}>
+          {formData.respuesta.length} / 3000
+        </p>
       </div>
 
       <div className="w-full">
