@@ -1,40 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BarraLado from "../components/BarraLado.jsx";
 import ForoTarjeta from "../components/ForoTarjeta.jsx";
 import CrearForo from "../components/CrearForo.jsx";
 import Modal from "../components/Modal.jsx";
+import { foroService } from "../services/foroService.js";
 import "../input.css";
 
 export default function Home() {
   const [mostrarForo, setMostrarForo] = useState(false);
   const [busqueda, setBusqueda] = useState("");
-  
-  const foros = [
-    {
-      id: 1,
-      pregunta: "Pregunta de Foro",
-      autor: "Juan Pérez",
-      materia: "Matemáticas 2",
-      respuestas: 5,
-    },
-    {
-      id: 2,
-      pregunta: "Pregunta de Foro",
-      autor: "Ana Gómez",
-      materia: "Física 1",
-      respuestas: 3,
-    },
-    {
-      id: 3,
-      pregunta: "Pregunta de Foro",
-      autor: "Carlos Ruiz",
-      materia: "Programación Web",
-      respuestas: 8,
-    },
-  ];
+  const [foros, setForos] = useState([]);
+  const [carga, setCarga] = useState(true);
+  const [error, setError] = useState(null);
+
+
+  useEffect(() => {
+    const cargarForos = async () => {
+      try {
+        const data = await foroService.obtenerTodos();
+        
+        const forosOrdenados = data
+          .filter((foro) => foro.fecha_creacion)
+          .sort(
+            (a, b) =>
+              new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
+          );
+
+        setForos(forosOrdenados);
+
+      }catch (error) {
+        setError("Error al cargar los foros:", error);
+      }finally{
+        setCarga(false);
+      }
+    };
+
+    cargarForos();
+  }, [])
 
   const foroBuscador = foros.filter((foro) => 
-    foro.pregunta.toLowerCase().includes(busqueda.toLowerCase())
+    (foro.pregunta || "").toLowerCase().includes(busqueda.toLowerCase())
   )
 
   return (
@@ -57,12 +62,15 @@ export default function Home() {
           </button>
         </div>
 
+        {carga && <p className="text-gray-400">Cargando foros...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+
         {foroBuscador.length > 0 ? (
           foroBuscador.map((foro) => (
             <ForoTarjeta key={foro.id} foro={foro} />
           ))
         ) : (
-          <p className="text-gray-400">No se encontraron foros con ese título.</p>
+          <p className="text-gray-400">No se encontraron foros.</p>
         )}
       </main>
 
