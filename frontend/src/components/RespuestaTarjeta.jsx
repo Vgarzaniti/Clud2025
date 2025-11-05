@@ -4,7 +4,15 @@ import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
 export default function RespuestaTarjeta({ respuesta }) {
     const [puntaje, setPuntaje] = useState(respuesta.puntaje || 0);
     const [voto, setVoto] = useState(null);
+    const [expandido, setExpandido] = useState(false);
+    const limite = 300;
 
+    const textoCorto =
+    respuesta.respuesta.length > limite
+      ? respuesta.respuesta.slice(0, limite) + "..."
+      : respuesta.respuesta;
+
+    
     const handleUpvote = () => {
         if (voto === "up") {
             setPuntaje(puntaje - 1);
@@ -27,10 +35,23 @@ export default function RespuestaTarjeta({ respuesta }) {
 
     return (
     <div className="bg-panel p-5 rounded-2xl border border-gray-700 shadow-md">
-      <p className="text-gray-200">{respuesta.respuesta}</p>
+      
+      <p className="text-gray-200 whitespace-pre-line">
+        {expandido ? respuesta.respuesta : textoCorto}
+      </p>
+
+      {/* Botón Mostrar más / menos */}
+      {respuesta.respuesta.length > limite && (
+        <button
+          onClick={() => setExpandido(!expandido)}
+          className="mt-1 text-gray-500 hover:underline text-sm"
+        >
+          {expandido ? "Mostrar menos" : "Mostrar más"}
+        </button>
+      )}
 
       {respuesta.archivos && (
-        <div className="mt-3 space-y-2">
+        <div className="mt-2 space-y-2">
           {Array.isArray(respuesta.archivos)
             ? respuesta.archivos.map((archivo, i) => {
                 const isFileObject = archivo instanceof File;

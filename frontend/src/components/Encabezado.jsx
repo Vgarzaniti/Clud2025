@@ -6,7 +6,7 @@ export default function Encabezado() {
     return (
          <nav className="bg-panel text-white border-b border-gray-700">
             <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-                <Link to="/" className="text-xl font-semibold">
+                <Link to="/home" className="text-xl font-semibold">
                     Foro Institucional UTN
                 </Link>
                 
