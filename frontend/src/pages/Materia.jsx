@@ -62,7 +62,7 @@ export default function Materia() {
             <div className="space-y-4 mt-5"> 
                 {foroBuscador.length > 0 ? (
                     foroBuscador.map((foro) => (
-                        <ForoTarjeta key={foro.id} foro={foro} />
+                        <ForoTarjeta key={foro.idForo} foro={foro} />
                     ))
                 ) : (
                     <p className="text-gray-400">No se encontraron foros con ese título.</p>

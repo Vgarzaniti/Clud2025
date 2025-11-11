@@ -161,7 +161,7 @@ export default function Perfil() {
                             className="space-y-4"
                         >
                             {foros.map((foro) => (
-                                <div key={foro.id} className="relative">
+                                <div key={foro.idForo} className="relative">
                                     <ForoTarjeta foro={foro} />
                                     <button
                                         onClick={() => {

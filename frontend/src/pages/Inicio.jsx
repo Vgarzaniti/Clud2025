@@ -46,7 +46,7 @@ export default function Inicio() {
                     </h2>
                         <ul className="space-y-3">
                             {forosPopulares.map((foro) => (
-                            <li key={foro.id} className="flex items-center gap-3">
+                            <li key={foro.idForo} className="flex items-center gap-3">
                                 <div>
                                     <p className="font-semibold">{foro.nombre}</p>
                                     <p className="text-sm text-gray-400">

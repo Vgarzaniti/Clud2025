@@ -29,32 +29,28 @@ export default function CarreraTarjeta({ carrera }) {
 
     return (
         <section className="mb-10">
-        <h2 className="text-xl mt-5 font-bold mb-4 text-white">
-            {carrera.nombre}
-        </h2>
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl mt-5 font-bold text-white">
+                    {carrera.nombre}
+                </h2>
 
-        <div className="flex flex-wrap gap-2 mb-4">
-            {[1, 2, 3, 4, 5].map((ano) => (
-            <button
-                key={ano}
-                onClick={() => setFiltroAno(filtroAno === ano ? null : ano)}
-                className={`px-4 py-1 rounded-full border transition ${
-                filtroAno === ano
-                    ? "bg-azulUTN text-white border-azulUTN"
-                    : "bg-fondo border-gray-600 hover:bg-gray-800"
-                }`}
-            >
-                {ano}° Año
-            </button>
-            ))}
-
-            <button
-                onClick={() => setFiltroAno(null)}
-                className="px-4 py-1 rounded-full border border-gray-600 hover:bg-gray-800 transition"
-            >
-                Ver todas
-            </button>
-        </div>
+                {/* Selector de año */}
+                <select
+                    value={filtroAno}
+                    onChange={(e) => {
+                        const valor = e.target.value;
+                        setFiltroAno(valor === "" ? null : parseInt(valor));
+                    }}
+                    className="bg-fondo border border-gray-600 text-white px-3 py-1 rounded-xl text-sm hover:bg-gray-800 transition"
+                >
+                    <option value="">Ver todas</option>
+                    {[1, 2, 3, 4, 5].map((ano) => (
+                        <option key={ano} value={ano}>
+                            {ano}° Año
+                        </option>
+                    ))}
+                </select>
+            </div>
 
         {/* Materias */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-3">

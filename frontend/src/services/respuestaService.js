@@ -3,13 +3,13 @@ import api from "./api";
 export const respuestaService = {
     
     obtenerPorForo: async (foroId) => {
-        const response = await api.get(`/respuestas?foroId=${foroId}`);
-        return response.data;
+        const res = await api.get(`/respuestas/?foro=${foroId}`);
+        return res.data;
     },
 
     crear: async (datos) => {
-        const response = await api.post("/respuestas", datos);
-        return response.data;
+        const res = await api.post("/respuestas/", datos);
+        return res.data;
     },
 
     editar: async (id, datos) => {
