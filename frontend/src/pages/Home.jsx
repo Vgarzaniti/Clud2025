@@ -1,72 +1,136 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import BarraLado from "../components/BarraLado.jsx";
 import ForoTarjeta from "../components/ForoTarjeta.jsx";
 import CrearForo from "../components/CrearForo.jsx";
 import Modal from "../components/Modal.jsx";
+import { foroService } from "../services/foroService.js";
+import { carreraService } from "../services/carreraService.js";
+import { materiaService } from "../services/materiaService.js";
 import "../input.css";
 
 export default function Home() {
   const [mostrarForo, setMostrarForo] = useState(false);
   const [busqueda, setBusqueda] = useState("");
-  
-  const foros = [
-    {
-      id: 1,
-      pregunta: "Pregunta de Foro",
-      autor: "Juan Pérez",
-      materia: "Matemáticas 2",
-      respuestas: 5,
-    },
-    {
-      id: 2,
-      pregunta: "Pregunta de Foro",
-      autor: "Ana Gómez",
-      materia: "Física 1",
-      respuestas: 3,
-    },
-    {
-      id: 3,
-      pregunta: "Pregunta de Foro",
-      autor: "Carlos Ruiz",
-      materia: "Programación Web",
-      respuestas: 8,
-    },
-  ];
+  const [foros, setForos] = useState([]);
+  const [carreras, setCarreras] = useState([]);
+  const [materias, setMaterias] = useState([]);
+  const [carga, setCarga] = useState(true);
+  const [error, setError] = useState(null);
 
-  const foroBuscador = foros.filter((foro) => 
-    foro.pregunta.toLowerCase().includes(busqueda.toLowerCase())
-  )
+  const [filtroCarrera, setFiltroCarrera] = useState("");
+  const [filtroMateria, setFiltroMateria] = useState("");
+
+
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        const [dataForos, dataCarreras, dataMaterias] = await Promise.all([
+          foroService.obtenerTodos(),
+          carreraService.obtenerTodos(),
+          materiaService.obtenerTodos(),
+        ]);
+
+        const forosOrdenados = dataForos
+          .filter((foro) => foro.fecha_creacion)
+          .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
+
+        setForos(forosOrdenados);
+        setCarreras(dataCarreras);
+        setMaterias(dataMaterias);
+      } catch (error) {
+        console.error("❌ Error al cargar datos:", error);
+        setError("Error al cargar datos del servidor.");
+      } finally {
+        setCarga(false);
+      }
+    };
+
+    cargarDatos();
+  }, []);
+
+  const forosEnriquecidos = useMemo(() => {
+    if (!foros.length || !materias.length) return [];
+
+    return foros.map((foro) => {
+      const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
+      return {
+        ...foro,
+        materiaInfo, // 🔹 agrega toda la información de materia (nombre, carrera, año)
+        carreraId: materiaInfo?.carrera,
+        carreraNombre: materiaInfo?.carrera_nombre,
+      };
+    });
+  }, [foros, materias]);
+
+
+  const materiasFiltradas = useMemo(() => {
+    if (!filtroCarrera) return materias;
+    return materias.filter((m) => m.carrera === parseInt(filtroCarrera));
+  }, [materias, filtroCarrera]);
+
+
+  const forosFiltrados = useMemo(() => {
+    return forosEnriquecidos.filter((foro) => {
+      const coincideBusqueda = foro.pregunta
+        ?.toLowerCase()
+        .includes(busqueda.toLowerCase());
+
+      const coincideCarrera =
+        !filtroCarrera ||
+        foro.carreraId === parseInt(filtroCarrera);
+
+      const coincideMateria =
+        !filtroMateria ||
+        foro.materiaInfo?.idMateria === parseInt(filtroMateria);
+
+      return coincideBusqueda && coincideCarrera && coincideMateria;
+    });
+  }, [forosEnriquecidos, busqueda, filtroCarrera, filtroMateria]);
+
 
   return (
     <div className="max-w-7xl mx-auto mt-10 px-6 flex gap-6">
-      <BarraLado />
+      <BarraLado
+        carreras={carreras}
+        materias={materiasFiltradas}
+        foros={forosEnriquecidos}
+        filtroCarrera={filtroCarrera}
+        filtroMateria={filtroMateria}
+        onFiltroCarreraChange={setFiltroCarrera}
+        onFiltroMateriaChange={setFiltroMateria}
+      />
+
       <main className="flex-1 space-y-4">
         <div className="flex gap-2 mb-4">
           <input
             type="text"
-            placeholder="Buscar Foro"
+            placeholder="Buscar Foro..."
             value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)} 
+            onChange={(e) => setBusqueda(e.target.value)}
             className="bg-panel border border-gray-700 text-white placeholder-gray-400 px-4 py-2 rounded-lg flex-1"
           />
-          <button 
-            onClick={()=> setMostrarForo(true)}
+          <button
+            onClick={() => setMostrarForo(true)}
             className="bg-azulUTN text-white px-4 py-2 rounded-lg hover:bg-blue-600"
           >
             Publicar
           </button>
         </div>
 
-        {foroBuscador.length > 0 ? (
-          foroBuscador.map((foro) => (
-            <ForoTarjeta key={foro.id} foro={foro} />
-          ))
-        ) : (
-          <p className="text-gray-400">No se encontraron foros con ese título.</p>
-        )}
+        {carga && <p className="text-gray-400">Cargando foros...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+
+        <div className="space-y-4">
+          {forosFiltrados.length > 0 ? (
+            forosFiltrados.map((foro) => (
+              <ForoTarjeta key={foro.idForo} foro={foro} />
+            ))
+          ) : (
+            <p className="text-gray-400">No se encontraron foros.</p>
+          )}
+        </div>
       </main>
 
-      {/*Mostar Modal para Foro*/}
       <Modal visible={mostrarForo} onClose={() => setMostrarForo(false)}>
         <CrearForo onClose={() => setMostrarForo(false)} />
       </Modal>

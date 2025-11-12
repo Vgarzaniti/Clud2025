@@ -1,21 +1,18 @@
 import { useState } from "react";
 import { useRef, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
+import { respuestaService } from "../services/respuestaService";
 
-export default function CrearRespuesta({ onClose }) {
+export default function CrearRespuesta({ foroId, usuarioId, materiaId, onClose, onSave }) {
   
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
+  const [formData, setFormData] = useState({ respuesta: "" });
+  const textareaRef = useRef(null);
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
-
-  const textareaRef = useRef(null);
-  
-  const [formData, setFormData] = useState({
-    respuesta: "",
-  });
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -25,7 +22,7 @@ export default function CrearRespuesta({ onClose }) {
     }
   }, [formData.respuesta]);
 
-  const hadleArchivoChange = (e) => {
+  const handleArchivoChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
     let totalSize = archivos.reduce((acc, file) => acc + file.size, 0);
     let errores = [];
@@ -51,34 +48,45 @@ export default function CrearRespuesta({ onClose }) {
   };
 
   const handleEliminarArchivo = (index) => {
-    const nuevos = archivos.filter((_, i) => i !== index);
-    setArchivos(nuevos);
-  }
+    setArchivos((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-
     if (!formData.respuesta.trim()) nuevosErrores.respuesta = "La respuesta no puede estar vacía.";
-
     setErroresCampos(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
-  }
+  };
 
   
-  const handleSubmit = (e) => {
-   e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     if (error) {
       alert("Corrige los errores antes de publicar.");
       return;
     }
 
-    if (!validarFormulario()) {
-      return;
-    }
+    if (!validarFormulario()) return;
 
-    console.log("Archivos válidos:", archivos);
-    alert("Respuesta publicada correctamente.");
-    onClose();
+    try {
+      const nuevaRespuesta = {
+        usuario: usuarioId,
+        foro: foroId,
+        materia: materiaId,
+        respuesta: formData.respuesta,
+        archivos, 
+      };
+
+      const respuestaGuardada = await respuestaService.crear(nuevaRespuesta);
+
+      onSave(respuestaGuardada);
+      alert("✅ Respuesta publicada correctamente.");
+      onClose();
+    } catch (err) {
+      console.error("❌ Error al crear la respuesta:", err);
+      alert("Ocurrió un error al publicar la respuesta.");
+    }
   };
 
   return (
@@ -90,12 +98,10 @@ export default function CrearRespuesta({ onClose }) {
         <textarea
           ref={textareaRef}
           value={formData.respuesta}
-          onChange={(e) => {
-            const limiteCaracteres = e.target.value;
-            if (limiteCaracteres.length <= 3000){
-              setFormData({ ...formData, respuesta: e.target.value })
-            }
-          }}
+          onChange={(e) =>
+            e.target.value.length <= 3000 &&
+            setFormData({ ...formData, respuesta: e.target.value })
+          }
           maxLength={3000}
           className={`w-full p-2 rounded-xl bg-fondo border ${
             erroresCampos.respuesta ? "border-red-500" : "border-gray-600"
@@ -105,14 +111,18 @@ export default function CrearRespuesta({ onClose }) {
         {erroresCampos.respuesta && (
           <p className="text-red-500 text-sm mt-1">{erroresCampos.respuesta}</p>
         )}
-        <p className={`text-right mr-1 ${formData.respuesta.length >= 3000 ? "text-red-500" : "text-gray-400"}`}>
+        <p
+          className={`text-right mr-1 ${
+            formData.respuesta.length >= 3000 ? "text-red-500" : "text-gray-400"
+          }`}
+        >
           {formData.respuesta.length} / 3000
         </p>
       </div>
 
+      {/* Archivos */}
       <div className="w-full">
         <label className="block text-m mb-2">Archivos adjuntos</label>
-
         <label
           htmlFor="file-upload"
           className="flex flex-col items-center justify-center w-full p-2 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800 hover:bg-gray-700 transition"
@@ -127,14 +137,12 @@ export default function CrearRespuesta({ onClose }) {
             id="file-upload"
             type="file"
             multiple
-            onChange={hadleArchivoChange}
+            onChange={handleArchivoChange}
             className="hidden"
           />
         </label>
 
-        {error && (
-          <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>
-        )}
+        {error && <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>}
 
         {archivos.length > 0 && (
           <ul className="text-sm text-gray-300 mt-3 max-h-[65px] overflow-y-auto">
