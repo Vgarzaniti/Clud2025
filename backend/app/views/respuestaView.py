@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db.models import Avg, Count
-from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle, Foro, Puntaje
+from ..models import Respuesta, RespuestaArchivo, Foro, Puntaje
 from ..serializers.respuesta_serializer import RespuestaSerializer, PuntajeRespuestaSerializer
 from rest_framework.views import APIView
 
@@ -13,7 +13,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         archivos = request.FILES.getlist('archivos')
-        respuesta_texto = data.get('respuesta_texto')
 
         # 🔹 Recuperar el foro
         foro_id = data.get('foro')
@@ -32,25 +31,18 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             respuesta = serializer.save()
 
-            # 🔹 Crear detalle de texto
-            if respuesta_texto:
-                RespuestaDetalle.objects.create(
-                    respuesta=respuesta,
-                    respuesta_texto=respuesta_texto
-                )
-
-            # 🔹 Guardar archivos asociados
+            # 🔹 Guardar archivos subidos manualmente (si los hay)
             for archivo in archivos:
                 RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
 
-            # 🔹 Refrescar relaciones para incluir archivos y detalles en la respuesta
+            # 🔹 Refrescar relaciones (archivos y detalles)
             respuesta = Respuesta.objects.prefetch_related('archivos', 'detalles').get(pk=respuesta.pk)
-
 
             return Response(RespuestaSerializer(respuesta).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class RespuestaPuntajeView(APIView):
     """
     Vista para registrar o actualizar el puntaje de una respuesta
@@ -101,7 +93,6 @@ class RespuestaPuntajeView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Calcular promedio y cantidad
         stats = respuesta.puntajes.aggregate(
             promedio=Avg('valor'),
             total=Count('id')
