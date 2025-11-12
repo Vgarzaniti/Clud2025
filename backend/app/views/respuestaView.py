@@ -44,7 +44,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
 
             # 🔹 Refrescar relaciones para incluir archivos y detalles en la respuesta
-            respuesta.refresh_from_db()
+            respuesta = Respuesta.objects.prefetch_related('archivos', 'detalles').get(pk=respuesta.pk)
+
 
             return Response(RespuestaSerializer(respuesta).data, status=status.HTTP_201_CREATED)
 
