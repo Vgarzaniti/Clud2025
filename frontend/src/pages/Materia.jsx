@@ -1,9 +1,10 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo} from "react";
 import ForoTarjeta from "../components/ForoTarjeta.jsx";
 import CrearForo from "../components/CrearForo.jsx";
 import Modal from "../components/Modal.jsx";
 import { foroService } from "../services/foroService.js";
+import { materiaService } from "../services/materiaService.js";
 import "../input.css";
 
 export default function Materia() {
@@ -14,38 +15,55 @@ export default function Materia() {
     const [error, setError] = useState(null);
     const [busqueda, setBusqueda] = useState("");
 
-
     const formatoNombre = (texto) => {
         return texto
             .replace(/-/g, " ")
             .replace(/\b\w/g, (c) => c.toUpperCase());
     }
 
-
     useEffect(() => {
-        const cargarForos = async () => {
-        try {
-            const data = await foroService.obtenerTodos();
-            
-            const forosOrdenados = data
-            .filter((foro) => foro.fecha_creacion)
-            .sort(
-                (a, b) =>
-                new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
-            );
+        const cargarDatos = async () => {
+            try {
+                const [dataForos] = await Promise.all([
+                foroService.obtenerTodos(),
+                materiaService.obtenerTodos(),
+                ]);
 
-            setForos(forosOrdenados);
+                const forosOrdenados = dataForos
+                .filter((foro) => foro.fecha_creacion)
+                .sort(
+                    (a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
+                );
 
-        }catch (error) {
-            console.error("Error al cargar los foros:", error);
-            setError("Ocurrió un error al cargar los foros.");
-        }finally{
-            setCarga(false);
-        }
+                setForos(forosOrdenados);
+            } catch (error) {
+                console.error("Error al cargar datos:", error);
+                setError("Ocurrió un error al cargar los foros o materias.");
+            } finally {
+                setCarga(false);
+            }
         };
+        cargarDatos();
+    }, []);
 
-        cargarForos();
-    }, [])
+    const forosPorMateria = useMemo(() => {
+        const nombreMateriaURL = formatoNombre(nombre);
+        return foros.filter((foro) => {
+            const materiaNombre =
+                typeof foro.materia === "string"
+                ? foro.materia
+                : foro.materia?.nombre || foro.materia_nombre || "";
+
+            const materiaNormalizada = formatoNombre(materiaNombre);
+            return materiaNormalizada === nombreMateriaURL;
+        });
+    }, [foros, nombre]);
+
+    const forosFiltrados = useMemo(() => {
+        return forosPorMateria.filter((foro) =>
+            foro.pregunta?.toLowerCase().includes(busqueda.toLowerCase())
+        );
+    }, [forosPorMateria, busqueda]);
 
     if (carga) {
         return (
@@ -55,27 +73,11 @@ export default function Materia() {
         );
     }
 
-    const foroMateria = foros.filter((foro) => {
-
-  const nombreMateria =
-        typeof foro.materia === "string"
-        ? foro.materia
-        : foro.materia?.nombre || foro.materia_nombre || "";
-
-        return nombreMateria.toLowerCase() === formatoNombre(nombre).toLowerCase();
-    });
-
-
-    const foroBuscador = foros.filter((foro) => 
-        foro.pregunta?.toLowerCase().includes(busqueda.toLowerCase())
-    )
-
     return (
         <div className="max-w-7xl mx-auto mt-10 px-6 text-texto">
             
-
             <h1 className="text-3xl font-semibold mb-6 text-azulUTN">
-                Foros de {formatoNombre(nombre)}
+                Foros de {formatoNombre(nombre).replace(/\b\w/g, (c) => c.toUpperCase())}
             </h1>
 
             <hr className="w-3/4 mx-auto border-t-2 border-gray-700" />
@@ -98,8 +100,8 @@ export default function Materia() {
             {error && <p className="text-red-500 mt-3">{error}</p>}
 
             <div className="space-y-4 mt-5"> 
-                {foroBuscador.length > 0 ? (
-                    foroBuscador.map((foro) => (
+                {forosFiltrados.length > 0 ? (
+                    forosFiltrados.map((foro) => (
                         <ForoTarjeta key={foro.idForo} foro={foro} />
                     ))
                 ) : (
@@ -111,8 +113,6 @@ export default function Materia() {
             <Modal visible={mostrarForo} onClose={() => setMostrarForo(false)}>
                 <CrearForo 
                     onClose={() => setMostrarForo(false)} 
-                    defaultCarrera="Sistemas"
-                    defaultMateria={formatoNombre(nombre)}
                 />
             </Modal>
         </div>

@@ -20,6 +20,7 @@ export default function CrearForo({ onClose }) {
     carrera: "",
     materia: "",
     pregunta: "",
+    archivos: "",
   });
 
   useEffect(() => {

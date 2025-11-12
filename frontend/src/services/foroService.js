@@ -66,11 +66,21 @@ export const foroService = {
 
   buscar: async (query) => {
     try {
-      const res = await api.get(`/foros/?search=${encodeURIComponent(query)}&format=json`);
+      const res = await api.get(`/foros/?pregunta=${encodeURIComponent(query)}&format=json`);
       return normalizarRespuesta(res.data);
     } catch (error) {
       console.error("❌ Error al buscar foros:", error);
       throw error;
     }
   },
+
+  buscarUsuario: async (usuarioId) => {
+    try {
+      const res = await api.get(`/foros/?usuario=${usuarioId}`);
+      return normalizarRespuesta(res.data);
+    } catch (error) {
+      console.error("❌ Error al buscar foros por UsuarioId:", error);
+      throw error;
+    }
+  }
 };

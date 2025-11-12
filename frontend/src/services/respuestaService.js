@@ -21,4 +21,14 @@ export const respuestaService = {
         const response = await api.delete(`/respuestas/${id}`);
         return response.data;
     },
+
+    buscarUsuario: async (usuarioId) => {
+        try {
+            const res = await api.get(`/respuestas/?usuario=${usuarioId}`);
+            return res.data
+        } catch (error) {
+            console.error("❌ Error al buscar respuestas por UsuarioId:", error);
+            throw error;
+        }
+    }
 };
