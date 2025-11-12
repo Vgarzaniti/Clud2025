@@ -147,12 +147,12 @@ export default function Perfil() {
         if (elementoAEliminar.tipo === "foro") {
             await foroService.eliminar(elementoAEliminar.idForo);
             setForos((prev) =>
-            prev.filter((f) => f.idForo !== elementoAEliminar.idForo)
+              prev.filter((f) => f.idForo !== elementoAEliminar.idForo)
             );
         } else if (elementoAEliminar.tipo === "respuesta") {
             await respuestaService.eliminar(elementoAEliminar.idRespuesta);
             setRespuestas((prev) =>
-            prev.filter((r) => r.idRespuesta !== elementoAEliminar.idRespuesta)
+              prev.filter((r) => r.idRespuesta !== elementoAEliminar.idRespuesta)
             );
         }
     } catch (error) {
