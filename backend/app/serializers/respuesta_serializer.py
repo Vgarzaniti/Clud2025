@@ -20,17 +20,10 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
         return obj.archivo.url if obj.archivo else None
 
 
-# 🔹 Serializador para los detalles de texto
-class RespuestaDetalleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RespuestaDetalle
-        fields = ['idRespuestaDetalle', 'respuesta_texto']
-
 
 # 🔹 Serializador principal de la Respuesta (permite crear detalles y archivos)
 class RespuestaSerializer(serializers.ModelSerializer):
     archivos = RespuestaArchivoSerializer(many=True, required=False)
-    detalles = RespuestaDetalleSerializer(many=True, required=False)
     puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
 
     class Meta:
@@ -41,9 +34,9 @@ class RespuestaSerializer(serializers.ModelSerializer):
             'foro',
             'materia',
             'fecha_creacion',
+            'respuesta_texto',
             'fecha_actualizacion',
             'archivos',
-            'detalles',
             'puntajes'
         ]
 
