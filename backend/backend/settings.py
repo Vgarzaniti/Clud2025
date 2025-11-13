@@ -82,10 +82,17 @@ cloudinary.config(
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,              # 🔁 refresca automáticamente
     "BLACKLIST_AFTER_ROTATION": True,
-    "USER_ID_FIELD": "idUsuario",   # ✅ campo real de tu modelo
-    "USER_ID_CLAIM": "user_id",     # ✅ claim del token
+    "USER_ID_FIELD": "idUsuario",
+    "USER_ID_CLAIM": "user_id",
+
+    # ⚙️ Estas son las claves necesarias para usar cookies JWT
+    "AUTH_COOKIE": "access_token",              # Nombre de la cookie del access
+    "AUTH_COOKIE_REFRESH": "refresh_token",     # Nombre de la cookie del refresh
+    "AUTH_COOKIE_SECURE": True,                 # ⚠️ True en Render (usa HTTPS)
+    "AUTH_COOKIE_HTTP_ONLY": True,              # Protege de JS
+    "AUTH_COOKIE_SAMESITE": "None",             # Necesario si frontend está aparte
 }
 
 MIDDLEWARE = [
