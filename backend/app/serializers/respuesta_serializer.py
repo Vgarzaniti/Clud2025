@@ -39,19 +39,3 @@ class RespuestaSerializer(serializers.ModelSerializer):
             'archivos',
             'puntajes'
         ]
-
-    def create(self, validated_data):
-        detalles_data = validated_data.pop('detalles', [])
-        archivos_data = validated_data.pop('archivos', [])
-
-        respuesta = Respuesta.objects.create(**validated_data)
-
-        # Crear detalles
-        for detalle_data in detalles_data:
-            RespuestaDetalle.objects.create(respuesta=respuesta, **detalle_data)
-
-        # Crear archivos
-        for archivo_data in archivos_data:
-            RespuestaArchivo.objects.create(respuesta=respuesta, **archivo_data)
-
-        return respuesta
