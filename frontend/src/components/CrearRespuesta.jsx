@@ -60,34 +60,36 @@ export default function CrearRespuesta({ foroId, usuarioId, materiaId, onClose, 
 
   
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (error) {
-      alert("Corrige los errores antes de publicar.");
-      return;
-    }
+  if (error) {
+    alert("Corrige los errores antes de publicar.");
+    return;
+  }
 
-    if (!validarFormulario()) return;
+  if (!validarFormulario()) return;
 
-    try {
-      const nuevaRespuesta = {
-        usuario: usuarioId,
-        foro: foroId,
-        materia: materiaId,
-        respuesta: formData.respuesta,
-        archivos, 
-      };
+  try {
+    const formDataAPI = new FormData();
+    formDataAPI.append("usuario", usuarioId);
+    formDataAPI.append("foro", foroId);
+    formDataAPI.append("materia", materiaId);
+    formDataAPI.append("respuesta_texto", formData.respuesta);
 
-      const respuestaGuardada = await respuestaService.crear(nuevaRespuesta);
+    // Adjuntar todos los archivos seleccionados
+    archivos.forEach((file) => formDataAPI.append("archivos", file));
 
-      onSave(respuestaGuardada);
-      alert("✅ Respuesta publicada correctamente.");
-      onClose();
-    } catch (err) {
-      console.error("❌ Error al crear la respuesta:", err);
-      alert("Ocurrió un error al publicar la respuesta.");
-    }
-  };
+    // Llamar al servicio
+    const respuestaGuardada = await respuestaService.crear(formDataAPI);
+
+    onSave(respuestaGuardada);
+    alert("✅ Respuesta publicada correctamente.");
+    onClose();
+  } catch (err) {
+    console.error("❌ Error al crear la respuesta:", err);
+    alert("Ocurrió un error al publicar la respuesta.");
+  }
+};
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">

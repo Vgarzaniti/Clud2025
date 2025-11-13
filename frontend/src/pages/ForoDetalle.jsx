@@ -117,7 +117,7 @@ export default function ForoDetalle() {
           >
             {respuestasOrdenadas.length > 0 ? (
               respuestasOrdenadas.map((res) => (
-                <RespuestaTarjeta key={res.id} respuesta={res} />
+                <RespuestaTarjeta key={res.idRespuesta} respuesta={res} />
               ))
             ) : (
               <p className="text-gray-400 italic">No hay respuestas todavía.</p>

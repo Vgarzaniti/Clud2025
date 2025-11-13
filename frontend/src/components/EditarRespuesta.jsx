@@ -6,15 +6,13 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   const [archivos, setArchivos] = useState(
     Array.isArray(respuestaActual.archivos)
       ? respuestaActual.archivos
-      : respuestaActual.archivos
-      ? [respuestaActual.archivos]
       : []
   );
 
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
   const [formData, setFormData] = useState({
-    respuesta: respuestaActual.contenido || respuestaActual.respuesta || "",
+    respuesta: respuestaActual.respuesta_texto || "",
   });
 
   const textareaRef = useRef(null);
@@ -76,13 +74,21 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
     if (!validarFormulario()) return;
 
     try {
-      const respuestaEditada = {
-        ...respuestaActual,
-        contenido: formData.respuesta.trim(),
-        archivos,
-      };
+      const formDataAPI = new FormData();
+      formDataAPI.append("respuesta_texto", formData.respuesta.trim());
+      formDataAPI.append("usuario", respuestaActual.usuario);
+      formDataAPI.append("foro", respuestaActual.foro);
+      formDataAPI.append("materia", respuestaActual.materia);
 
-      await respuestaService.editar(respuestaEditada.idRespuesta, respuestaEditada);
+      // Adjuntar solo los archivos nuevos (File)
+      archivos.forEach((file) => {
+        if (file instanceof File) formDataAPI.append("archivos", file);
+      });
+
+      const respuestaEditada = await respuestaService.editar(
+        respuestaActual.idRespuesta,
+        formDataAPI
+      );
 
       alert("✅ Respuesta actualizada correctamente.");
       onSave(respuestaEditada);
@@ -111,7 +117,7 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
           className={`w-full p-2 rounded-xl bg-fondo border ${
             erroresCampos.respuesta ? "border-red-500" : "border-gray-600"
           } focus:outline-none overflow-y-auto min-h-[100px] max-h-[250px]`}
-          placeholder="Escribí tu respuesta..."
+          placeholder="Editá tu respuesta..."
         />
         {erroresCampos.respuesta && (
           <p className="text-red-500 text-sm mt-1">{erroresCampos.respuesta}</p>
@@ -149,11 +155,15 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
 
         {error && <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>}
 
-        {Array.isArray(archivos) && archivos.length > 0 && (
+        {archivos.length > 0 && (
           <ul className="text-sm text-gray-300 mt-3 max-h-[65px] overflow-y-auto">
             {archivos.map((a, i) => {
               const isFile = a instanceof File;
-              const nombreArchivo = isFile ? a.name : a.split("/").pop();
+              const nombreArchivo = isFile
+                ? a.name
+                : a.archivo_url
+                ? a.archivo_url.split("/").pop()
+                : "Archivo";
               const tamaño = isFile
                 ? `${(a.size / 1024 / 1024).toFixed(2)} MB`
                 : "Archivo existente";
