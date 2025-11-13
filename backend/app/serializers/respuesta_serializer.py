@@ -1,10 +1,12 @@
 from rest_framework import serializers
-from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle, Puntaje
+from ..models import Respuesta, RespuestaArchivo, Puntaje
+
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Puntaje
         fields = ['id', 'usuario', 'respuesta', 'valor']
+
 
 # 🔹 Serializador para los archivos
 class RespuestaArchivoSerializer(serializers.ModelSerializer):
@@ -18,18 +20,12 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
         return obj.archivo.url if obj.archivo else None
 
 
-# 🔹 Serializador para los detalles de texto
-class RespuestaDetalleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = RespuestaDetalle
-        fields = ['idRespuestaDetalle', 'respuesta_texto']
 
-
-# 🔹 Serializador principal de la Respuesta
+# 🔹 Serializador principal de la Respuesta (permite crear detalles y archivos)
 class RespuestaSerializer(serializers.ModelSerializer):
     archivos = RespuestaArchivoSerializer(many=True, read_only=True)
-    detalles = RespuestaDetalleSerializer(many=True, read_only=True)
-    puntaje = PuntajeRespuestaSerializer(many=True, read_only=True)
+    puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
+
     class Meta:
         model = Respuesta
         fields = [
@@ -37,9 +33,9 @@ class RespuestaSerializer(serializers.ModelSerializer):
             'usuario',
             'foro',
             'materia',
-            'puntaje',
             'fecha_creacion',
+            'respuesta_texto',
             'fecha_actualizacion',
             'archivos',
-            'detalles'
+            'puntajes'
         ]

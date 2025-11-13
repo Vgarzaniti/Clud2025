@@ -1,38 +1,93 @@
-from rest_framework import generics, permissions,status
-from ..serializers.usuario_serializer import UsuarioSerializer, CambiarPasswordSerializer
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from django.contrib.auth.hashers import check_password, make_password
+from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth.hashers import make_password
 from ..models import Usuario
+from ..serializers.usuario_serializer import (
+    UsuarioSerializer,
+    LoginSerializer,
+    CambiarDatosSerializer
+)
 
-class UsuarioView(generics.CreateAPIView):
-    """
-    Endpoint único para registro o login con email.
-    Devuelve el JWT (access y refresh) directamente.
-    """
-    queryset = Usuario.objects.all()
-    serializer_class = UsuarioSerializer
+# ------------------------
+# 🔹 Registro / Login con JWT en cookies
+# ------------------------
+class UsuarioView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
-class CambiarPasswordView(generics.UpdateAPIView):
-    serializer_class = CambiarPasswordSerializer
-    permission_classes = [permissions.IsAuthenticated]   # 🔐 Requiere token
-    authentication_classes = [JWTAuthentication]          # ✅ Usa SimpleJWT
+    def post(self, request, *args, **kwargs):
+        # Detectar si es login o registro
+        if 'login' in request.data:
+            serializer = LoginSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            usuario = serializer.validated_data
+        else:
+            serializer = UsuarioSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            usuario = serializer.save()
+
+        # Generar tokens JWT personalizados
+        refresh = RefreshToken.for_user(usuario)
+        refresh['idUsuario'] = usuario.idUsuario
+        refresh['email'] = usuario.email
+        refresh['username'] = usuario.username
+
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        # Crear respuesta
+        response = Response({
+            "mensaje": "Login/Registro exitoso",
+            "access": access_token,
+            "refresh": refresh_token,
+            "usuario": {
+                "idUsuario": usuario.idUsuario,
+                "nombreYapellido": usuario.nombreYapellido,
+                "email": usuario.email,
+                "username": usuario.username
+            }
+        }, status=status.HTTP_200_OK)
+
+        # Guardar tokens en cookies seguras
+        response.set_cookie(
+            key='access_token',
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite='None'
+        )
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite='None'
+        )
+
+        return response
+
+# ------------------------
+# 🔹 Cambiar contraseña o username
+# ------------------------
+class CambiarDatosView(generics.UpdateAPIView):
+    serializer_class = CambiarDatosSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
     def get_object(self):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
         usuario = self.get_object()
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        if not check_password(data['password_actual'], usuario.password):
-            return Response({"error": "La contraseña actual es incorrecta."},
-                            status=status.HTTP_400_BAD_REQUEST)
+        if 'password_nueva' in data:
+            usuario.password = make_password(data['password_nueva'])
+        if 'nuevo_username' in data:
+            usuario.username = data['nuevo_username']
 
-        usuario.password = make_password(data['password_nueva'])
         usuario.save()
-        return Response({"mensaje": "Contraseña actualizada correctamente."},
-                        status=status.HTTP_200_OK)
+        return Response({"mensaje": "Datos actualizados correctamente."}, status=status.HTTP_200_OK)

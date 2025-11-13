@@ -29,14 +29,15 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-t+a8ge1)-9o6=b)#8kik8_7l7il!df1n8bx-)i2p#59h166g=-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = ['clud2025.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'clud2025.onrender.com',
+    'localhost',
+    '127.0.0.1',
+]
 
 AUTH_USER_MODEL = 'app.Usuario'
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'app',
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -60,7 +62,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-        
 }
 
 SPECTACULAR_SETTINGS = {
@@ -69,8 +70,6 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
 }
-
-
 
 cloudinary.config(
     cloud_name=config('CLOUD_NAME'),
@@ -82,10 +81,15 @@ cloudinary.config(
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=120),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "USER_ID_FIELD": "idUsuario",   # ✅ campo real de tu modelo
-    "USER_ID_CLAIM": "user_id",     # ✅ claim del token
+    "USER_ID_FIELD": "idUsuario",
+    "USER_ID_CLAIM": "user_id",
+    "AUTH_COOKIE": "access_token",
+    "AUTH_COOKIE_REFRESH": "refresh_token",
+    "AUTH_COOKIE_SECURE": True,       # ✅ True porque Render usa HTTPS
+    "AUTH_COOKIE_HTTP_ONLY": True,    # ✅ No accesible por JS
+    "AUTH_COOKIE_SAMESITE": "None",   # ✅ Necesario para Vercel + Render
 }
 
 MIDDLEWARE = [
@@ -99,9 +103,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# ✅ Configuración CORS definitiva para producción (Vercel + Render)
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # dirección del Vite dev server
+    "https://clud2025.vercel.app",   # 👈 tu frontend en producción
+    "http://localhost:5173",         # 👈 modo desarrollo local
 ]
+
+# ✅ Permitir envío de cookies (necesario para JWT en cookies)
+CORS_ALLOW_CREDENTIALS = True
 
 ROOT_URLCONF = 'backend.urls'
 

@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.db.models import Avg, Count
-from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle, Foro, Puntaje
+from ..models import Respuesta, RespuestaArchivo, Foro, Puntaje
 from ..serializers.respuesta_serializer import RespuestaSerializer, PuntajeRespuestaSerializer
 from rest_framework.views import APIView
 
@@ -41,18 +41,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data, status=201)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 class RespuestaPuntajeView(APIView):
-    """
-    Vista para registrar o actualizar el puntaje de una respuesta
-    y obtener el promedio de puntajes.
-    """
-
     def post(self, request):
-        """
-        Crea o actualiza el puntaje de un usuario para una respuesta.
-        """
         serializer = PuntajeRespuestaSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -61,14 +51,12 @@ class RespuestaPuntajeView(APIView):
         usuario = serializer.validated_data['usuario']
         valor = serializer.validated_data['valor']
 
-        # Validar rango de valor (0 a 5)
         if valor < 0 or valor > 5:
             return Response(
                 {"error": "El valor del puntaje debe estar entre 0 y 5."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Crear o actualizar puntaje
         puntaje, creado = Puntaje.objects.update_or_create(
             respuesta_id=respuesta_id,
             usuario=usuario,
@@ -82,9 +70,6 @@ class RespuestaPuntajeView(APIView):
         )
 
     def get(self, request, respuesta_id):
-        """
-        Devuelve el promedio y cantidad total de puntajes de una respuesta.
-        """
         try:
             respuesta = Respuesta.objects.get(pk=respuesta_id)
         except Respuesta.DoesNotExist:
@@ -93,7 +78,6 @@ class RespuestaPuntajeView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Calcular promedio y cantidad
         stats = respuesta.puntajes.aggregate(
             promedio=Avg('valor'),
             total=Count('id')
