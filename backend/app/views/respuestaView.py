@@ -11,41 +11,41 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     serializer_class = RespuestaSerializer
 
     def create(self, request, *args, **kwargs):
-    data = request.data.copy()
+        data = request.data.copy()
 
-    archivos = request.FILES.getlist("archivos")
-    respuesta_texto = data.get("respuesta_texto")
+        archivos = request.FILES.getlist("archivos")
+        respuesta_texto = data.get("respuesta_texto")
 
-    if not respuesta_texto:
-        return Response({"error": "La respuesta no puede estar vacía."}, status=400)
+        if not respuesta_texto:
+            return Response({"error": "La respuesta no puede estar vacía."}, status=400)
 
-    # Recuperar foro
-    foro_id = data.get("foro")
-    try:
-        foro = Foro.objects.get(pk=foro_id)
-    except Foro.DoesNotExist:
-        return Response({"error": "No existe el foro indicado."}, status=400)
+        # Recuperar foro
+        foro_id = data.get("foro")
+        try:
+            foro = Foro.objects.get(pk=foro_id)
+        except Foro.DoesNotExist:
+            return Response({"error": "No existe el foro indicado."}, status=400)
 
-    # ← ASIGNAR MATERIA AUTOMÁTICAMENTE
-    data["materia"] = foro.materia.idMateria
+        # ← ASIGNAR MATERIA AUTOMÁTICAMENTE
+        data["materia"] = foro.materia.idMateria
 
-    serializer = RespuestaSerializer(data=data)
-    serializer.is_valid(raise_exception=True)
-    respuesta = serializer.save()
+        serializer = RespuestaSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        respuesta = serializer.save()
 
-    # Archivos
-    for archivo in archivos:
-        RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
+        # Archivos
+        for archivo in archivos:
+            RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
 
-    # Detalle
-    if respuesta_texto:
-        RespuestaDetalle.objects.create(
-            respuesta=respuesta,
-            respuesta_texto=respuesta_texto
-        )
+        # Detalle
+        if respuesta_texto:
+            RespuestaDetalle.objects.create(
+                respuesta=respuesta,
+                respuesta_texto=respuesta_texto
+            )
 
-    respuesta.refresh_from_db()
-    return Response(RespuestaSerializer(respuesta).data, status=201)
+        respuesta.refresh_from_db()
+        return Response(RespuestaSerializer(respuesta).data, status=201)
 
 
 class RespuestaPuntajeView(APIView):
