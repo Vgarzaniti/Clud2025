@@ -12,41 +12,34 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-        archivos = request.FILES.getlist('archivos')
-        respuesta_texto = data.get('respuesta_texto')
 
-        # 🔹 Recuperar el foro
-        foro_id = data.get('foro')
+        archivos = request.FILES.getlist("archivos")
+        respuesta_texto = data.get("respuesta_texto")
+
+        if not respuesta_texto:
+            return Response({"error": "La respuesta no puede estar vacía."}, status=400)
+
+        # Recuperar foro
+        foro_id = data.get("foro")
         try:
             foro = Foro.objects.get(pk=foro_id)
         except Foro.DoesNotExist:
-            return Response(
-                {"error": f"No existe foro con id {foro_id}"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": "No existe el foro indicado."}, status=400)
 
-        # 🔹 Asignar la materia del foro automáticamente
-        data['materia'] = foro.materia.idMateria
+        # Asignar materia automáticamente desde el foro
+        data["materia"] = foro.materia.idMateria
 
+        # Crear la respuesta
         serializer = RespuestaSerializer(data=data)
-        if serializer.is_valid():
-            respuesta = serializer.save()
+        serializer.is_valid(raise_exception=True)
+        respuesta = serializer.save()
 
-            # 🔹 Crear detalle de texto
-            if respuesta_texto:
-                RespuestaDetalle.objects.create(
-                    respuesta=respuesta,
-                    respuesta_texto=respuesta_texto
-                )
+        # Guardar archivos adjuntos
+        for archivo in archivos:
+            RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
 
-            # 🔹 Guardar archivos asociados
-            for archivo in archivos:
-                RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
-
-            # 🔹 Refrescar relaciones para incluir archivos y detalles en la respuesta
-            respuesta.refresh_from_db()
-
-            return Response(RespuestaSerializer(respuesta).data, status=status.HTTP_201_CREATED)
+        respuesta.refresh_from_db()
+        return Response(RespuestaSerializer(respuesta).data, status=201)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
