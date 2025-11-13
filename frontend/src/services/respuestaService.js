@@ -14,13 +14,15 @@ export const respuestaService = {
 
   async crear(formData) {
     try {
+      // axios detecta automáticamente FormData y pone el Content-Type correcto
       const { data } = await api.post("/respuestas/", formData);
       return data;
     } catch (error) {
-      console.error("Error en API:", error.response?.data || error);
+      console.error("❌ ERROR en la API:", error.response?.data || error.message);
       throw error;
     }
   },
+
 
   async editar(id, formData) {
     const { data } = await api.put(`/respuestas/${id}/`, formData);

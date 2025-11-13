@@ -77,8 +77,8 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
       formDataAPI.append("materia", materiaId);
       formDataAPI.append("respuesta_texto", formData.respuesta);
 
-      archivos.forEach((archivo, i) => {
-        formDataAPI.append(`archivos[${i}][archivo]`, archivo);
+      archivos.forEach((archivo) => {
+        formDataAPI.append("archivos", archivo);
       });
 
       for (let [key, value] of formDataAPI.entries()) {
