@@ -1,71 +1,89 @@
-from rest_framework import serializers
-from rest_framework.serializers import Serializer, CharField
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth import authenticate
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.contrib.auth.hashers import make_password
 from ..models import Usuario
+from ..serializers.usuario_serializer import (
+    UsuarioSerializer,
+    LoginSerializer,
+    CambiarDatosSerializer
+)
 
+# ------------------------
+# 🔹 Registro / Login con JWT en cookies
+# ------------------------
+class UsuarioView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
 
-class UsuarioSerializer(serializers.ModelSerializer):
-    """
-    Serializer unificado para:
-    - Registro de usuario (si no existe)
-    - Login con email (si ya existe)
-    Retorna los tokens JWT (access y refresh)
-    """
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(write_only=True, min_length=8)
-    token = serializers.SerializerMethodField(read_only=True)
+    def post(self, request, *args, **kwargs):
+        # Detectar si es login o registro
+        if 'login' in request.data:
+            serializer = LoginSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            usuario = serializer.validated_data
+        else:
+            serializer = UsuarioSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            usuario = serializer.save()
 
-    class Meta:
-        model = Usuario
-        fields = ['idUsuario', 'nombreYapellido', 'email', 'password', 'token']
-        read_only_fields = ['idUsuario', 'token']
+        # Generar tokens JWT
+        refresh = RefreshToken.for_user(usuario)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
 
-    def get_token(self, obj):
-        """Genera y devuelve los JWT tokens del usuario."""
-        refresh = RefreshToken.for_user(obj)
-        return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
+        # Crear respuesta
+        response = Response({
+            "mensaje": "Login/Registro exitoso",
+            "access": access_token,
+            "refresh": refresh_token,
+            "usuario": {
+                "idUsuario": usuario.idUsuario,
+                "nombreYapellido": usuario.nombreYapellido,
+                "email": usuario.email,
+                "username": usuario.username
+            }
+        }, status=status.HTTP_200_OK)
 
-    def create(self, validated_data):
-        """
-        Si el usuario no existe → lo registra.
-        Si ya existe → valida credenciales y devuelve tokens.
-        """
-        email = validated_data.get('email')
-        password = validated_data.get('password')
-        nombreYapellido = validated_data.get('nombreYapellido', '')
+        # Guardar tokens en cookies seguras
+        response.set_cookie(
+            key='access_token',
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite='None'
+        )
+        response.set_cookie(
+            key='refresh_token',
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite='None'
+        )
 
-        try:
-            # Si existe el usuario, intentamos autenticar
-            user = Usuario.objects.get(email__iexact=email)
-            user_auth = authenticate(username=user.username, password=password)
+        return response
 
-            if user_auth is None:
-                raise serializers.ValidationError("Contraseña incorrecta.")
+# ------------------------
+# 🔹 Cambiar contraseña o username
+# ------------------------
+class CambiarDatosView(generics.UpdateAPIView):
+    serializer_class = CambiarDatosSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
 
-            return user_auth
+    def get_object(self):
+        return self.request.user
 
-        except Usuario.DoesNotExist:
-            # Si no existe → lo registramos
-            username_auto = email.split('@')[0]  # generar username simple
-            user = Usuario.objects.create(
-                username=username_auto,
-                email=email,
-                nombreYapellido=nombreYapellido,
-                password=make_password(password)
-            )
-            return user
+    def update(self, request, *args, **kwargs):
+        usuario = self.get_object()
+        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
-class CambiarPasswordSerializer(Serializer):
-    password_actual = CharField(required=True, write_only=True)
-    password_nueva = CharField(required=True, min_length=8, write_only=True)
-    confirmar_password = CharField(required=True, min_length=8, write_only=True)
+        if 'password_nueva' in data:
+            usuario.password = make_password(data['password_nueva'])
+        if 'nuevo_username' in data:
+            usuario.username = data['nuevo_username']
 
-    def validate(self, data):
-        if data['password_nueva'] != data['confirmar_password']:
-            raise ValueError("Las contraseñas nuevas no coinciden.")
-        return data
+        usuario.save()
+        return Response({"mensaje": "Datos actualizados correctamente."}, status=status.HTTP_200_OK)

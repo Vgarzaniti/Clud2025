@@ -22,6 +22,7 @@ class Usuario(AbstractUser):
     idUsuario = models.AutoField(primary_key=True)
     nombreYapellido = models.CharField(max_length=200, null=False, blank=False)
     email = models.EmailField(unique=True, null=False, blank=False)
+    username = models.CharField(max_length=150, unique=True, null=False, blank=False)
     is_staff = models.BooleanField(default=False)
     is_activate = models.BooleanField(default=True)
 
