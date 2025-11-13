@@ -23,7 +23,7 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
 
 # 🔹 Serializador principal de la Respuesta (permite crear detalles y archivos)
 class RespuestaSerializer(serializers.ModelSerializer):
-    archivos = RespuestaArchivoSerializer(many=True, required=True)
+    archivos = RespuestaArchivoSerializer(many=True, read_only=True)
     puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
 
     class Meta:
