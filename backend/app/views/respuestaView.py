@@ -14,7 +14,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         archivos = request.FILES.getlist('archivos')
 
-        # 🔹 Recuperar el foro
+        # 🔹 Validar foro
         foro_id = data.get('foro')
         try:
             foro = Foro.objects.get(pk=foro_id)
@@ -24,35 +24,25 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 🔹 Asignar la materia del foro automáticamente
+        # 🔹 Asignar materia automáticamente
         data['materia'] = foro.materia.idMateria
 
         serializer = RespuestaSerializer(data=data)
         if serializer.is_valid():
             respuesta = serializer.save()
 
-            # 🔹 Guardar archivos subidos manualmente (si los hay)
+            # 🔹 Guardar archivos (si hay)
             for archivo in archivos:
                 RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
 
-            # 🔹 Refrescar relaciones (archivos y detalles)
-            respuesta = Respuesta.objects.prefetch_related('archivos', 'detalles').get(pk=respuesta.pk)
-
+            respuesta = Respuesta.objects.prefetch_related('archivos').get(pk=respuesta.pk)
             return Response(RespuestaSerializer(respuesta).data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RespuestaPuntajeView(APIView):
-    """
-    Vista para registrar o actualizar el puntaje de una respuesta
-    y obtener el promedio de puntajes.
-    """
-
     def post(self, request):
-        """
-        Crea o actualiza el puntaje de un usuario para una respuesta.
-        """
         serializer = PuntajeRespuestaSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -61,14 +51,12 @@ class RespuestaPuntajeView(APIView):
         usuario = serializer.validated_data['usuario']
         valor = serializer.validated_data['valor']
 
-        # Validar rango de valor (0 a 5)
         if valor < 0 or valor > 5:
             return Response(
                 {"error": "El valor del puntaje debe estar entre 0 y 5."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Crear o actualizar puntaje
         puntaje, creado = Puntaje.objects.update_or_create(
             respuesta_id=respuesta_id,
             usuario=usuario,
@@ -82,9 +70,6 @@ class RespuestaPuntajeView(APIView):
         )
 
     def get(self, request, respuesta_id):
-        """
-        Devuelve el promedio y cantidad total de puntajes de una respuesta.
-        """
         try:
             respuesta = Respuesta.objects.get(pk=respuesta_id)
         except Respuesta.DoesNotExist:

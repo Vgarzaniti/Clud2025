@@ -125,6 +125,7 @@ class Respuesta(models.Model):
         null=False,
         blank=False
     )
+    respuesta_texto = models.TextField(null=True, blank=True)
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
 
@@ -155,24 +156,8 @@ class RespuestaArchivo(models.Model):
         verbose_name_plural = 'Archivos de Respuestas'
 
 
-# -------------------- RESPUESTA DETALLE --------------------
-class RespuestaDetalle(models.Model):
-    idRespuestaDetalle = models.AutoField(primary_key=True)
-    respuesta = models.ForeignKey(
-        Respuesta,
-        on_delete=models.CASCADE,
-        related_name='detalles',
-        null=False,
-        blank=False
-    )
-    respuesta_texto = models.TextField(null=False, blank=False)
 
-    def __str__(self):
-        return f"Detalle de Respuesta {self.respuesta.idRespuesta}"
 
-    class Meta:
-        db_table = 'RespuestaDetalle'
-        verbose_name_plural = 'Detalles de Respuestas'
         
 
 class Puntaje(models.Model):
