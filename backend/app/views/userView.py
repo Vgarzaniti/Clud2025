@@ -27,8 +27,12 @@ class UsuarioView(generics.GenericAPIView):
             serializer.is_valid(raise_exception=True)
             usuario = serializer.save()
 
-        # Generar tokens JWT
+        # Generar tokens JWT personalizados
         refresh = RefreshToken.for_user(usuario)
+        refresh['idUsuario'] = usuario.idUsuario
+        refresh['email'] = usuario.email
+        refresh['username'] = usuario.username
+
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)
 
