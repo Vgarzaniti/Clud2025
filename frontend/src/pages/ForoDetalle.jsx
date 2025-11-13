@@ -24,9 +24,20 @@ export default function ForoDetalle() {
 
         const [foroData, respuestasData, materias] = await Promise.all([
           foroService.obtenerPorId(foroId),
-          respuestaService.obtenerPorForo(foroId),
+          respuestaService.obtenerPorTodos(),
           materiaService.obtenerTodos(),
         ]);
+
+        if (!foroData) {
+          console.error("⚠️ Foro no encontrado:", foroId);
+          setForo(null);
+          setRespuestas([]);
+          return;
+        }
+
+        const respuestasForo = Array.isArray(respuestasData)
+          ? respuestasData.filter((r) => r.foro === foroData.idForo)
+          : [];
 
         const materia = materias.find((m) => m.idMateria === foroData.materia);
         const foroEnriquecido = {
@@ -36,15 +47,15 @@ export default function ForoDetalle() {
           usuario_nombre: foroData.usuario || "Anónimo",
         };
 
-        // Ordenar respuestas por ID (o puntaje si querés)
-        const respuestasOrdenadas = respuestasData.sort(
+        // Ordenar las respuestas
+        const respuestasOrdenadas = [...respuestasForo].sort(
           (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
         );
 
         setForo(foroEnriquecido);
         setRespuestas(respuestasOrdenadas);
       } catch (error) {
-        console.error("Error al cargar datos del foro:", error);
+        console.error("❌ Error al cargar datos del foro:", error);
       } finally {
         setLoading(false);
       }
@@ -52,6 +63,7 @@ export default function ForoDetalle() {
 
     cargarDatos();
   }, [foroId]);
+
 
   if (loading) return <p className="text-center text-gray-400 mt-10">Cargando foro...</p>;
   if (!foro) return <p className="text-center text-red-400 mt-10">Foro no encontrado</p>;
@@ -162,8 +174,11 @@ export default function ForoDetalle() {
       {/* Modal para responder */}
       <Modal visible={mostrarRespuesta} onClose={() => setMostrarRespuesta(false)}>
         <CrearRespuesta
-          foroId={foroId}
+          foroId={foro.idForo}
+          materiaId={foro.materia}
+          usuarioId={foro.usuario || 1} // o el usuario actual si tenés login
           onClose={() => setMostrarRespuesta(false)}
+          onSave={(nuevaRespuesta) => setRespuestas((prev) => [...prev, nuevaRespuesta])}
         />
       </Modal>
     </div>

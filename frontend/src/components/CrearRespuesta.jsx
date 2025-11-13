@@ -3,13 +3,14 @@ import { useRef, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService";
 
-export default function CrearRespuesta({ foroId, usuarioId, materiaId, onClose, onSave }) {
+export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
   
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
   const [formData, setFormData] = useState({ respuesta: "" });
   const textareaRef = useRef(null);
+  const userId = 1;
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
@@ -60,36 +61,41 @@ export default function CrearRespuesta({ foroId, usuarioId, materiaId, onClose, 
 
   
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (error) {
-    alert("Corrige los errores antes de publicar.");
-    return;
-  }
+    if (error) {
+      alert("Corrige los errores antes de publicar.");
+      return;
+    }
 
-  if (!validarFormulario()) return;
+    if (!validarFormulario()) return;
 
-  try {
-    const formDataAPI = new FormData();
-    formDataAPI.append("usuario", usuarioId);
-    formDataAPI.append("foro", foroId);
-    formDataAPI.append("materia", materiaId);
-    formDataAPI.append("respuesta_texto", formData.respuesta);
+    try {
+      const formDataAPI = new FormData();
+      formDataAPI.append("usuario", userId);
+      formDataAPI.append("foro", foroId);
+      formDataAPI.append("materia", materiaId);
+      formDataAPI.append("respuesta_texto", formData.respuesta);
 
-    // Adjuntar todos los archivos seleccionados
-    archivos.forEach((file) => formDataAPI.append("archivos", file));
+      archivos.forEach((archivo, i) => {
+        formDataAPI.append(`archivos[${i}][archivo]`, archivo);
+      });
 
-    // Llamar al servicio
-    const respuestaGuardada = await respuestaService.crear(formDataAPI);
+      for (let [key, value] of formDataAPI.entries()) {
+        console.log(`${key}:`, value);
+      }
 
-    onSave(respuestaGuardada);
-    alert("✅ Respuesta publicada correctamente.");
-    onClose();
-  } catch (err) {
-    console.error("❌ Error al crear la respuesta:", err);
-    alert("Ocurrió un error al publicar la respuesta.");
-  }
-};
+      const respuestaGuardada = await respuestaService.crear(formDataAPI);
+
+      onSave(respuestaGuardada);
+      alert("✅ Respuesta publicada correctamente.");
+      onClose();
+    } catch (err) {
+      console.error("❌ Error al crear la respuesta:", err);
+      alert("Ocurrió un error al publicar la respuesta.");
+    }
+  };
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">
