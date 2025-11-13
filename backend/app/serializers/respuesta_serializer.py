@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from ..models import Respuesta, RespuestaArchivo, RespuestaDetalle, Puntaje
+from ..models import Respuesta, RespuestaArchivo, Puntaje
 
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
