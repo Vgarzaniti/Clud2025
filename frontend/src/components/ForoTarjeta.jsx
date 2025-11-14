@@ -1,8 +1,32 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { respuestaService } from "../services/respuestaService";
+import { Loader2 } from "lucide-react";
 import "../input.css";
 
 export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onEliminar }) {
   const navigate = useNavigate();
+  const [cantRespuestas, setCantRespuestas] = useState();
+
+  useEffect(() => {
+    const cargarCantRes = async () => {
+      try {
+        const respuestas = await respuestaService.obtenerPorTodos();
+
+        // Filtrar solo las del foro actual
+        const respuestasFiltradas = respuestas.filter(
+          (r) => Number(r.foro) === Number(foro.idForo)
+        );
+
+        setCantRespuestas(respuestasFiltradas.length);
+      } catch (err) {
+        console.error("Error al cargar cantidad de respuestas:", err);
+      }
+    };
+
+    cargarCantRes();
+  }, [foro.idForo]);
+
 
   return (
     <div
@@ -53,7 +77,14 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
         <span>Autor: {foro.usuario || "Anónimo"}</span>
-        <span>💬 {foro.respuestas_count ?? 0} respuestas</span>
+        <span className="flex items-center gap-1">
+          💬{" "}
+          {cantRespuestas === null ? (
+            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+          ) : (
+            `${cantRespuestas} respuestas`
+          )}
+        </span>
       </div>
     </div>
 
