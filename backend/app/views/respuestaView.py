@@ -12,6 +12,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
+
         archivos = request.FILES.getlist("archivos")
         respuesta_texto = data.get("respuesta_texto")
 
@@ -25,7 +26,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         except Foro.DoesNotExist:
             return Response({"error": "No existe el foro indicado."}, status=400)
 
-        # Asignar materia automáticamente
+        # Asignar materia automáticamente desde el foro
         data["materia"] = foro.materia.idMateria
 
         # Crear la respuesta
@@ -33,14 +34,12 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # Guardar archivos
+        # Guardar archivos adjuntos
         for archivo in archivos:
             RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
 
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data, status=201)
-
-
 
 class RespuestaPuntajeView(APIView):
     def post(self, request):

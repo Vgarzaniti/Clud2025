@@ -53,14 +53,17 @@ export default function Home() {
 
     return foros.map((foro) => {
       const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
+      const carreraInfo = carreras.find(
+        (c) => c.idCarrera === materiaInfo?.carrera
+      );
       return {
-        ...foro,
-        materiaInfo, // 🔹 agrega toda la información de materia (nombre, carrera, año)
-        carreraId: materiaInfo?.carrera,
-        carreraNombre: materiaInfo?.carrera_nombre,
+         ...foro,
+          materia_nombre: materiaInfo?.nombre || "Sin materia",
+          carrera_nombre: carreraInfo?.nombre || "Sin carrera",
+          carreraId: carreraInfo?.idCarrera,
       };
     });
-  }, [foros, materias]);
+  }, [foros, materias, carreras]);
 
 
   const materiasFiltradas = useMemo(() => {
@@ -132,7 +135,11 @@ export default function Home() {
       </main>
 
       <Modal visible={mostrarForo} onClose={() => setMostrarForo(false)}>
-        <CrearForo onClose={() => setMostrarForo(false)} />
+        <CrearForo
+          onClose={() => setMostrarForo(false)}
+          carreraSeleccionada={filtroCarrera}
+          materiaSeleccionada={filtroMateria}
+        />
       </Modal>
     </div>
   );

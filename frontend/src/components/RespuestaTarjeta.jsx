@@ -2,16 +2,16 @@ import { useState } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
 
 export default function RespuestaTarjeta({ respuesta }) {
+    const textoRespuesta = respuesta.respuesta_texto || respuesta.respuesta || respuesta.contenido || "";
     const [puntaje, setPuntaje] = useState(respuesta.puntaje || 0);
     const [voto, setVoto] = useState(null);
     const [expandido, setExpandido] = useState(false);
     const limite = 300;
 
     const textoCorto =
-    respuesta.respuesta.length > limite
-      ? respuesta.respuesta.slice(0, limite) + "..."
-      : respuesta.respuesta;
-
+      textoRespuesta.length > limite
+        ? textoRespuesta.slice(0, limite) + "..."
+        : textoRespuesta;
     
     const handleUpvote = () => {
         if (voto === "up") {
@@ -37,11 +37,11 @@ export default function RespuestaTarjeta({ respuesta }) {
     <div className="bg-panel p-5 rounded-2xl border border-gray-700 shadow-md">
       
       <p className="text-gray-200 whitespace-pre-line">
-        {expandido ? respuesta.respuesta : textoCorto}
+        {expandido ? textoRespuesta : textoCorto}
       </p>
 
       {/* Botón Mostrar más / menos */}
-      {respuesta.respuesta.length > limite && (
+      {textoRespuesta.length > limite && (
         <button
           onClick={() => setExpandido(!expandido)}
           className="mt-1 text-gray-500 hover:underline text-sm"
@@ -50,62 +50,38 @@ export default function RespuestaTarjeta({ respuesta }) {
         </button>
       )}
 
-      {respuesta.archivos && (
+      {/* Archivos adjuntos */}
+      {Array.isArray(respuesta.archivos) && respuesta.archivos.length > 0 && (
         <div className="mt-2 space-y-2">
-          {Array.isArray(respuesta.archivos)
-            ? respuesta.archivos.map((archivo, i) => {
-                const isFileObject = archivo instanceof File;
-                const nombreArchivo = isFileObject
-                  ? archivo.name
-                  : archivo.split("/").pop();
-                const enlace = isFileObject
-                  ? URL.createObjectURL(archivo)
-                  : archivo;
+          {respuesta.archivos.map((archivo, i) => {
+            // Maneja diferentes estructuras posibles de archivo
+            const enlace = archivo.archivo_url || archivo.archivo || (archivo instanceof File ? URL.createObjectURL(archivo) : archivo);
 
-                return (
-                  <div key={i} className="flex items-center gap-2 text-sm text-blue-400">
-                    <Paperclip size={16} />
-                    <a
-                      href={enlace}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-azulUTN hover:underline truncate max-w-[200px]"
-                    >
-                      {nombreArchivo}
-                    </a>
-                  </div>
-                );
-              })
-            : (() => {
-                // Caso: un solo archivo (no array)
-                const archivo = respuesta.archivos;
-                const isFileObject = archivo instanceof File;
-                const nombreArchivo = isFileObject
-                  ? archivo.name
-                  : archivo.split("/").pop();
-                const enlace = isFileObject
-                  ? URL.createObjectURL(archivo)
-                  : archivo;
+            // Extrae un nombre legible desde el link o el objeto File
+            const nombreArchivo =
+              archivo.nombre ||
+              (archivo instanceof File ? archivo.name : enlace.split("/").pop() || "archivo_descargable");
 
-                return (
-                  <div className="flex items-center gap-2 text-sm text-blue-400">
-                    <Paperclip size={16} />
-                    <a
-                      href={enlace}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-azulUTN hover:underline truncate max-w-[200px]"
-                    >
-                      {nombreArchivo}
-                    </a>
-                  </div>
-                );
-              })()}
+            return (
+              <div key={archivo.id || i} className="flex items-center gap-2 text-sm text-blue-400">
+                <Paperclip size={16} />
+                <a
+                  href={enlace}
+                  download={nombreArchivo} //permite descargar directamente
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-azulUTN hover:underline truncate max-w-[200px]"
+                >
+                  {nombreArchivo}
+                </a>
+              </div>
+            );
+          })}
         </div>
       )}
 
       <div className="flex justify-between items-center mt-4">
-        <span className="text-sm text-gray-400">Respuesta de {respuesta.autor}</span>
+        <span className="text-sm text-gray-400">Respuesta de {respuesta.autor || "Anonimo"}</span>
         <div className="flex items-center gap-2">
           <button
             onClick={handleUpvote}

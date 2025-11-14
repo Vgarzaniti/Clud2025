@@ -3,13 +3,14 @@ import { useRef, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService";
 
-export default function CrearRespuesta({ foroId, usuarioId, materiaId, onClose, onSave }) {
+export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
   
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
   const [formData, setFormData] = useState({ respuesta: "" });
   const textareaRef = useRef(null);
+  const userId = 1;
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
@@ -70,15 +71,21 @@ export default function CrearRespuesta({ foroId, usuarioId, materiaId, onClose, 
     if (!validarFormulario()) return;
 
     try {
-      const nuevaRespuesta = {
-        usuario: usuarioId,
-        foro: foroId,
-        materia: materiaId,
-        respuesta: formData.respuesta,
-        archivos, 
-      };
+      const formDataAPI = new FormData();
+      formDataAPI.append("usuario", userId);
+      formDataAPI.append("foro", foroId);
+      formDataAPI.append("materia", materiaId);
+      formDataAPI.append("respuesta_texto", formData.respuesta);
 
-      const respuestaGuardada = await respuestaService.crear(nuevaRespuesta);
+      archivos.forEach((archivo) => {
+        formDataAPI.append("archivos", archivo);
+      });
+
+      for (let [key, value] of formDataAPI.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      const respuestaGuardada = await respuestaService.crear(formDataAPI);
 
       onSave(respuestaGuardada);
       alert("✅ Respuesta publicada correctamente.");
@@ -88,6 +95,7 @@ export default function CrearRespuesta({ foroId, usuarioId, materiaId, onClose, 
       alert("Ocurrió un error al publicar la respuesta.");
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">

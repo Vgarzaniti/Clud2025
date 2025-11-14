@@ -1,18 +1,23 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../input.css";
+import { foroService } from "../services/foroService";
+import { respuestaService } from "../services/respuestaService";
 
 export default function BarraLado({
   carreras = [],
   materias = [],
-  foros = [],
   filtroCarrera,
   filtroMateria,
   onFiltroCarreraChange,
   onFiltroMateriaChange,
 }) {
   const [materiasFiltradas, setMateriasFiltradas] = useState([]);
+  const [rankingForos, setRankingForos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const navigate = useNavigate();
 
-
+  // Filtrar materias por carrera seleccionada
   useEffect(() => {
     if (filtroCarrera) {
       const filtradas = materias.filter(
@@ -24,22 +29,47 @@ export default function BarraLado({
     }
   }, [filtroCarrera, materias]);
 
+  //Cargar ranking dinámico desde la API
+  useEffect(() => {
+    const cargarRanking = async () => {
+      try {
+        const foros = await foroService.obtenerTodos();
+        const respuestas = await respuestaService.obtenerPorTodos();
 
-  const rankingForos = useMemo(() => {
-    if (!foros || foros.length === 0) return [];
-    return [...foros]
-      .filter((f) => f.respuestas && f.respuestas.length > 0)
-      .sort((a, b) => b.respuestas.length - a.respuestas.length)
-      .slice(0, 5);
-  }, [foros]);
+        // Contar respuestas por foro
+        const conteo = {};
+        (respuestas || []).forEach((r) => {
+          const idForo = r.foro;
+          conteo[idForo] = (conteo[idForo] || 0) + 1;
+        });
+
+        // Ordenar por cantidad de respuestas
+        const topForos = (foros || [])
+          .map((foro) => ({
+            ...foro,
+            totalRespuestas: conteo[foro.idForo] || 0,
+          }))
+          .sort((a, b) => b.totalRespuestas - a.totalRespuestas)
+          .slice(0, 5);
+
+        setRankingForos(topForos);
+      } catch (err) {
+        console.error("Error al cargar ranking:", err);
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarRanking();
+  }, []);
 
   return (
     <aside className="w-1/4 space-y-6">
-
+      {/* FILTROS */}
       <div className="bg-panel p-4 rounded-2xl shadow-md border border-gray-600">
         <h2 className="text-lg font-semibold mb-3 text-azulUTN">Filtros</h2>
 
-
+        {/* Filtro Carrera */}
         <div className="mb-4">
           <p className="font-medium mb-1">Carrera</p>
           <select
@@ -74,20 +104,25 @@ export default function BarraLado({
         </div>
       </div>
 
+      {/* RANKING */}
       <div className="bg-panel p-4 rounded-2xl shadow-md border border-gray-600">
         <h2 className="text-lg font-semibold mb-3 text-azulUTN">
           Ranking de Foros
         </h2>
 
-        {rankingForos.length > 0 ? (
-          <ol className="list-decimal pl-5 space-y-2 text-sm text-gray-300">
+        {cargando ? (
+          <p className="text-gray-400 text-sm">Cargando ranking...</p>
+        ) : rankingForos.length > 0 ? (
+          <ol className="list-decimal ml-4 space-y-2 text-sm text-gray-300">
             {rankingForos.map((foro) => (
-              <li key={foro.idForo} className="leading-snug">
-                <p className="font-medium text-white truncate">
-                  {foro.pregunta}
-                </p>
+              <li
+                key={foro.idForo}
+                className="leading-snug cursor-pointer hover:text-amber-500 transition"
+                onClick={() => navigate(`/foro/${foro.idForo}`)}
+              >
+                <p className="font-medium text-white truncate">{foro.pregunta}</p>
                 <p className="text-gray-400 text-xs">
-                  Respuestas: {foro.respuestas.length}
+                  Respuestas: {foro.totalRespuestas}
                 </p>
               </li>
             ))}
