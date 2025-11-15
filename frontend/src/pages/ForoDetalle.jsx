@@ -80,11 +80,49 @@ export default function ForoDetalle() {
         {/* Pregunta principal */}
         <div className="bg-cyan-950 p-5 rounded-2xl border border-gray-700 shadow-md">
           <h1 className="text-2xl font-bold mb-2">{foro.pregunta}</h1>
-          <p className="text-gray-400 text-sm mb-2">
+          
+          {foro.archivos && foro.archivos.length > 0 && (
+              <div className="mt-4 space-y-3">
+                <p className="text-gray-300 font-small">Archivos adjuntos:</p>
+
+                {foro.archivos.map((archivo) => {
+                  const extension = archivo.archivo_url.split('.').pop().toLowerCase();
+                  const isImage = ["png", "jpg", "jpeg", "gif", "webp"].includes(extension);
+
+                  return (
+                    <div
+                      key={archivo.id}
+                      className="border border-gray-700 p-2 rounded-xl bg-gray-900 flex flex-col gap-2"
+                    >
+                      {isImage ? (
+                        <img
+                          src={archivo.archivo_url}
+                          alt="archivo del foro"
+                          className="rounded-lg max-h-64 object-cover cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <a
+                          href={archivo.archivo_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-400 underline hover:text-blue-500 text-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          📎 Descargar archivo ({extension.toUpperCase()})
+                        </a>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+          )}
+          
+          <p className="text-gray-400 text-sm mb-2 mt-3">
             Materia: {foro.materia_nombre}
           </p>
-          <p className="text-gray-300 mb-3">{foro.descripcion || ""}</p>
-          <p className="text-gray-500 text-xs">
+          
+          <p className="text-gray-500 text-xs mt-3">  
             Creado el{" "}
             {foro.fecha_creacion
               ? new Date(foro.fecha_creacion).toLocaleString("es-AR")
