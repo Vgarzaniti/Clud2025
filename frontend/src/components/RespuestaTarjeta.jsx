@@ -52,34 +52,54 @@ export default function RespuestaTarjeta({ respuesta }) {
 
       {/* Archivos adjuntos */}
       {Array.isArray(respuesta.archivos) && respuesta.archivos.length > 0 && (
-        <div className="mt-2 space-y-2">
-          {respuesta.archivos.map((archivo, i) => {
-            // Maneja diferentes estructuras posibles de archivo
-            const enlace = archivo.archivo_url || archivo.archivo || (archivo instanceof File ? URL.createObjectURL(archivo) : archivo);
+        <div className="mt-4 space-y-3">
+          <p className="text-gray-300 font-medium flex items-center gap-2">
+            <Paperclip size={16} />
+            Archivos adjuntos:
+          </p>
 
-            // Extrae un nombre legible desde el link o el objeto File
+          {respuesta.archivos.map((archivo, i) => {
+            const enlace =
+              archivo.archivo_url ||
+              archivo.archivo ||
+              (archivo instanceof File ? URL.createObjectURL(archivo) : archivo);
+
             const nombreArchivo =
               archivo.nombre ||
-              (archivo instanceof File ? archivo.name : enlace.split("/").pop() || "archivo_descargable");
+              (archivo instanceof File ? archivo.name : enlace.split("/").pop() || "archivo");
+
+            const extension = enlace.split(".").pop().toLowerCase();
+            const esImagen = ["png", "jpg", "jpeg", "gif", "webp"].includes(extension);
 
             return (
-              <div key={archivo.id || i} className="flex items-center gap-2 text-sm text-blue-400">
-                <Paperclip size={16} />
-                <a
-                  href={enlace}
-                  download={nombreArchivo} //permite descargar directamente
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-azulUTN hover:underline truncate max-w-[200px]"
-                >
-                  {nombreArchivo}
-                </a>
+              <div
+                key={archivo.id || i}
+                className="border border-gray-700 p-3 rounded-xl bg-gray-900 flex flex-col gap-2"
+              >
+                {esImagen ? (
+                  <img
+                    src={enlace}
+                    alt="adjunto"
+                    className="rounded-lg max-h-64 object-cover cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <a
+                    href={enlace}
+                    download={nombreArchivo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline hover:text-blue-500 break-all"
+                  >
+                    📎 {nombreArchivo}
+                  </a>
+                )}
               </div>
             );
           })}
         </div>
       )}
-
+      
       <div className="flex justify-between items-center mt-4">
         <span className="text-sm text-gray-400">Respuesta de {respuesta.autor || "Anonimo"}</span>
         <div className="flex items-center gap-2">
