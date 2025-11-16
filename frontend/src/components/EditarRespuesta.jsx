@@ -3,11 +3,9 @@ import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService.js";
 
 export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
-  const [archivos, setArchivos] = useState(
-    Array.isArray(respuestaActual.archivos)
-      ? respuestaActual.archivos
-      : []
-  );
+  const [archivos, setArchivos] = useState([]);
+  const [archivosOriginales, setArchivosOriginales] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
@@ -15,21 +13,32 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
     respuesta: respuestaActual.respuesta_texto || "",
   });
 
+  const userId = 1;
+
   const textareaRef = useRef(null);
   const LIMITE_INDIVIDUAL_MB = 5;
   const LIMITE_TOTAL_MB = 20;
 
   useEffect(() => {
+    setArchivos(respuestaActual.archivos || []);
+    setArchivosOriginales(respuestaActual.archivos || []);
+  }, [respuestaActual]);
+
+
+  useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = "auto";
-      textarea.style.height = textarea.scrollHeight + "px";
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, [formData.respuesta]);
 
   const handleArchivoChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
-    let totalSize = archivos.reduce((acc, file) => acc + (file.size || 0), 0);
+    let totalSize = archivos
+      .filter((a) => a instanceof File)
+      .reduce((acc, file) => acc + file.size, 0);
+
     let errores = [];
 
     for (const file of nuevosArchivos) {
@@ -66,38 +75,44 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (error) {
-      alert("Corrige los errores antes de guardar.");
-      return;
-    }
-
+    if (error) return alert("Corrige los errores antes de guardar.");
     if (!validarFormulario()) return;
 
+    setLoading(true);
+
     try {
+      
       const formDataAPI = new FormData();
       formDataAPI.append("respuesta_texto", formData.respuesta.trim());
-      formDataAPI.append("usuario", respuestaActual.usuario);
+      formDataAPI.append("usuario", userId);
       formDataAPI.append("foro", respuestaActual.foro);
       formDataAPI.append("materia", respuestaActual.materia);
 
-      // Adjuntar solo los archivos nuevos (File)
-      archivos.forEach((file) => {
-        if (file instanceof File) formDataAPI.append("archivos", file);
-      });
+      const nuevosArchivos = archivos.filter((a) => a instanceof File);
+      nuevosArchivos.forEach((file) => formDataAPI.append("archivos", file));
+
+      const archivosEliminados = archivosOriginales.filter(
+        (a) => !archivos.some((file) => file.url === a.url)
+      );
+
+      formDataAPI.append("eliminados", JSON.stringify(archivosEliminados));
 
       const respuestaEditada = await respuestaService.editar(
         respuestaActual.idRespuesta,
         formDataAPI
       );
 
-      alert("✅ Respuesta actualizada correctamente.");
+      alert("✔ Respuesta actualizada correctamente.");
       onSave(respuestaEditada);
       onClose();
     } catch (err) {
       console.error("❌ Error al editar respuesta:", err);
       alert("Ocurrió un error al guardar los cambios.");
+    } finally {
+      setLoading(false);
     }
   };
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">
@@ -193,9 +208,10 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
 
       <button
         type="submit"
+        disabled={loading}
         className="w-full bg-green-600 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
       >
-        Guardar cambios
+        {loading ? "Guardando..." : "Guardar cambios"}
       </button>
     </form>
   );
