@@ -84,7 +84,7 @@ export default function Home() {
 
       const coincideMateria =
         !filtroMateria ||
-        foro.materiaInfo?.idMateria === parseInt(filtroMateria);
+        foro.materia === parseInt(filtroMateria);
 
       return coincideBusqueda && coincideCarrera && coincideMateria;
     });
