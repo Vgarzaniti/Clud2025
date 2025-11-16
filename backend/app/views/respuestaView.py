@@ -41,33 +41,64 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data, status=201)
 
+
 class RespuestaPuntajeView(APIView):
+
     def post(self, request):
         serializer = PuntajeRespuestaSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        respuesta_id = serializer.validated_data['respuesta'].idRespuesta
+        respuesta = serializer.validated_data['respuesta']
         usuario = serializer.validated_data['usuario']
-        valor = serializer.validated_data['valor']
+        nuevo_valor = serializer.validated_data['valor']  # 1 = like, -1 = dislike
 
-        if valor < 0 or valor > 5:
-            return Response(
-                {"error": "El valor del puntaje debe estar entre 0 y 5."},
-                status=status.HTTP_400_BAD_REQUEST
+        # Buscar voto anterior (si existe)
+        puntaje_existente = Puntaje.objects.filter(
+            respuesta=respuesta,
+            usuario=usuario
+        ).first()
+
+        if puntaje_existente:
+            # Si repite mismo voto → se borra (NONE / 0)
+            if puntaje_existente.valor == nuevo_valor:
+                puntaje_existente.valor = Puntaje.NONE
+            else:
+                puntaje_existente.valor = nuevo_valor
+
+            puntaje_existente.save()
+            puntaje = puntaje_existente
+            creado = False
+
+        else:
+            # Crear nuevo voto
+            puntaje = Puntaje.objects.create(
+                respuesta=respuesta,
+                usuario=usuario,
+                valor=nuevo_valor
             )
+            creado = True
 
-        puntaje, creado = Puntaje.objects.update_or_create(
-            respuesta_id=respuesta_id,
-            usuario=usuario,
-            defaults={'valor': valor}
-        )
+        # 🔥 Recalcular siempre los totales de la respuesta
+        respuesta.total_likes = respuesta.puntajes.filter(valor=Puntaje.LIKE).count()
+        respuesta.total_dislikes = respuesta.puntajes.filter(valor=Puntaje.DISLIKE).count()
+        respuesta.total_votos = respuesta.puntajes.exclude(valor=Puntaje.NONE).count()
+        respuesta.puntaje_neto = respuesta.total_likes - respuesta.total_dislikes
+        respuesta.save()
 
-        mensaje = "Puntaje creado correctamente." if creado else "Puntaje actualizado correctamente."
+        mensaje = "Puntaje creado." if creado else "Puntaje actualizado."
         return Response(
-            {"mensaje": mensaje, "valor": puntaje.valor},
+            {
+                "mensaje": mensaje,
+                "valor": puntaje.valor,
+                "total_likes": respuesta.total_likes,
+                "total_dislikes": respuesta.total_dislikes,
+                "total_votos": respuesta.total_votos,
+                "puntaje_neto": respuesta.puntaje_neto,
+            },
             status=status.HTTP_200_OK
         )
+
 
     def get(self, request, respuesta_id):
         try:
@@ -78,13 +109,10 @@ class RespuestaPuntajeView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        stats = respuesta.puntajes.aggregate(
-            promedio=Avg('valor'),
-            total=Count('id')
-        )
-
         return Response({
             "respuesta_id": respuesta.idRespuesta,
-            "puntaje_promedio": round(stats['promedio'] or 0, 2),
-            "total_votos": stats['total']
+            "total_likes": respuesta.total_likes,
+            "total_dislikes": respuesta.total_dislikes,
+            "total_votos": respuesta.total_votos,
+            "puntaje_neto": respuesta.puntaje_neto
         })
