@@ -37,5 +37,9 @@ class RespuestaSerializer(serializers.ModelSerializer):
             'respuesta_texto',
             'fecha_actualizacion',
             'archivos',
-            'puntajes'
+            'puntajes',
+            'total_likes',
+            'total_dislikes',
+            'total_votos',
+            'puntaje_neto'
         ]
