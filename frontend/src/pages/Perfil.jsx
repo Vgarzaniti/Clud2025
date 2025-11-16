@@ -165,9 +165,9 @@ export default function Perfil() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto mt-10 px-6 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="max-w-7xl mx-auto mt-10 px-6 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6 min-h-20 items-stretch">
       {/* Panel lateral usuario */}
-      <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto">
+      <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto h-[400px] self-start">
         <div className="shadow-gray-900 shadow-lg w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-2xl font-bold text-fondo absolute -top-12 left-1/2 transform -translate-x-1/2">
           {usuario.nombre
             ? usuario.nombre
@@ -178,7 +178,7 @@ export default function Perfil() {
             : "US"}
         </div>
 
-        <div className="mt-15 space-y-2 text-left">
+        <div className="mt-15 space-y-2 text-left max-h-100">
           <div>
             <p className="font-semibold text-white">Nombre Completo</p>
             <p className="ml-2 text-gray-400">{usuario.nombre}</p>
