@@ -5,7 +5,7 @@ from ..models import Respuesta, RespuestaArchivo, Puntaje
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Puntaje
-        fields = ['id', 'usuario', 'respuesta', 'valor']
+        fields = ['id', 'usuario', 'valor']
 
 
 # 🔹 Serializador para los archivos
