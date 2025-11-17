@@ -4,7 +4,9 @@ from django.db.models import Avg, Count
 from ..models import Respuesta, RespuestaArchivo, Foro, Puntaje
 from ..serializers.respuesta_serializer import RespuestaSerializer, PuntajeRespuestaSerializer
 from rest_framework.views import APIView
-
+from cloudinary.uploader import upload, destroy
+from cloudinary.exceptions import Error as CloudinaryError
+from .hash import file_hash  # tu función MD5
 
 class RespuestaViewSet(viewsets.ModelViewSet):
     queryset = Respuesta.objects.all().order_by('-fecha_creacion')
@@ -12,7 +14,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
-
         archivos = request.FILES.getlist("archivos")
         respuesta_texto = data.get("respuesta_texto")
 
@@ -34,13 +35,62 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # Guardar archivos adjuntos
+        # Guardar archivos evitando duplicados por hash
         for archivo in archivos:
-            RespuestaArchivo.objects.create(respuesta=respuesta, archivo=archivo)
+            hash_archivo = file_hash(archivo)
+            if not RespuestaArchivo.objects.filter(respuesta=respuesta, hash=hash_archivo).exists():
+                try:
+                    result = upload(archivo)
+                    url = result['secure_url']
+                    RespuestaArchivo.objects.create(respuesta=respuesta, archivo=url, hash=hash_archivo)
+                except CloudinaryError:
+                    continue
 
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data, status=201)
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        data = request.data.copy()
+        archivos_nuevos = request.FILES.getlist("archivos")
+        archivos_a_eliminar = data.get("archivos_a_eliminar", [])
+
+        # Convertir string a lista si es necesario
+        if archivos_a_eliminar and isinstance(archivos_a_eliminar, str):
+            archivos_a_eliminar = [int(x) for x in archivos_a_eliminar.split(',')]
+
+        # Actualizar campos de Respuesta
+        serializer = RespuestaSerializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        respuesta = serializer.save()
+
+        # ELIMINAR ARCHIVOS
+        for archivo_id in archivos_a_eliminar:
+            try:
+                archivo_obj = RespuestaArchivo.objects.get(id=archivo_id, respuesta=respuesta)
+                try:
+                    public_id = archivo_obj.archivo.split('/upload/')[-1].rsplit('.', 1)[0]
+                    destroy(public_id)
+                except CloudinaryError:
+                    pass
+                archivo_obj.delete()
+            except RespuestaArchivo.DoesNotExist:
+                pass
+
+        # AGREGAR ARCHIVOS NUEVOS EVITANDO DUPLICADOS POR HASH
+        for archivo in archivos_nuevos:
+            hash_archivo = file_hash(archivo)
+            if not RespuestaArchivo.objects.filter(respuesta=respuesta, hash=hash_archivo).exists():
+                try:
+                    result = upload(archivo)
+                    url = result['secure_url']
+                    RespuestaArchivo.objects.create(respuesta=respuesta, archivo=url, hash=hash_archivo)
+                except CloudinaryError:
+                    continue
+
+        respuesta.refresh_from_db()
+        return Response(RespuestaSerializer(respuesta).data)
 
 class RespuestaPuntajeView(APIView):
 
