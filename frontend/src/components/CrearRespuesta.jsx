@@ -11,6 +11,7 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
   const [formData, setFormData] = useState({ respuesta: "" });
   const textareaRef = useRef(null);
   const userId = 1;
+  const [loading, setLoading] = useState(false);
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
@@ -70,6 +71,8 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
 
     if (!validarFormulario()) return;
 
+    setLoading(true);
+
     try {
       const formDataAPI = new FormData();
       formDataAPI.append("usuario", userId);
@@ -93,6 +96,8 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
     } catch (err) {
       console.error("❌ Error al crear la respuesta:", err);
       alert("Ocurrió un error al publicar la respuesta.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -180,9 +185,10 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
 
       <button
         type="submit"
+        disabled={loading}
         className="w-full bg-azulUTN py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
       >
-        Responder
+        {loading ? "Cargando..." : "Responder"}
       </button>
     </form>
   );

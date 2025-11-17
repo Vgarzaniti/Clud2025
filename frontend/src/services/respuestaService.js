@@ -23,10 +23,18 @@ export const respuestaService = {
     }
   },
 
-
   async editar(id, formData) {
-    const { data } = await api.put(`/respuestas/${id}/`, formData);
-    return data;
+    try {
+      const { data } = await api.put(`/respuestas/${id}/`, formData, {
+        headers: {
+          "Accept": "application/json",
+        },
+      });
+      return data;
+    } catch (error) {
+      console.error("❌ Error al editar respuesta:", error.response?.data || error);
+      throw error;
+    }
   },
 
   eliminar: async (id) => {

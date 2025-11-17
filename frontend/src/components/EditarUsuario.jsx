@@ -6,7 +6,7 @@ export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
     username: usuarioActual.username || "",
     email: usuarioActual.email || "",
   });
-
+  const [loading, setLoading] = useState(false);
   const [errores, setErrores] = useState({});
 
   const validar = () => {
@@ -22,10 +22,15 @@ export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
     if (!validar()) return;
+    
+    setLoading(true);
+
     onSave(formData);
     alert("Perfil actualizado correctamente.");
     onClose();
+    setLoading(false);
   };
 
   return (
@@ -82,9 +87,10 @@ export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
 
       <button
         type="submit"
+        disabled={loading}
         className="w-full bg-azulUTN py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
       >
-        Guardar cambios
+        {loading ? "Guardando..." : "Guardar cambios"}
       </button>
     </form>
   );
