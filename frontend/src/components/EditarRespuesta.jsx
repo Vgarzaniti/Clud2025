@@ -6,6 +6,7 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   const [archivos, setArchivos] = useState([]);
   const [archivosOriginales, setArchivosOriginales] = useState([]);
   const [loading, setLoading] = useState(false);
+  const fileInputRef = useRef(null);
 
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
@@ -20,9 +21,12 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   const LIMITE_TOTAL_MB = 20;
 
   useEffect(() => {
-    setArchivos(respuestaActual.archivos || []);
-    setArchivosOriginales(respuestaActual.archivos || []);
+    if (respuestaActual?.archivos) {
+      setArchivos(respuestaActual.archivos);          
+      setArchivosOriginales(respuestaActual.archivos); 
+    }
   }, [respuestaActual]);
+
 
 
   useEffect(() => {
@@ -81,30 +85,51 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
     setLoading(true);
 
     try {
-      
       const formDataAPI = new FormData();
-      formDataAPI.append("respuesta_texto", formData.respuesta.trim());
+
+      formDataAPI.append("respuesta_texto", formData.respuesta);
       formDataAPI.append("usuario", userId);
       formDataAPI.append("foro", respuestaActual.foro);
       formDataAPI.append("materia", respuestaActual.materia);
 
-      const nuevosArchivos = archivos.filter((a) => a instanceof File);
-      nuevosArchivos.forEach((file) => formDataAPI.append("archivos", file));
+      const sanitizarArchivo = (file) => {
+        const nombreSeguro = file.name.replace(/[^\w.-]+/g, "_");
+        return new File([file], nombreSeguro, { type: file.type });
+      };
+
+      const nuevosArchivos = archivos.filter(a => a instanceof File);
+      nuevosArchivos.forEach(file => formDataAPI.append("archivos[]", sanitizarArchivo(file)));
+
+      const archivosPersistentes = archivos
+        .filter(a => !(a instanceof File))
+        .map(a => a.archivo_url);
+
+      formDataAPI.append("persistentes", JSON.stringify(archivosPersistentes));
 
       const archivosEliminados = archivosOriginales.filter(
-        (a) => !archivos.some((file) => file.url === a.url)
+        (orig) => !archivosPersistentes.includes(orig.archivo_url)
       );
 
       formDataAPI.append("eliminados", JSON.stringify(archivosEliminados));
+
+      for (const pair of formDataAPI.entries()) {
+        console.log("FORM DATA →", pair[0], pair[1]);
+      }
 
       const respuestaEditada = await respuestaService.editar(
         respuestaActual.idRespuesta,
         formDataAPI
       );
 
+      console.log("Archivos enviados:", archivos);
+      console.log("Nuevos:", nuevosArchivos);
+      console.log("Persisten:", archivosPersistentes);
+      console.log("Eliminados:", archivosEliminados);
+
       alert("✔ Respuesta actualizada correctamente.");
       onSave(respuestaEditada);
       onClose();
+
     } catch (err) {
       console.error("❌ Error al editar respuesta:", err);
       alert("Ocurrió un error al guardar los cambios.");
@@ -112,7 +137,6 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
       setLoading(false);
     }
   };
-
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">
@@ -149,62 +173,66 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
       {/* Archivos */}
       <div className="w-full">
         <label className="block text-m mb-2">Archivos adjuntos</label>
-        <label
-          htmlFor="file-upload"
-          className="flex flex-col items-center justify-center w-full p-2 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800 hover:bg-gray-700 transition"
+
+        <div
+          className="flex flex-col items-center justify-center w-full p-3 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800 hover:bg-gray-700 transition"
+          onClick={() => fileInputRef.current.click()}
         >
           <p className="text-gray-300 font-medium">
-            Arrastrá tus archivos o <span className="text-azulUTN">seleccionalos</span>
+            Arrastrá archivos o <span className="text-azulUTN underline">seleccionalos</span>
           </p>
-          <p className="text-sm text-gray-400 mt-1">
-            Máx. 5MB por archivo — 20MB total
-          </p>
+          <p className="text-sm text-gray-400 mt-1">Máx. 5MB por archivo — 20MB total</p>
+
           <input
-            id="file-upload"
             type="file"
             multiple
-            onChange={handleArchivoChange}
+            ref={fileInputRef}
             className="hidden"
+            onChange={handleArchivoChange}
           />
-        </label>
+        </div>
 
-        {error && <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>}
+        {error && (
+          <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>
+        )}
 
         {archivos.length > 0 && (
-          <ul className="text-sm text-gray-300 mt-3 max-h-[65px] overflow-y-auto">
+          <ul className="text-sm text-gray-300 mt-3 max-h-[100px] overflow-y-auto">
             {archivos.map((a, i) => {
               const isFile = a instanceof File;
               const nombreArchivo = isFile
                 ? a.name
-                : a.archivo_url
-                ? a.archivo_url.split("/").pop()
-                : "Archivo";
+                : a.archivo_url.split("/").pop();
               const tamaño = isFile
                 ? `${(a.size / 1024 / 1024).toFixed(2)} MB`
-                : "Archivo existente";
+                : "Archivo guardado";
 
               return (
                 <li
                   key={i}
                   className="flex items-center justify-between bg-gray-800 px-3 py-2 mb-2 rounded-lg"
                 >
-                  <div className="flex flex-col">
-                    <span className="text-s">📎 {nombreArchivo}</span>
-                    <span className="text-xs text-gray-400">{tamaño}</span>
+                  <div>
+                    <span>📎 {nombreArchivo}</span>
+                    <p className="text-xs text-gray-500">{tamaño}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => handleEliminarArchivo(i)}
-                    className="text-red-400 hover:text-red-600 transition"
-                  >
-                    <FiTrash2 size={18} />
-                  </button>
+
+                  {(isFile || !isFile) && (
+                    <button
+                      type="button"
+                      onClick={() => handleEliminarArchivo(i)}
+                      className="text-red-400 hover:text-red-600 transition"
+                    >
+                      <FiTrash2 size={18} />
+                    </button>
+                  )}
                 </li>
               );
             })}
           </ul>
         )}
       </div>
+
 
       <button
         type="submit"

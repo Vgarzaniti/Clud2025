@@ -153,7 +153,7 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
             console.error(err);
             alert("❌ Error al guardar.");
         } finally {
-        setLoading(false);
+            setLoading(false);
         }
     };
 

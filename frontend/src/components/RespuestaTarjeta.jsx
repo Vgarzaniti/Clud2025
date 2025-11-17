@@ -33,12 +33,13 @@ export default function RespuestaTarjeta({ respuesta }) {
     }
 
     try {
-      await fetch(`/api/respuestas/${respuesta.idRespuesta}/votar/`, {
+      await fetch(`/api/puntaje/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           usuario: userId,
-          valor: nuevoValor
+          valor: nuevoValor,
+          respuesta: respuesta.idRespuesta,
         }),
       });
 

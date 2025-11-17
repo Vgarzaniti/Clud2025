@@ -11,6 +11,7 @@ export default function CrearForo({ onClose }) {
   const [materias, setMaterias] = useState([]);
   const [carreras, setCarreras] = useState([]);
   const [materiasFiltradas, setMateriasFiltradas] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
@@ -26,6 +27,9 @@ export default function CrearForo({ onClose }) {
   useEffect(() => {
     const cargarDatos = async () => {
       try {
+
+        setLoading(true);
+
         const [carrerasBD, materiasBD] = await Promise.all([
           carreraService.obtenerTodos(),
           materiaService.obtenerTodos(),
@@ -35,6 +39,8 @@ export default function CrearForo({ onClose }) {
         setMateriasFiltradas(materiasBD); 
       } catch (error) {
         console.error("Error al cargar datos:", error);
+      } finally {
+        setLoading(false);
       }
     };
     cargarDatos();
@@ -111,6 +117,8 @@ export default function CrearForo({ onClose }) {
 
     if (!validarFormulario()) return;
 
+    setLoading(true);
+
     try {
       const nuevoForo = {
         usuario: 1, 
@@ -125,8 +133,12 @@ export default function CrearForo({ onClose }) {
     } catch (error) {
       console.error("❌ Error al publicar el foro:", error);
       alert("Hubo un error al publicar el foro. Verifica la consola.");
+    }finally{
+      setLoading(false);
     }
   };
+
+  if (loading) return <p className="text-center text-gray-400 mt-10">Cargando foro...</p>;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 text-white w-full max-w-md">
@@ -259,9 +271,10 @@ export default function CrearForo({ onClose }) {
       {/* Botón final */}
       <button
         type="submit"
+        disabled={loading}
         className="w-full bg-azulUTN py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
       >
-        Publicar
+        {loading ? "Cargando..." : "Publicar"}
       </button>
     </form>
   );
