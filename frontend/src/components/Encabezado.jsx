@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom';
+import utnLogo from "../images/utnLogo.png";
 import "../input.css";
 
 export default function Encabezado() {
@@ -16,8 +17,8 @@ export default function Encabezado() {
                     <Link to="/perfil" className='hover:text-indigo-600'>Mi perfil</Link>
                     <Link to="/ayuda" className='hover:text-indigo-600'>Ayuda</Link>
                     
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center font-semibold text-fondo">
-                        US
+                    <div className="flex items-center justify-center">
+                        <img src={utnLogo} alt="UTN Logo" className="w-6 h-6" />
                     </div>
                 </div>
             </div>
