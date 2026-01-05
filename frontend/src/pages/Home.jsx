@@ -61,6 +61,7 @@ export default function Home() {
           materia_nombre: materiaInfo?.nombre || "Sin materia",
           carrera_nombre: carreraInfo?.nombre || "Sin carrera",
           carreraId: carreraInfo?.idCarrera,
+          materiaId: materiaInfo?.idMateria,
       };
     });
   }, [foros, materias, carreras]);
@@ -84,7 +85,7 @@ export default function Home() {
 
       const coincideMateria =
         !filtroMateria ||
-        foro.materiaInfo?.idMateria === parseInt(filtroMateria);
+        foro.materiaId === parseInt(filtroMateria);
 
       return coincideBusqueda && coincideCarrera && coincideMateria;
     });
