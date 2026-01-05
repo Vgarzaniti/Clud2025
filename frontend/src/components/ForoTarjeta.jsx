@@ -10,7 +10,9 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
       className="relative bg-panel p-5 rounded-2xl border border-gray-700 shadow-md cursor-pointer hover:bg-gray-800 transition"
     >
       <div className="flex justify-between items-start">
-        <h2 className="text-lg font-semibold text-white mr-4">{foro.pregunta}</h2>
+        <h2 className="text-lg font-semibold text-white mr-4">
+          {foro.pregunta}
+        </h2>
 
         {mostrarAcciones && (
           <div className="flex gap-2">
@@ -53,10 +55,9 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
         <span>Autor: {foro.usuario || "Anónimo"}</span>
-        <span>💬 {foro.respuestas_count ?? 0} respuestas</span>
+        <span>💬 {foro.totalRespuestas} respuestas</span>
       </div>
     </div>
-
   );
 }
 
