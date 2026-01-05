@@ -140,12 +140,6 @@ export default function ForoDetalle() {
 
       {/* Columna lateral */}
       <div className="flex flex-col gap-4">
-        <button
-          onClick={() => setMostrarRespuesta(true)}
-          className="w-full bg-azulUTN text-white py-3 rounded-xl font-semibold hover:bg-blue-500 transition text-lg shadow-lg"
-        >
-          Responder
-        </button>
 
         <aside className="bg-panel p-4 rounded-2xl border border-gray-700 h-fit space-y-4">
           <div className="border border-gray-600 rounded-lg p-3">
@@ -169,6 +163,13 @@ export default function ForoDetalle() {
             </p>
           </div>
         </aside>
+        
+        <button
+          onClick={() => setMostrarRespuesta(true)}
+          className="w-full bg-azulUTN text-white py-3 rounded-xl font-semibold hover:bg-blue-500 transition text-lg shadow-lg"
+        >
+          Responder
+        </button>
       </div>
 
       {/* Modal para responder */}
