@@ -19,6 +19,7 @@ export default function Perfil() {
   const [respuestaSeleccionada, setRespuestaSeleccionada] = useState(null);
   const [mostrarEditarUsuario, setMostrarEditarUsuario] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
+  const [mostrarConfirmarCerrarSesion, setMostrarConfirmarCerrarSesion] = useState(false);
   const [elementoAEliminar, setElementoAEliminar] = useState(null);
   const [foros, setForos] = useState([]);
   const [carreras, setCarreras] = useState([]);
@@ -164,6 +165,11 @@ export default function Perfil() {
     }
   };
 
+  const handleConfirmarCerrarSesion = () => {
+    setMostrarConfirmarCerrarSesion(false);
+    navigate("/");
+  }
+
   return (
     <div className="max-w-7xl mx-auto mt-10 px-6 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Panel lateral usuario */}
@@ -201,7 +207,7 @@ export default function Perfil() {
             Editar
           </button>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => setMostrarConfirmarCerrarSesion(true)}
             className="bg-red-500 text-white py-2 rounded-lg font-semibold hover:bg-red-600 transition"
           >
             Cerrar sesión
@@ -345,6 +351,32 @@ export default function Perfil() {
             </button>
             <button
               onClick={() => setMostrarConfirmar(false)}
+              className="bg-gray-700 px-5 py-2 rounded-lg text-white hover:bg-gray-600"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal confirmar cierre de sesión */}
+      <Modal 
+        visible={mostrarConfirmarCerrarSesion}
+        onClose={() => setMostrarConfirmarCerrarSesion(false)}
+      >
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-4 mt-5 text-white">
+            ¿Estás seguro de que deseas cerrar sesión?
+          </h2>
+          <div className="flex justify-center gap-1">
+            <button
+              onClick={handleConfirmarCerrarSesion}
+              className="bg-red-600 px-5 py-2 rounded-lg text-white hover:bg-red-700"
+            >
+              Cerrar sesión
+            </button>
+            <button
+              onClick={() => setMostrarConfirmarCerrarSesion(false)}
               className="bg-gray-700 px-5 py-2 rounded-lg text-white hover:bg-gray-600"
             >
               Cancelar
