@@ -145,7 +145,7 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">
+        <form onSubmit={handleSubmit} className="space-y-7 text-white w-full max-w-md">
             <h2 className="text-xl font-semibold text-center mb-2">Editar Foro</h2>
 
             <div>

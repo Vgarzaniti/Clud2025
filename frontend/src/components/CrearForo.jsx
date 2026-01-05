@@ -129,7 +129,7 @@ export default function CrearForo({ onClose }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 text-white w-full max-w-md">
+    <form onSubmit={handleSubmit} className="space-y-8 text-white w-full max-w-md">
       <h2 className="text-2xl font-semibold text-center mb-2">Crear Foro</h2>
 
       {/* Selección de carrera */}
@@ -142,13 +142,16 @@ export default function CrearForo({ onClose }) {
             erroresCampos.carrera ? "border-red-500" : "border-gray-600"
           } focus:outline-none cursor-pointer`}
         >
-          <option value="">Todas las carreras</option>
+          <option value="">Seleccionar carrera</option>
           {carreras.map((c) => (
             <option key={c.idCarrera} value={c.idCarrera}>
               {c.nombre}
             </option>
           ))}
         </select>
+        {erroresCampos.carrera && (
+          <p className="text-red-500 text-sm mt-1">{erroresCampos.carrera}</p>
+        )}
       </div>
 
       {/* Selección de materia */}
