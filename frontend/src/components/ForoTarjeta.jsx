@@ -6,13 +6,36 @@ import "../input.css";
 export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onEliminar }) {
   const navigate = useNavigate();
   const [totalRespuestas, setTotalRespuestas] = useState(0);
+  const [loadingResp, setLoadingResp] = useState(true);
 
   useEffect(() => {
+    let activo = true;
+
     const cargar = async () => {
-      const data = await foroService.obtenerPorId(foro.idForo, true);
-      setTotalRespuestas(data.totalRespuestas);
+      try {
+        setLoadingResp(true);
+        const data = await foroService.obtenerPorId(foro.idForo, true);
+
+        if (activo) {
+          setTotalRespuestas(data.totalRespuestas);
+        }
+      } catch (error) {
+        if (activo) {
+          setTotalRespuestas(0);
+          console.error("Error al cargar el total de respuestas:", error);
+        }
+      } finally {
+        if (activo) {
+          setLoadingResp(false);
+        }
+      }
     };
+
     cargar();
+
+    return () => {
+      activo = false;
+    };
   }, [foro.idForo]);
 
   return (
@@ -66,7 +89,14 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
         <span>Autor: {foro.usuario || "Anónimo"}</span>
-        <span>💬 {totalRespuestas} respuestas</span>
+        <span className="flex items-center gap-2">
+          💬
+          {loadingResp ? (
+            <span className="animate-pulse">Cargando...</span>
+          ) : (
+            <span>{totalRespuestas} respuestas</span>
+          )}
+        </span>
       </div>
     </div>
   );
