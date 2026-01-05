@@ -22,8 +22,7 @@ export const respuestaService = {
       throw error;
     }
   },
-
-
+  
   async editar(id, formData) {
     const { data } = await api.put(`/respuestas/${id}/`, formData);
     return data;

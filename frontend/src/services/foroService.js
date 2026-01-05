@@ -1,5 +1,6 @@
 import api from "./api";
 import { materiaService } from "./materiaService";
+import { respuestaService } from "./respuestaService";
 
 const normalizarRespuesta = (data) => {
   if (Array.isArray(data)) return data; 
@@ -26,13 +27,23 @@ export const foroService = {
 
   obtenerPorId: async (id) => {
     try {
-      const res = await api.get(`/foros/${id}/?format=json`);
-      return res.data;
+      const foroRes = await api.get(`/foros/${id}/?format=json`);
+      const respuestas = await respuestaService.obtenerPorTodos();
+
+      const respuestasDelForo = respuestas.filter(
+        (r) => String(r.foro) === String(id)
+      );
+
+      return {
+        ...foroRes.data,
+        totalRespuestas: respuestasDelForo.length
+      };
     } catch (error) {
       console.error(`❌ Error al obtener el foro con ID ${id}:`, error);
       throw error;
     }
   },
+
 
   crear: async (datos) => {
     try {

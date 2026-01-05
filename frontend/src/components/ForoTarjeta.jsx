@@ -1,8 +1,19 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { foroService } from "../services/foroService";
 import "../input.css";
 
 export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onEliminar }) {
   const navigate = useNavigate();
+  const [totalRespuestas, setTotalRespuestas] = useState(0);
+
+  useEffect(() => {
+    const cargar = async () => {
+      const data = await foroService.obtenerPorId(foro.idForo, true);
+      setTotalRespuestas(data.totalRespuestas);
+    };
+    cargar();
+  }, [foro.idForo]);
 
   return (
     <div
@@ -55,7 +66,7 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
         <span>Autor: {foro.usuario || "Anónimo"}</span>
-        <span>💬 {foro.totalRespuestas} respuestas</span>
+        <span>💬 {totalRespuestas} respuestas</span>
       </div>
     </div>
   );
