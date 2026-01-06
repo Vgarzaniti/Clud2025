@@ -4,7 +4,7 @@ import { foroService } from "../services/foroService.js";
 import { materiaService } from "../services/materiaService.js";
 import { carreraService } from "../services/carreraService.js";
 
-export default function CrearForo({ onClose }) {
+export default function CrearForo({ onClose, onForoCreado }) {
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
@@ -47,6 +47,8 @@ export default function CrearForo({ onClose }) {
       textarea.style.height = textarea.scrollHeight + "px";
     }
   }, [formData.pregunta]);
+
+  
 
   useEffect(() => {
     if (formData.carrera) {
@@ -118,9 +120,10 @@ export default function CrearForo({ onClose }) {
         pregunta: formData.pregunta,
       };
 
-      await foroService.crear(nuevoForo);
+      const foroCreado = await foroService.crear(nuevoForo);
 
       alert("✅ Foro publicado correctamente.");
+      onForoCreado(foroCreado);
       onClose();
     } catch (error) {
       console.error("❌ Error al publicar el foro:", error);
