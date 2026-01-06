@@ -11,6 +11,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
   const [materias, setMaterias] = useState([]);
   const [carreras, setCarreras] = useState([]);
   const [materiasFiltradas, setMateriasFiltradas] = useState([]);
+  const [cargando, setCargando] = useState(false);
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
@@ -47,8 +48,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
       textarea.style.height = textarea.scrollHeight + "px";
     }
   }, [formData.pregunta]);
-
-  
 
   useEffect(() => {
     if (formData.carrera) {
@@ -106,6 +105,9 @@ export default function CrearForo({ onClose, onForoCreado }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (cargando) return;
+    
     if (error) {
       alert("Corrige los errores antes de publicar.");
       return;
@@ -113,6 +115,8 @@ export default function CrearForo({ onClose, onForoCreado }) {
 
     if (!validarFormulario()) return;
 
+    setCargando(true);
+    
     try {
       const nuevoForo = {
         usuario: 1, 
@@ -128,6 +132,8 @@ export default function CrearForo({ onClose, onForoCreado }) {
     } catch (error) {
       console.error("❌ Error al publicar el foro:", error);
       alert("Hubo un error al publicar el foro. Verifica la consola.");
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -265,9 +271,15 @@ export default function CrearForo({ onClose, onForoCreado }) {
       {/* Botón final */}
       <button
         type="submit"
-        className="w-full bg-azulUTN py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
+        disabled={cargando}
+        className={`w-full py-2 rounded-lg font-semibold transition
+          ${
+            cargando
+              ? "bg-gray-500 cursor-not-allowed opacity-70"
+              : "bg-azulUTN hover:bg-blue-500"
+          }`}
       >
-        Publicar
+        {cargando ? "Publicando..." : "Publicar"}
       </button>
     </form>
   );

@@ -10,6 +10,7 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
   const [erroresCampos, setErroresCampos] = useState({});
   const [formData, setFormData] = useState({ respuesta: "" });
   const textareaRef = useRef(null);
+  const [cargando, setCargando] = useState(false);
   const userId = 1;
 
   const Limite_Individual_MB = 5;
@@ -63,12 +64,16 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (cargando) return;
+
     if (error) {
       alert("Corrige los errores antes de publicar.");
       return;
     }
 
     if (!validarFormulario()) return;
+
+    setCargando(true);
 
     try {
       const formDataAPI = new FormData();
@@ -93,6 +98,8 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
     } catch (err) {
       console.error("❌ Error al crear la respuesta:", err);
       alert("Ocurrió un error al publicar la respuesta.");
+    }finally{
+      setCargando(false);
     }
   };
 
@@ -180,9 +187,15 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
 
       <button
         type="submit"
-        className="w-full bg-azulUTN py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
+        disabled={cargando}
+        className={`w-full py-2 rounded-lg font-semibold transition
+          ${
+            cargando
+              ? "bg-gray-500 cursor-not-allowed opacity-70"
+              : "bg-azulUTN hover:bg-blue-500"
+          }`}
       >
-        Responder
+        {cargando ? "Respondiendo..." : "Responder"}
       </button>
     </form>
   );

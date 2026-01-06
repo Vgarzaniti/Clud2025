@@ -12,6 +12,7 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
     const [materias, setMaterias] = useState([]); 
     const [carreras, setCarreras] = useState([]);
     const [materiasFiltradas, setMateriasFiltradas] = useState([]);
+    const [cargando, setCargando] = useState(false);
 
     const Limite_Individual_MB = 5;
     const Limite_Total_MB = 20;
@@ -119,12 +120,17 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        if (cargando) return;
+
         if (error) {
         alert("Corrige los errores antes de publicar.");
         return;
         }
 
         if (!validarFormulario()) return;
+
+        setCargando(true);
 
         try {
         const foroEditado = {
@@ -138,11 +144,15 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
         alert("✅ Foro editado correctamente.");
         onSave(foroEditado);
         onClose();
-        } catch (error) {
+        
+    } catch (error) {
         console.error("❌ Error al editar el foro:", error);
         alert("Ocurrió un error al guardar los cambios.");
-        }
+        
+    } finally {
+        setCargando(false);
     };
+}
 
     return (
         <form onSubmit={handleSubmit} className="space-y-7 text-white w-full max-w-md">
@@ -272,9 +282,15 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
 
             <button
                 type="submit"
-                className="w-full bg-azulUTN py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
+                disabled={cargando}
+                className={`w-full py-2 rounded-lg font-semibold transition
+                ${
+                    cargando
+                    ? "bg-gray-500 cursor-not-allowed opacity-70"
+                    : "bg-azulUTN hover:bg-blue-500"
+                }`}
             >
-                Guardar cambios
+                { cargando ? "Guardando cambios..." : "Guardar cambios"}
             </button>
         </form>
     );
