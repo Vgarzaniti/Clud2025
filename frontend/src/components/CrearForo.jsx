@@ -11,6 +11,7 @@ export default function CrearForo({ onClose }) {
   const [materias, setMaterias] = useState([]);
   const [carreras, setCarreras] = useState([]);
   const [materiasFiltradas, setMateriasFiltradas] = useState([]);
+  const [cargando, setCargando] = useState(false);
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
@@ -104,6 +105,9 @@ export default function CrearForo({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (cargando) return;
+    
     if (error) {
       alert("Corrige los errores antes de publicar.");
       return;
@@ -111,6 +115,8 @@ export default function CrearForo({ onClose }) {
 
     if (!validarFormulario()) return;
 
+    setCargando(true);
+    
     try {
       const nuevoForo = {
         usuario: 1, 
