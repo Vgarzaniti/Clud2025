@@ -49,8 +49,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
     }
   }, [formData.pregunta]);
 
-  
-
   useEffect(() => {
     if (formData.carrera) {
       const filtradas = materias.filter(
@@ -134,6 +132,8 @@ export default function CrearForo({ onClose, onForoCreado }) {
     } catch (error) {
       console.error("❌ Error al publicar el foro:", error);
       alert("Hubo un error al publicar el foro. Verifica la consola.");
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -271,9 +271,15 @@ export default function CrearForo({ onClose, onForoCreado }) {
       {/* Botón final */}
       <button
         type="submit"
-        className="w-full bg-azulUTN py-2 rounded-lg font-semibold hover:bg-blue-500 transition"
+        disabled={cargando}
+        className={`w-full py-2 rounded-lg font-semibold transition
+          ${
+            cargando
+              ? "bg-gray-500 cursor-not-allowed opacity-70"
+              : "bg-azulUTN hover:bg-blue-500"
+          }`}
       >
-        Publicar
+        {cargando ? "Publicando..." : "Publicar"}
       </button>
     </form>
   );

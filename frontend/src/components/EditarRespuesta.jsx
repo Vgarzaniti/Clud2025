@@ -14,6 +14,7 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   const [formData, setFormData] = useState({
     respuesta: respuestaActual.respuesta_texto || "",
   });
+  const [cargando, setCargando] = useState(false);
 
   const textareaRef = useRef(null);
   const LIMITE_INDIVIDUAL_MB = 5;
@@ -66,12 +67,16 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (cargando) return;
+
     if (error) {
       alert("Corrige los errores antes de guardar.");
       return;
     }
 
     if (!validarFormulario()) return;
+
+    setCargando(true);
 
     try {
       const formDataAPI = new FormData();
@@ -96,6 +101,8 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
     } catch (err) {
       console.error("❌ Error al editar respuesta:", err);
       alert("Ocurrió un error al guardar los cambios.");
+    } finally {
+      setCargando(false);
     }
   };
 
@@ -193,9 +200,15 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
 
       <button
         type="submit"
-        className="w-full bg-green-600 py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+        disabled={cargando}
+        className={`w-full py-2 rounded-lg font-semibold transition
+        ${
+          cargando
+          ? "bg-gray-500 cursor-not-allowed opacity-70"
+          : "bg-azulUTN hover:bg-blue-500"
+        }`}
       >
-        Guardar cambios
+        { cargando ? "Guardando cambios..." : "Guardar cambios"}
       </button>
     </form>
   );
