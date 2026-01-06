@@ -14,6 +14,7 @@ export default function Materia() {
     const [carga, setCarga] = useState(true);
     const [error, setError] = useState(null);
     const [busqueda, setBusqueda] = useState("");
+    const [materiaActual, setMateriaActual] = useState(null);
 
     const formatoNombre = (texto) => {
         return texto
@@ -24,46 +25,55 @@ export default function Materia() {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const [dataForos] = await Promise.all([
-                foroService.obtenerTodos(),
-                materiaService.obtenerTodos(),
+                const [dataForos, dataMaterias] = await Promise.all([
+                    foroService.obtenerTodos(),
+                    materiaService.obtenerTodos(),
                 ]);
 
-                const forosOrdenados = dataForos
-                .filter((foro) => foro.fecha_creacion)
-                .sort(
-                    (a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
+                const materiaEncontrada = dataMaterias.find(
+                    (m) => formatoNombre(m.nombre) === formatoNombre(nombre)
                 );
 
-                setForos(forosOrdenados);
+                setMateriaActual(materiaEncontrada);
+
+                setForos(
+                dataForos
+                    .filter((f) => f.fecha_creacion)
+                    .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+                );
+
             } catch (error) {
+
                 console.error("Error al cargar datos:", error);
                 setError("Ocurrió un error al cargar los foros o materias.");
+
             } finally {
+
                 setCarga(false);
+
             }
         };
         cargarDatos();
-    }, []);
+    },);
 
     const forosPorMateria = useMemo(() => {
-        const nombreMateriaURL = formatoNombre(nombre);
-        return foros.filter((foro) => {
-            const materiaNombre =
-                typeof foro.materia === "string"
-                ? foro.materia
-                : foro.materia?.nombre || foro.materia_nombre || "";
+        if (!materiaActual) return [];
 
-            const materiaNormalizada = formatoNombre(materiaNombre);
-            return materiaNormalizada === nombreMateriaURL;
-        });
-    }, [foros, nombre]);
+        return foros.filter(
+            (foro) => foro.materia === materiaActual.idMateria
+        );
+        
+    }, [foros, materiaActual]);
 
     const forosFiltrados = useMemo(() => {
         return forosPorMateria.filter((foro) =>
             foro.pregunta?.toLowerCase().includes(busqueda.toLowerCase())
         );
     }, [forosPorMateria, busqueda]);
+
+    const handleForoCreado = (foroNuevo) => {
+        setForos((prev) => [foroNuevo, ...prev]);
+    };
 
     if (carga) {
         return (
@@ -113,6 +123,8 @@ export default function Materia() {
             <Modal visible={mostrarForo} onClose={() => setMostrarForo(false)}>
                 <CrearForo 
                     onClose={() => setMostrarForo(false)} 
+                    onForoCreado={handleForoCreado}
+                    materiaSeleccionada={materiaActual?.idMateria}
                 />
             </Modal>
         </div>

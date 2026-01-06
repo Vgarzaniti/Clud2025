@@ -20,6 +20,9 @@ export default function Home() {
   const [filtroCarrera, setFiltroCarrera] = useState("");
   const [filtroMateria, setFiltroMateria] = useState("");
 
+  const handleForoCreado = (foroNuevo) => {
+    setForos((prev) => [foroNuevo, ...prev]);
+  };
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -138,6 +141,7 @@ export default function Home() {
       <Modal visible={mostrarForo} onClose={() => setMostrarForo(false)}>
         <CrearForo
           onClose={() => setMostrarForo(false)}
+          onForoCreado={handleForoCreado}
           carreraSeleccionada={filtroCarrera}
           materiaSeleccionada={filtroMateria}
         />
