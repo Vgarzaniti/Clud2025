@@ -1,54 +1,47 @@
-import threading
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from ..models import Foro, ForoArchivo
+
+from ..models import Foro, ForoArchivo, Archivo
 from ..serializers.foro_serializer import ForoSerializer
 from .hash import file_hash
-from cloudinary.exceptions import Error as CloudinaryError
 
 
 class ForoViewSet(viewsets.ModelViewSet):
     queryset = Foro.objects.all().order_by('-fecha_creacion')
     serializer_class = ForoSerializer
 
-    # 🔹 Función reusable para subir un archivo (thread-safe)
+    # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod
-    def _subir_archivo_thread(archivo, foro):
-        """
-        Guarda el archivo usando CloudinaryField
-        """
+    def _procesar_archivo(archivo_file, foro):
         try:
-            hash_archivo = file_hash(archivo)
+            hash_archivo = file_hash(archivo_file)
 
-            # Evita duplicados por foro
-            if ForoArchivo.objects.filter(foro=foro, hash=hash_archivo).exists():
-                return
+            # 1️⃣ Buscar archivo global por hash
+            archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
 
-            ForoArchivo.objects.create(
+            # 2️⃣ Si NO existe → subir a Cloudinary UNA sola vez
+            if not archivo_global:
+                archivo_global = Archivo.objects.create(
+                    archivo=archivo_file,
+                    hash=hash_archivo
+                )
+
+            # 3️⃣ Asociar archivo al foro (sin duplicar relación)
+            ForoArchivo.objects.get_or_create(
                 foro=foro,
-                archivo=archivo,  # ✅ AQUÍ está la corrección clave
-                hash=hash_archivo
+                archivo=archivo_global
             )
 
-        except CloudinaryError:
-            pass
+        except Exception as e:
+            print("Error procesando archivo:", e)
 
-    # 🔹 Subida múltiple en paralelo
+    # 🔹 Procesar múltiples archivos (SECUENCIAL)
     def _subir_archivos(self, foro, archivos):
         if not archivos:
             return
 
-        threads = []
         for archivo in archivos:
-            t = threading.Thread(
-                target=self._subir_archivo_thread,
-                args=(archivo, foro)
-            )
-            t.start()
-            threads.append(t)
-
-        for t in threads:
-            t.join()
+            self._procesar_archivo(archivo, foro)
 
         foro.refresh_from_db()
 
@@ -99,18 +92,18 @@ class ForoViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         foro = serializer.save()
 
-        # 🔹 Eliminar archivos
+        # 🔹 Eliminar relación foro ↔ archivo (NO borra Cloudinary)
         for archivo_id in archivos_a_eliminar:
             try:
-                archivo_obj = ForoArchivo.objects.get(
+                foro_archivo = ForoArchivo.objects.get(
                     id=archivo_id,
                     foro=foro
                 )
-                archivo_obj.delete()  # signal borra en Cloudinary
+                foro_archivo.delete()
             except ForoArchivo.DoesNotExist:
                 pass
 
-        # 🔹 Subir nuevos
+        # 🔹 Subir / reutilizar archivos nuevos
         self._subir_archivos(foro, archivos_nuevos)
 
         foro.refresh_from_db()
