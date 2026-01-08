@@ -169,11 +169,11 @@ class RespuestaArchivo(models.Model):
     archivo = models.ForeignKey(
         Archivo,
         on_delete=models.CASCADE,
-        related_name='respuestas'
+        related_name='respuesta'
     )
 
     class Meta:
-        unique_together = ('foro', 'archivo')
+        unique_together = ('respuesta', 'archivo')
 
 class Puntaje(models.Model):
     LIKE = 1
