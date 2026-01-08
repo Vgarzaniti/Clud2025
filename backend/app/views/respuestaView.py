@@ -1,116 +1,160 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from django.db.models import Avg, Count
-from ..models import Respuesta, RespuestaArchivo, Foro, Puntaje
-from ..serializers.respuesta_serializer import RespuestaSerializer, PuntajeRespuestaSerializer
 from rest_framework.views import APIView
-from cloudinary.uploader import upload, destroy
-from cloudinary.exceptions import Error as CloudinaryError
-from .hash import file_hash  # tu función MD5
+
+from ..models import (
+    Respuesta,
+    RespuestaArchivo,
+    Foro,
+    Puntaje,
+    Archivo
+)
+from ..serializers.respuesta_serializer import (
+    RespuestaSerializer,
+    PuntajeRespuestaSerializer
+)
+from .hash import file_hash
+
 
 class RespuestaViewSet(viewsets.ModelViewSet):
     queryset = Respuesta.objects.all().order_by('-fecha_creacion')
     serializer_class = RespuestaSerializer
 
+    # ===============================
+    # 🔹 MANEJO DE ARCHIVOS (GLOBAL)
+    # ===============================
+    @staticmethod
+    def _procesar_archivo(archivo_file, respuesta):
+        try:
+            hash_archivo = file_hash(archivo_file)
+
+            # 1️⃣ Buscar archivo global por hash
+            archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
+
+            # 2️⃣ Si no existe → subir a Cloudinary UNA sola vez
+            if not archivo_global:
+                archivo_global = Archivo.objects.create(
+                    archivo=archivo_file,
+                    hash=hash_archivo
+                )
+
+            # 3️⃣ Asociar archivo a la respuesta (sin duplicar)
+            RespuestaArchivo.objects.get_or_create(
+                respuesta=respuesta,
+                archivo=archivo_global
+            )
+
+        except Exception as e:
+            print("Error procesando archivo de respuesta:", e)
+
+    def _subir_archivos(self, respuesta, archivos):
+        if not archivos:
+            return
+
+        for archivo in archivos:
+            self._procesar_archivo(archivo, respuesta)
+
+        respuesta.refresh_from_db()
+
+    # ===============================
+    # 🔹 CREATE
+    # ===============================
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         archivos = request.FILES.getlist("archivos")
+
         respuesta_texto = data.get("respuesta_texto")
-
         if not respuesta_texto:
-            return Response({"error": "La respuesta no puede estar vacía."}, status=400)
+            return Response(
+                {"error": "La respuesta no puede estar vacía."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Recuperar foro
+        # Obtener foro
         foro_id = data.get("foro")
         try:
             foro = Foro.objects.get(pk=foro_id)
         except Foro.DoesNotExist:
-            return Response({"error": "No existe el foro indicado."}, status=400)
+            return Response(
+                {"error": "No existe el foro indicado."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        # Asignar materia automáticamente desde el foro
+        # Asignar materia automáticamente
         data["materia"] = foro.materia.idMateria
 
-        # Crear la respuesta
         serializer = RespuestaSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # Guardar archivos evitando duplicados por hash
-        for archivo in archivos:
-            hash_archivo = file_hash(archivo)
-            if not RespuestaArchivo.objects.filter(respuesta=respuesta, hash=hash_archivo).exists():
-                try:
-                    result = upload(archivo)
-                    url = result['secure_url']
-                    RespuestaArchivo.objects.create(respuesta=respuesta, archivo=url, hash=hash_archivo)
-                except CloudinaryError:
-                    continue
+        # Procesar archivos (deduplicación global)
+        self._subir_archivos(respuesta, archivos)
 
-        respuesta.refresh_from_db()
-        return Response(RespuestaSerializer(respuesta).data, status=201)
+        return Response(
+            RespuestaSerializer(respuesta).data,
+            status=status.HTTP_201_CREATED
+        )
 
+    # ===============================
+    # 🔹 UPDATE
+    # ===============================
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         data = request.data.copy()
+
         archivos_nuevos = request.FILES.getlist("archivos")
         archivos_a_eliminar = data.get("archivos_a_eliminar", [])
 
-        # Convertir string a lista si es necesario
         if archivos_a_eliminar and isinstance(archivos_a_eliminar, str):
-            archivos_a_eliminar = [int(x) for x in archivos_a_eliminar.split(',')]
+            archivos_a_eliminar = [
+                int(x) for x in archivos_a_eliminar.split(',')
+            ]
 
-        # Actualizar campos de Respuesta
         serializer = RespuestaSerializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # ELIMINAR ARCHIVOS
+        # 🔹 Eliminar SOLO la relación respuesta ↔ archivo
         for archivo_id in archivos_a_eliminar:
             try:
-                archivo_obj = RespuestaArchivo.objects.get(id=archivo_id, respuesta=respuesta)
-                try:
-                    public_id = archivo_obj.archivo.split('/upload/')[-1].rsplit('.', 1)[0]
-                    destroy(public_id)
-                except CloudinaryError:
-                    pass
-                archivo_obj.delete()
+                relacion = RespuestaArchivo.objects.get(
+                    id=archivo_id,
+                    respuesta=respuesta
+                )
+                relacion.delete()
             except RespuestaArchivo.DoesNotExist:
                 pass
 
-        # AGREGAR ARCHIVOS NUEVOS EVITANDO DUPLICADOS POR HASH
-        for archivo in archivos_nuevos:
-            hash_archivo = file_hash(archivo)
-            if not RespuestaArchivo.objects.filter(respuesta=respuesta, hash=hash_archivo).exists():
-                try:
-                    result = upload(archivo)
-                    url = result['secure_url']
-                    RespuestaArchivo.objects.create(respuesta=respuesta, archivo=url, hash=hash_archivo)
-                except CloudinaryError:
-                    continue
+        # 🔹 Procesar archivos nuevos
+        self._subir_archivos(respuesta, archivos_nuevos)
 
-        respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data)
 
+
+# =====================================================
+# 🔹 PUNTAJES (NO SE MODIFICA)
+# =====================================================
 class RespuestaPuntajeView(APIView):
 
     def post(self, request):
         serializer = PuntajeRespuestaSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         respuesta = serializer.validated_data['respuesta']
         usuario = serializer.validated_data['usuario']
-        nuevo_valor = serializer.validated_data['valor']  # 1 = like, -1 = dislike
+        nuevo_valor = serializer.validated_data['valor']
 
-        # Buscar voto anterior (si existe)
         puntaje_existente = Puntaje.objects.filter(
             respuesta=respuesta,
             usuario=usuario
         ).first()
 
         if puntaje_existente:
-            # Si repite mismo voto → se borra (NONE / 0)
             if puntaje_existente.valor == nuevo_valor:
                 puntaje_existente.valor = Puntaje.NONE
             else:
@@ -119,9 +163,7 @@ class RespuestaPuntajeView(APIView):
             puntaje_existente.save()
             puntaje = puntaje_existente
             creado = False
-
         else:
-            # Crear nuevo voto
             puntaje = Puntaje.objects.create(
                 respuesta=respuesta,
                 usuario=usuario,
@@ -129,11 +171,19 @@ class RespuestaPuntajeView(APIView):
             )
             creado = True
 
-        # 🔥 Recalcular siempre los totales de la respuesta
-        respuesta.total_likes = respuesta.puntajes.filter(valor=Puntaje.LIKE).count()
-        respuesta.total_dislikes = respuesta.puntajes.filter(valor=Puntaje.DISLIKE).count()
-        respuesta.total_votos = respuesta.puntajes.exclude(valor=Puntaje.NONE).count()
-        respuesta.puntaje_neto = respuesta.total_likes - respuesta.total_dislikes
+        # Recalcular totales
+        respuesta.total_likes = respuesta.puntajes.filter(
+            valor=Puntaje.LIKE
+        ).count()
+        respuesta.total_dislikes = respuesta.puntajes.filter(
+            valor=Puntaje.DISLIKE
+        ).count()
+        respuesta.total_votos = respuesta.puntajes.exclude(
+            valor=Puntaje.NONE
+        ).count()
+        respuesta.puntaje_neto = (
+            respuesta.total_likes - respuesta.total_dislikes
+        )
         respuesta.save()
 
         mensaje = "Puntaje creado." if creado else "Puntaje actualizado."
@@ -149,7 +199,6 @@ class RespuestaPuntajeView(APIView):
             status=status.HTTP_200_OK
         )
 
-
     def get(self, request, respuesta_id):
         try:
             respuesta = Respuesta.objects.get(pk=respuesta_id)
@@ -159,10 +208,12 @@ class RespuestaPuntajeView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        return Response({
-            "respuesta_id": respuesta.idRespuesta,
-            "total_likes": respuesta.total_likes,
-            "total_dislikes": respuesta.total_dislikes,
-            "total_votos": respuesta.total_votos,
-            "puntaje_neto": respuesta.puntaje_neto
-        })
+        return Response(
+            {
+                "respuesta_id": respuesta.idRespuesta,
+                "total_likes": respuesta.total_likes,
+                "total_dislikes": respuesta.total_dislikes,
+                "total_votos": respuesta.total_votos,
+                "puntaje_neto": respuesta.puntaje_neto,
+            }
+        )

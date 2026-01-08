@@ -3,7 +3,21 @@ from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 
+class Archivo(models.Model):
+    archivo = CloudinaryField(
+        'archivo',
+        resource_type='raw',
+        null=False,
+        blank=False
+    )
+    hash = models.CharField(
+        max_length=32,
+        unique=True,
+        db_index=True
+    )
 
+    def __str__(self):
+        return self.hash
 # -------------------- CARRERA --------------------
 class Carrera(models.Model):
     idCarrera = models.AutoField(primary_key=True)
@@ -89,19 +103,18 @@ class ForoArchivo(models.Model):
     foro = models.ForeignKey(
         Foro,
         on_delete=models.CASCADE,
-        related_name='archivos',
-        null=False,
-        blank=False
+        related_name='archivos'
     )
-    archivo = CloudinaryField('archivo',resource_type='raw', null=False, blank=False)
-    hash = models.CharField(max_length=32, null=False, blank=False)  # MD5 del archivo
-    def __str__(self):
-        return f"Archivo del Foro {self.foro.idForo}"
+    archivo = models.ForeignKey(
+        Archivo,
+        on_delete=models.CASCADE,
+        related_name='foros'
+    )
 
     class Meta:
-        db_table = 'ForoArchivo'
-        verbose_name_plural = 'Archivos de Foros'
-        unique_together = ('foro', 'hash')  # evita duplicados
+        unique_together = ('foro', 'archivo')
+
+
 
 
 # -------------------- RESPUESTA --------------------
@@ -153,15 +166,14 @@ class RespuestaArchivo(models.Model):
         null=False,
         blank=False
     )
-    archivo = CloudinaryField('archivo', null=False, blank=False)
-    hash = models.CharField(max_length=32, null=False, blank=False)  # MD5 del archivo
-    def __str__(self):
-        return f"Archivo de Respuesta {self.respuesta.idRespuesta}"
+    archivo = models.ForeignKey(
+        Archivo,
+        on_delete=models.CASCADE,
+        related_name='respuestas'
+    )
 
     class Meta:
-        db_table = 'RespuestaArchivo'
-        verbose_name_plural = 'Archivos de Respuestas'
-        unique_together = ('respuesta', 'hash')  # evita duplicados
+        unique_together = ('foro', 'archivo')
 
 class Puntaje(models.Model):
     LIKE = 1
