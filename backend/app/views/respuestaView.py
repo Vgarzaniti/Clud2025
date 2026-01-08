@@ -17,7 +17,6 @@ from .hash import file_hash
 
 
 class RespuestaViewSet(viewsets.ModelViewSet):
-    # 🔥 CLAVE: traer relaciones
     queryset = Respuesta.objects.prefetch_related(
         'archivos__archivo'
     ).order_by('-fecha_creacion')
@@ -32,7 +31,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         try:
             hash_archivo = file_hash(archivo_file)
 
-            archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
+            archivo_global = Archivo.objects.filter(
+                hash=hash_archivo
+            ).first()
 
             if not archivo_global:
                 archivo_global = Archivo.objects.create(
@@ -40,14 +41,13 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                     hash=hash_archivo
                 )
 
-            # 🔥 ACÁ SE CREA RespuestaArchivo
             RespuestaArchivo.objects.get_or_create(
                 respuesta=respuesta,
                 archivo=archivo_global
             )
 
         except Exception as e:
-            print("Error procesando archivo de respuesta:", e)
+            print("❌ Error procesando archivo de respuesta:", e)
 
     # ===============================
     # 🔹 PROCESAR MULTIPLES ARCHIVOS
@@ -62,14 +62,13 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         respuesta.refresh_from_db()
 
     # ===============================
-    # 🔹 CREATE
+    # 🔹 CREATE (FIX DEFINITIVO)
     # ===============================
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         archivos = request.FILES.getlist("archivos")
 
-        respuesta_texto = data.get("respuesta_texto")
-        if not respuesta_texto:
+        if not data.get("respuesta_texto"):
             return Response(
                 {"error": "La respuesta no puede estar vacía."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -84,14 +83,14 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 🔥 FIX REAL Y DEFINITIVO
-        data["materia"] = foro.materia  # NO usar .idMateria
-
         serializer = RespuestaSerializer(data=data)
         serializer.is_valid(raise_exception=True)
-        respuesta = serializer.save()
 
-        # 🔹 Subir archivos
+        # 🔥 FIX REAL: asignar materia en save()
+        respuesta = serializer.save(
+            materia=foro.materia
+        )
+
         self._subir_archivos(respuesta, archivos)
 
         respuesta.refresh_from_db()
@@ -117,11 +116,13 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 int(x) for x in archivos_a_eliminar.split(',')
             ]
 
-        serializer = RespuestaSerializer(instance, data=data, partial=partial)
+        serializer = RespuestaSerializer(
+            instance, data=data, partial=partial
+        )
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # 🔹 Eliminar SOLO la relación (NO el archivo global)
+        # 🔹 Eliminar relación Respuesta ↔ Archivo
         for archivo_id in archivos_a_eliminar:
             try:
                 relacion = RespuestaArchivo.objects.get(
@@ -132,7 +133,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             except RespuestaArchivo.DoesNotExist:
                 pass
 
-        # 🔹 Subir archivos nuevos
         self._subir_archivos(respuesta, archivos_nuevos)
 
         respuesta.refresh_from_db()
@@ -140,7 +140,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
 
 # =====================================================
-# 🔹 PUNTAJES (NO SE TOCAN)
+# 🔹 PUNTAJES (SIN CAMBIOS)
 # =====================================================
 class RespuestaPuntajeView(APIView):
 
@@ -158,19 +158,18 @@ class RespuestaPuntajeView(APIView):
         ).first()
 
         if puntaje_existente:
-            if puntaje_existente.valor == nuevo_valor:
-                puntaje_existente.valor = Puntaje.NONE
-            else:
-                puntaje_existente.valor = nuevo_valor
+            puntaje_existente.valor = (
+                Puntaje.NONE
+                if puntaje_existente.valor == nuevo_valor
+                else nuevo_valor
+            )
             puntaje_existente.save()
-            creado = False
         else:
             Puntaje.objects.create(
                 respuesta=respuesta,
                 usuario=usuario,
                 valor=nuevo_valor
             )
-            creado = True
 
         respuesta.total_likes = respuesta.puntajes.filter(
             valor=Puntaje.LIKE
@@ -188,30 +187,10 @@ class RespuestaPuntajeView(APIView):
 
         return Response(
             {
-                "mensaje": "Puntaje creado." if creado else "Puntaje actualizado.",
                 "total_likes": respuesta.total_likes,
                 "total_dislikes": respuesta.total_dislikes,
                 "total_votos": respuesta.total_votos,
                 "puntaje_neto": respuesta.puntaje_neto,
             },
             status=status.HTTP_200_OK
-        )
-
-    def get(self, request, respuesta_id):
-        try:
-            respuesta = Respuesta.objects.get(pk=respuesta_id)
-        except Respuesta.DoesNotExist:
-            return Response(
-                {"error": "La respuesta no existe."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        return Response(
-            {
-                "respuesta_id": respuesta.idRespuesta,
-                "total_likes": respuesta.total_likes,
-                "total_dislikes": respuesta.total_dislikes,
-                "total_votos": respuesta.total_votos,
-                "puntaje_neto": respuesta.puntaje_neto,
-            }
         )

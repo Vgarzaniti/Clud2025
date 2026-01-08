@@ -1,10 +1,8 @@
-import { useState } from "react";
-import { useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService";
 
 export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
-  
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
@@ -32,13 +30,17 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
     for (const file of nuevosArchivos) {
       const sizeMB = file.size / (1024 * 1024);
       if (sizeMB > Limite_Individual_MB) {
-        errores.push(`❌ ${file.name} excede el límite de ${Limite_Individual_MB}MB.`);
+        errores.push(
+          `❌ ${file.name} excede el límite de ${Limite_Individual_MB}MB.`
+        );
       }
       totalSize += file.size;
     }
 
     if (totalSize / (1024 * 1024) > Limite_Total_MB) {
-      errores.push(`❌ El tamaño total de archivos no puede superar ${Limite_Total_MB}MB.`);
+      errores.push(
+        `❌ El tamaño total de archivos no puede superar ${Limite_Total_MB}MB.`
+      );
     }
 
     if (errores.length > 0) {
@@ -55,12 +57,13 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-    if (!formData.respuesta.trim()) nuevosErrores.respuesta = "La respuesta no puede estar vacía.";
+    if (!formData.respuesta.trim()) {
+      nuevosErrores.respuesta = "La respuesta no puede estar vacía.";
+    }
     setErroresCampos(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
   };
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -79,16 +82,12 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
       const formDataAPI = new FormData();
       formDataAPI.append("usuario", userId);
       formDataAPI.append("foro", foroId);
-      formDataAPI.append("materia", materiaId);
       formDataAPI.append("respuesta_texto", formData.respuesta);
 
+      // 🔥 NO enviar materia (el backend la asigna)
       archivos.forEach((archivo) => {
         formDataAPI.append("archivos", archivo);
       });
-
-      for (let [key, value] of formDataAPI.entries()) {
-        console.log(`${key}:`, value);
-      }
 
       const respuestaGuardada = await respuestaService.crear(formDataAPI);
 
@@ -98,15 +97,16 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
     } catch (err) {
       console.error("❌ Error al crear la respuesta:", err);
       alert("Ocurrió un error al publicar la respuesta.");
-    }finally{
+    } finally {
       setCargando(false);
     }
   };
 
-
   return (
     <form onSubmit={handleSubmit} className="space-y-5 text-white w-full max-w-md">
-      <h2 className="text-xl font-semibold text-center mb-2">Crear Respuesta</h2>
+      <h2 className="text-xl font-semibold text-center mb-2">
+        Crear Respuesta
+      </h2>
 
       <div>
         <label className="block text-sm mb-1">Respuesta</label>
@@ -124,11 +124,15 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
           placeholder="Escribí tu respuesta..."
         />
         {erroresCampos.respuesta && (
-          <p className="text-red-500 text-sm mt-1">{erroresCampos.respuesta}</p>
+          <p className="text-red-500 text-sm mt-1">
+            {erroresCampos.respuesta}
+          </p>
         )}
         <p
           className={`text-right mr-1 ${
-            formData.respuesta.length >= 3000 ? "text-red-500" : "text-gray-400"
+            formData.respuesta.length >= 3000
+              ? "text-red-500"
+              : "text-gray-400"
           }`}
         >
           {formData.respuesta.length} / 3000
@@ -143,7 +147,8 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
           className="flex flex-col items-center justify-center w-full p-2 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800 hover:bg-gray-700 transition"
         >
           <p className="text-gray-300 font-medium">
-            Arrastrá tus archivos o <span className="text-azulUTN">seleccionalos</span>
+            Arrastrá tus archivos o{" "}
+            <span className="text-azulUTN">seleccionalos</span>
           </p>
           <p className="text-sm text-gray-400 mt-1">
             Máx. 5MB por archivo — 20MB total
@@ -157,7 +162,11 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
           />
         </label>
 
-        {error && <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>}
+        {error && (
+          <p className="text-red-400 whitespace-pre-line text-sm mt-2">
+            {error}
+          </p>
+        )}
 
         {archivos.length > 0 && (
           <ul className="text-sm text-gray-300 mt-3 max-h-[65px] overflow-y-auto">
@@ -188,12 +197,11 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
       <button
         type="submit"
         disabled={cargando}
-        className={`w-full py-2 rounded-lg font-semibold transition
-          ${
-            cargando
-              ? "bg-gray-500 cursor-not-allowed opacity-70"
-              : "bg-azulUTN hover:bg-blue-500"
-          }`}
+        className={`w-full py-2 rounded-lg font-semibold transition ${
+          cargando
+            ? "bg-gray-500 cursor-not-allowed opacity-70"
+            : "bg-azulUTN hover:bg-blue-500"
+        }`}
       >
         {cargando ? "Respondiendo..." : "Responder"}
       </button>
