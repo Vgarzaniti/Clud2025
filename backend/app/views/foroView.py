@@ -15,7 +15,7 @@ class ForoViewSet(viewsets.ModelViewSet):
     serializer_class = ForoSerializer
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
-   @staticmethod
+    @staticmethod
     def _procesar_archivo(archivo_file, foro):
         try:
             hash_archivo = file_hash(archivo_file)
@@ -36,6 +36,7 @@ class ForoViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             print("❌ Error procesando archivo:", e)
+
 
 
     # 🔹 Procesar múltiples archivos (SECUENCIAL)
