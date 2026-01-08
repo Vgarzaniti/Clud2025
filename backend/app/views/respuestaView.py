@@ -17,7 +17,7 @@ from .hash import file_hash
 
 
 class RespuestaViewSet(viewsets.ModelViewSet):
-    # 🔥 CLAVE: prefetch de la relación intermedia
+    # 🔥 CLAVE: traer relaciones
     queryset = Respuesta.objects.prefetch_related(
         'archivos__archivo'
     ).order_by('-fecha_creacion')
@@ -25,24 +25,22 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     serializer_class = RespuestaSerializer
 
     # ===============================
-    # 🔹 MANEJO DE ARCHIVOS (GLOBAL)
+    # 🔹 PROCESAR UN ARCHIVO
     # ===============================
     @staticmethod
     def _procesar_archivo(archivo_file, respuesta):
         try:
             hash_archivo = file_hash(archivo_file)
 
-            # 1️⃣ Buscar archivo global por hash
             archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
 
-            # 2️⃣ Si no existe → subir a Cloudinary UNA sola vez
             if not archivo_global:
                 archivo_global = Archivo.objects.create(
                     archivo=archivo_file,
                     hash=hash_archivo
                 )
 
-            # 3️⃣ Asociar archivo a la respuesta (sin duplicar)
+            # 🔥 ACÁ SE CREA RespuestaArchivo
             RespuestaArchivo.objects.get_or_create(
                 respuesta=respuesta,
                 archivo=archivo_global
@@ -51,6 +49,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print("Error procesando archivo de respuesta:", e)
 
+    # ===============================
+    # 🔹 PROCESAR MULTIPLES ARCHIVOS
+    # ===============================
     def _subir_archivos(self, respuesta, archivos):
         if not archivos:
             return
@@ -58,7 +59,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         for archivo in archivos:
             self._procesar_archivo(archivo, respuesta)
 
-        # 🔥 IMPORTANTE: refrescar relaciones
         respuesta.refresh_from_db()
 
     # ===============================
@@ -75,7 +75,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Obtener foro
         foro_id = data.get("foro")
         try:
             foro = Foro.objects.get(pk=foro_id)
@@ -85,17 +84,16 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Asignar materia automáticamente
-        data["materia"] = foro.materia.idMateria
+        # 🔥 FIX REAL Y DEFINITIVO
+        data["materia"] = foro.materia  # NO usar .idMateria
 
         serializer = RespuestaSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # 🔹 Procesar archivos
+        # 🔹 Subir archivos
         self._subir_archivos(respuesta, archivos)
 
-        # 🔥 ASEGURA que el serializer vea los archivos
         respuesta.refresh_from_db()
 
         return Response(
@@ -123,7 +121,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # 🔹 Eliminar SOLO la relación respuesta ↔ archivo
+        # 🔹 Eliminar SOLO la relación (NO el archivo global)
         for archivo_id in archivos_a_eliminar:
             try:
                 relacion = RespuestaArchivo.objects.get(
@@ -134,7 +132,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             except RespuestaArchivo.DoesNotExist:
                 pass
 
-        # 🔹 Procesar archivos nuevos
+        # 🔹 Subir archivos nuevos
         self._subir_archivos(respuesta, archivos_nuevos)
 
         respuesta.refresh_from_db()
@@ -142,17 +140,13 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
 
 # =====================================================
-# 🔹 PUNTAJES (NO SE MODIFICA)
+# 🔹 PUNTAJES (NO SE TOCAN)
 # =====================================================
 class RespuestaPuntajeView(APIView):
 
     def post(self, request):
         serializer = PuntajeRespuestaSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer.is_valid(raise_exception=True)
 
         respuesta = serializer.validated_data['respuesta']
         usuario = serializer.validated_data['usuario']
@@ -168,19 +162,16 @@ class RespuestaPuntajeView(APIView):
                 puntaje_existente.valor = Puntaje.NONE
             else:
                 puntaje_existente.valor = nuevo_valor
-
             puntaje_existente.save()
-            puntaje = puntaje_existente
             creado = False
         else:
-            puntaje = Puntaje.objects.create(
+            Puntaje.objects.create(
                 respuesta=respuesta,
                 usuario=usuario,
                 valor=nuevo_valor
             )
             creado = True
 
-        # Recalcular totales
         respuesta.total_likes = respuesta.puntajes.filter(
             valor=Puntaje.LIKE
         ).count()
@@ -195,11 +186,9 @@ class RespuestaPuntajeView(APIView):
         )
         respuesta.save()
 
-        mensaje = "Puntaje creado." if creado else "Puntaje actualizado."
         return Response(
             {
-                "mensaje": mensaje,
-                "valor": puntaje.valor,
+                "mensaje": "Puntaje creado." if creado else "Puntaje actualizado.",
                 "total_likes": respuesta.total_likes,
                 "total_dislikes": respuesta.total_dislikes,
                 "total_votos": respuesta.total_votos,
