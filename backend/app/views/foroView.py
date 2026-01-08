@@ -15,29 +15,28 @@ class ForoViewSet(viewsets.ModelViewSet):
     serializer_class = ForoSerializer
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
-    @staticmethod
+   @staticmethod
     def _procesar_archivo(archivo_file, foro):
         try:
             hash_archivo = file_hash(archivo_file)
 
-            # 1️⃣ Buscar archivo global por hash
             archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
 
-            # 2️⃣ Si NO existe → subir a Cloudinary UNA sola vez
             if not archivo_global:
                 archivo_global = Archivo.objects.create(
                     archivo=archivo_file,
                     hash=hash_archivo
                 )
 
-            # 3️⃣ Asociar archivo al foro (sin duplicar relación)
+            # 🔥 SIEMPRE crear la relación, aunque el archivo exista
             ForoArchivo.objects.get_or_create(
                 foro=foro,
                 archivo=archivo_global
             )
 
         except Exception as e:
-            print("Error procesando archivo:", e)
+            print("❌ Error procesando archivo:", e)
+
 
     # 🔹 Procesar múltiples archivos (SECUENCIAL)
     def _subir_archivos(self, foro, archivos):
