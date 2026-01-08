@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from ..models import (
     Respuesta,
@@ -22,6 +23,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     ).order_by('-fecha_creacion')
 
     serializer_class = RespuestaSerializer
+
+    # 🔥 FIX CRÍTICO PARA ARCHIVOS
+    parser_classes = (MultiPartParser, FormParser)
 
     # ===============================
     # 🔹 PROCESAR UN ARCHIVO
@@ -62,11 +66,12 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         respuesta.refresh_from_db()
 
     # ===============================
-    # 🔹 CREATE (FIX DEFINITIVO)
+    # 🔹 CREATE (CORREGIDO)
     # ===============================
     def create(self, request, *args, **kwargs):
-        data = request.data.copy()
         archivos = request.FILES.getlist("archivos")
+
+        data = request.data.copy()
 
         if not data.get("respuesta_texto"):
             return Response(
@@ -86,11 +91,12 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         serializer = RespuestaSerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
-        # 🔥 FIX REAL: asignar materia en save()
+        # 🔥 LA MATERIA SE ASIGNA ACÁ (NO EN data)
         respuesta = serializer.save(
             materia=foro.materia
         )
 
+        # 🔥 SUBIDA REAL DE ARCHIVOS
         self._subir_archivos(respuesta, archivos)
 
         respuesta.refresh_from_db()
@@ -106,10 +112,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        data = request.data.copy()
 
         archivos_nuevos = request.FILES.getlist("archivos")
-        archivos_a_eliminar = data.get("archivos_a_eliminar", [])
+        archivos_a_eliminar = request.data.get("archivos_a_eliminar", [])
 
         if archivos_a_eliminar and isinstance(archivos_a_eliminar, str):
             archivos_a_eliminar = [
@@ -117,12 +122,11 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             ]
 
         serializer = RespuestaSerializer(
-            instance, data=data, partial=partial
+            instance, data=request.data, partial=partial
         )
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # 🔹 Eliminar relación Respuesta ↔ Archivo
         for archivo_id in archivos_a_eliminar:
             try:
                 relacion = RespuestaArchivo.objects.get(
