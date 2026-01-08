@@ -5,7 +5,7 @@ from ..models import Respuesta, RespuestaArchivo, Puntaje
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Puntaje
-        fields = ['id', 'usuario', 'valor','respuesta']
+        fields = ['id', 'usuario', 'valor', 'respuesta']
 
 
 # 🔹 Serializador para los archivos
@@ -20,12 +20,13 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
         fields = ['id', 'archivo_url']
 
 
-
-
-# 🔹 Serializador principal de la Respuesta (permite crear detalles y archivos)
+# 🔹 Serializador principal de la Respuesta
 class RespuestaSerializer(serializers.ModelSerializer):
     archivos = RespuestaArchivoSerializer(many=True, read_only=True)
     puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
+
+    # 🔥 FIX DEFINITIVO
+    materia = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Respuesta
