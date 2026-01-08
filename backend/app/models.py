@@ -93,7 +93,7 @@ class ForoArchivo(models.Model):
         null=False,
         blank=False
     )
-    archivo = CloudinaryField('archivo', null=False, blank=False)
+    archivo = CloudinaryField('archivo',resource_type='raw', null=False, blank=False)
     hash = models.CharField(max_length=32, null=False, blank=False)  # MD5 del archivo
     def __str__(self):
         return f"Archivo del Foro {self.foro.idForo}"
