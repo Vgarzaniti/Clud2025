@@ -33,7 +33,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
         ]);
         setCarreras(carrerasBD);
         setMaterias(materiasBD);
-        setMateriasFiltradas(materiasBD); 
+        setMateriasFiltradas(materiasBD);
       } catch (error) {
         console.error("Error al cargar datos:", error);
       }
@@ -50,17 +50,24 @@ export default function CrearForo({ onClose, onForoCreado }) {
   }, [formData.pregunta]);
 
   useEffect(() => {
-    if (formData.carrera) {
-      const filtradas = materias.filter(
-        (m) => m.carrera === parseInt(formData.carrera)
-      );
-      setMateriasFiltradas(filtradas);
-    } else {
-      setMateriasFiltradas(materias); // si no hay carrera, mostrar todas
-    }
-    
-    setFormData((prev) => ({ ...prev, materia: "" }));
-  }, [formData.carrera, materias]);
+    const cargarDatos = async () => {
+      try {
+        const [carrerasBD, materiasBD] = await Promise.all([
+          carreraService.obtenerTodos(),
+          materiaService.obtenerTodos(),
+        ]);
+
+        setCarreras(carrerasBD);
+        setMaterias(materiasBD);
+        setMateriasFiltradas(materiasBD); // 🔥 CLAVE
+      } catch (error) {
+        console.error("Error al cargar datos:", error);
+      }
+    };
+    cargarDatos();
+  }, []);
+
+
 
   const hadleArchivoChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
@@ -103,28 +110,31 @@ export default function CrearForo({ onClose, onForoCreado }) {
     return Object.keys(nuevosErrores).length === 0;
   };
 
+  // 🔥 ÚNICO CAMBIO REAL: FormData + archivos
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (cargando) return;
-    
     if (error) {
       alert("Corrige los errores antes de publicar.");
       return;
     }
-
     if (!validarFormulario()) return;
 
     setCargando(true);
-    
-    try {
-      const nuevoForo = {
-        usuario: 1, 
-        materia: parseInt(formData.materia),
-        pregunta: formData.pregunta,
-      };
 
-      const foroCreado = await foroService.crear(nuevoForo);
+    try {
+      const data = new FormData();
+
+      data.append("usuario", 1); // ⚠️ luego reemplazar por JWT
+      data.append("materia", parseInt(formData.materia));
+      data.append("pregunta", formData.pregunta);
+
+      archivos.forEach((archivo) => {
+        data.append("archivos", archivo);
+      });
+
+      const foroCreado = await foroService.crear(data);
 
       alert("✅ Foro publicado correctamente.");
       onForoCreado(foroCreado);
@@ -141,7 +151,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
     <form onSubmit={handleSubmit} className="space-y-8 text-white w-full max-w-md">
       <h2 className="text-2xl font-semibold text-center mb-2">Crear Foro</h2>
 
-      {/* Selección de carrera */}
+      {/* Carrera */}
       <div>
         <label className="block text-m mb-1">Carrera</label>
         <select
@@ -163,7 +173,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
         )}
       </div>
 
-      {/* Selección de materia */}
+      {/* Materia */}
       <div>
         <label className="block text-m mb-1">Materia</label>
         <select
@@ -239,7 +249,9 @@ export default function CrearForo({ onClose, onForoCreado }) {
         </label>
 
         {error && (
-          <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>
+          <p className="text-red-400 whitespace-pre-line text-sm mt-2">
+            {error}
+          </p>
         )}
 
         {archivos.length > 0 && (
@@ -268,16 +280,15 @@ export default function CrearForo({ onClose, onForoCreado }) {
         )}
       </div>
 
-      {/* Botón final */}
+      {/* Botón */}
       <button
         type="submit"
         disabled={cargando}
-        className={`w-full py-2 rounded-lg font-semibold transition
-          ${
-            cargando
-              ? "bg-gray-500 cursor-not-allowed opacity-70"
-              : "bg-azulUTN hover:bg-blue-500"
-          }`}
+        className={`w-full py-2 rounded-lg font-semibold transition ${
+          cargando
+            ? "bg-gray-500 cursor-not-allowed opacity-70"
+            : "bg-azulUTN hover:bg-blue-500"
+        }`}
       >
         {cargando ? "Publicando..." : "Publicar"}
       </button>

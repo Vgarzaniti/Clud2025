@@ -7,7 +7,11 @@ from .hash import file_hash
 
 
 class ForoViewSet(viewsets.ModelViewSet):
-    queryset = Foro.objects.all().order_by('-fecha_creacion')
+    # 🔥 CLAVE: prefetch de la relación intermedia
+    queryset = Foro.objects.prefetch_related(
+        'archivos__archivo'
+    ).order_by('-fecha_creacion')
+
     serializer_class = ForoSerializer
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
@@ -43,18 +47,12 @@ class ForoViewSet(viewsets.ModelViewSet):
         for archivo in archivos:
             self._procesar_archivo(archivo, foro)
 
+        # 🔥 importante, pero ya lo tenías bien
         foro.refresh_from_db()
 
-    # 🔹 Retrieve
+    # 🔹 Retrieve (USAR queryset del ViewSet)
     def retrieve(self, request, pk=None):
-        try:
-            foro = Foro.objects.get(pk=pk)
-        except Foro.DoesNotExist:
-            return Response(
-                {"detail": "El foro no existe."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
+        foro = self.get_object()
         serializer = ForoSerializer(foro)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -66,7 +64,12 @@ class ForoViewSet(viewsets.ModelViewSet):
         serializer = ForoSerializer(data=data)
         if serializer.is_valid():
             foro = serializer.save()
+
             self._subir_archivos(foro, archivos)
+
+            # 🔥 ASEGURA que el serializer vea la relación
+            foro.refresh_from_db()
+
             return Response(
                 ForoSerializer(foro).data,
                 status=status.HTTP_201_CREATED
