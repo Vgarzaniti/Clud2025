@@ -14,7 +14,7 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RespuestaArchivo
-        fields = ['id', 'archivo', 'archivo_url']
+        fields = ['id',  'archivo_url']
 
     def get_archivo_url(self, obj):
         return obj.archivo.url if obj.archivo else None
