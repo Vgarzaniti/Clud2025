@@ -17,7 +17,11 @@ from .hash import file_hash
 
 
 class RespuestaViewSet(viewsets.ModelViewSet):
-    queryset = Respuesta.objects.all().order_by('-fecha_creacion')
+    # 🔥 CLAVE: prefetch de la relación intermedia
+    queryset = Respuesta.objects.prefetch_related(
+        'archivos__archivo'
+    ).order_by('-fecha_creacion')
+
     serializer_class = RespuestaSerializer
 
     # ===============================
@@ -54,6 +58,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         for archivo in archivos:
             self._procesar_archivo(archivo, respuesta)
 
+        # 🔥 IMPORTANTE: refrescar relaciones
         respuesta.refresh_from_db()
 
     # ===============================
@@ -87,8 +92,11 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         respuesta = serializer.save()
 
-        # Procesar archivos (deduplicación global)
+        # 🔹 Procesar archivos
         self._subir_archivos(respuesta, archivos)
+
+        # 🔥 ASEGURA que el serializer vea los archivos
+        respuesta.refresh_from_db()
 
         return Response(
             RespuestaSerializer(respuesta).data,
@@ -129,6 +137,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         # 🔹 Procesar archivos nuevos
         self._subir_archivos(respuesta, archivos_nuevos)
 
+        respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data)
 
 

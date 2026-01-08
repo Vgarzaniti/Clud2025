@@ -8,7 +8,6 @@ import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
 import { materiaService } from "../services/materiaService.js";
 
-
 export default function ForoDetalle() {
   const { foroId } = useParams();
   const [foro, setForo] = useState(null);
@@ -29,7 +28,6 @@ export default function ForoDetalle() {
         ]);
 
         if (!foroData) {
-          console.error("⚠️ Foro no encontrado:", foroId);
           setForo(null);
           setRespuestas([]);
           return;
@@ -40,6 +38,7 @@ export default function ForoDetalle() {
           : [];
 
         const materia = materias.find((m) => m.idMateria === foroData.materia);
+
         const foroEnriquecido = {
           ...foroData,
           materia_nombre: materia ? materia.nombre : "Sin materia",
@@ -47,7 +46,6 @@ export default function ForoDetalle() {
           usuario_nombre: foroData.usuario || "Anónimo",
         };
 
-        // Ordenar las respuestas
         const respuestasOrdenadas = [...respuestasForo].sort(
           (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
         );
@@ -64,9 +62,17 @@ export default function ForoDetalle() {
     cargarDatos();
   }, [foroId]);
 
+  if (loading)
+    return (
+      <p className="text-center text-gray-400 mt-10">Cargando foro...</p>
+    );
 
-  if (loading) return <p className="text-center text-gray-400 mt-10">Cargando foro...</p>;
-  if (!foro) return <p className="text-center text-red-400 mt-10">Foro no encontrado</p>;
+  if (!foro)
+    return (
+      <p className="text-center text-red-400 mt-10">
+        Foro no encontrado
+      </p>
+    );
 
   const respuestasOrdenadas = [...respuestas].sort((a, b) => {
     if (modoVista === "ranking") return b.puntaje - a.puntaje;
@@ -77,14 +83,49 @@ export default function ForoDetalle() {
     <div className="max-w-7xl mx-auto mt-8 px-4 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Columna principal */}
       <div className="lg:col-span-2 space-y-4">
-        {/* Pregunta principal */}
+        {/* Pregunta */}
         <div className="bg-cyan-950 p-5 rounded-2xl border border-gray-700 shadow-md">
           <h1 className="text-2xl font-bold mb-2">{foro.pregunta}</h1>
+
           <p className="text-gray-400 text-sm mb-2">
             Materia: {foro.materia_nombre}
           </p>
-          <p className="text-gray-300 mb-3">{foro.descripcion || ""}</p>
-          <p className="text-gray-500 text-xs">
+
+          {/* 🔥 ARCHIVOS ADJUNTOS */}
+          {foro.archivos && foro.archivos.length > 0 && (
+            <div className="mt-4 border-t border-gray-700 pt-3">
+              <p className="text-sm text-gray-400 mb-2">
+                Archivos adjuntos:
+              </p>
+
+              <ul className="space-y-2">
+                {foro.archivos.map((fa) => {
+                  const nombreArchivo = fa.archivo_url
+                    ? fa.archivo_url.split("/").pop()
+                    : "Archivo";
+
+                  return (
+                    <li
+                      key={fa.id}
+                      className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg"
+                    >
+                      <span>📎</span>
+                      <a
+                        href={fa.archivo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-azulUTN hover:underline break-all"
+                      >
+                        {nombreArchivo}
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          <p className="text-gray-500 text-xs mt-3">
             Creado el{" "}
             {foro.fecha_creacion
               ? new Date(foro.fecha_creacion).toLocaleString("es-AR")
@@ -117,7 +158,7 @@ export default function ForoDetalle() {
           </button>
         </div>
 
-        {/* Lista de respuestas */}
+        {/* Respuestas */}
         <AnimatePresence mode="wait">
           <motion.div
             key={modoVista}
@@ -129,10 +170,15 @@ export default function ForoDetalle() {
           >
             {respuestasOrdenadas.length > 0 ? (
               respuestasOrdenadas.map((res) => (
-                <RespuestaTarjeta key={res.idRespuesta} respuesta={res} />
+                <RespuestaTarjeta
+                  key={res.idRespuesta}
+                  respuesta={res}
+                />
               ))
             ) : (
-              <p className="text-gray-400 italic">No hay respuestas todavía.</p>
+              <p className="text-gray-400 italic">
+                No hay respuestas todavía.
+              </p>
             )}
           </motion.div>
         </AnimatePresence>
@@ -140,20 +186,22 @@ export default function ForoDetalle() {
 
       {/* Columna lateral */}
       <div className="flex flex-col gap-4">
-
         <aside className="bg-panel p-4 rounded-2xl border border-gray-700 h-fit space-y-4">
           <div className="border border-gray-600 rounded-lg p-3">
             <h3 className="text-2xl font-semibold mb-2 text-azulUTN">
               Información del Foro
             </h3>
-            <p className="text-xl">
-              <span className="font-semibold">Materia:</span> {foro.materia_nombre}
+            <p className="text-lg">
+              <span className="font-semibold">Materia:</span>{" "}
+              {foro.materia_nombre}
             </p>
             <p className="text-lg">
-              <span className="font-semibold">Carrera:</span> {foro.carrera_nombre}
+              <span className="font-semibold">Carrera:</span>{" "}
+              {foro.carrera_nombre}
             </p>
             <p className="text-lg">
-              <span className="font-semibold">Autor:</span> {foro.usuario_nombre}
+              <span className="font-semibold">Autor:</span>{" "}
+              {foro.usuario_nombre}
             </p>
             <p className="text-lg">
               <span className="font-semibold">Fecha:</span>{" "}
@@ -163,7 +211,7 @@ export default function ForoDetalle() {
             </p>
           </div>
         </aside>
-        
+
         <button
           onClick={() => setMostrarRespuesta(true)}
           className="w-full bg-azulUTN text-white py-3 rounded-xl font-semibold hover:bg-blue-500 transition text-lg shadow-lg"
@@ -173,13 +221,18 @@ export default function ForoDetalle() {
       </div>
 
       {/* Modal para responder */}
-      <Modal visible={mostrarRespuesta} onClose={() => setMostrarRespuesta(false)}>
+      <Modal
+        visible={mostrarRespuesta}
+        onClose={() => setMostrarRespuesta(false)}
+      >
         <CrearRespuesta
           foroId={foro.idForo}
           materiaId={foro.materia}
-          usuarioId={foro.usuario || 1} // o el usuario actual si tenés login
+          usuarioId={foro.usuario || 1}
           onClose={() => setMostrarRespuesta(false)}
-          onSave={(nuevaRespuesta) => setRespuestas((prev) => [...prev, nuevaRespuesta])}
+          onSave={(nuevaRespuesta) =>
+            setRespuestas((prev) => [...prev, nuevaRespuesta])
+          }
         />
       </Modal>
     </div>
