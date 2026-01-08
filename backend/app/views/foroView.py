@@ -1,5 +1,6 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from ..models import Foro, ForoArchivo, Archivo
 from ..serializers.foro_serializer import ForoSerializer
@@ -7,28 +8,35 @@ from .hash import file_hash
 
 
 class ForoViewSet(viewsets.ModelViewSet):
-    # 🔥 CLAVE: prefetch de la relación intermedia
+    serializer_class = ForoSerializer
+
+    # 🔥 CLAVE: permite multipart/form-data
+    parser_classes = (MultiPartParser, FormParser)
+
+    # 🔥 CLAVE: optimiza carga de archivos
     queryset = Foro.objects.prefetch_related(
         'archivos__archivo'
     ).order_by('-fecha_creacion')
-
-    serializer_class = ForoSerializer
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod
     def _procesar_archivo(archivo_file, foro):
         try:
+            # 🔥 hash + reset del puntero
             hash_archivo = file_hash(archivo_file)
+            archivo_file.seek(0)
 
+            # 🔹 buscar archivo global
             archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
 
+            # 🔹 si no existe, subir UNA sola vez a Cloudinary
             if not archivo_global:
                 archivo_global = Archivo.objects.create(
                     archivo=archivo_file,
                     hash=hash_archivo
                 )
 
-            # 🔥 SIEMPRE crear la relación, aunque el archivo exista
+            # 🔥 SIEMPRE asociar al foro
             ForoArchivo.objects.get_or_create(
                 foro=foro,
                 archivo=archivo_global
@@ -37,9 +45,7 @@ class ForoViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print("❌ Error procesando archivo:", e)
 
-
-
-    # 🔹 Procesar múltiples archivos (SECUENCIAL)
+    # 🔹 Procesar múltiples archivos
     def _subir_archivos(self, foro, archivos):
         if not archivos:
             return
@@ -47,10 +53,9 @@ class ForoViewSet(viewsets.ModelViewSet):
         for archivo in archivos:
             self._procesar_archivo(archivo, foro)
 
-        # 🔥 importante, pero ya lo tenías bien
         foro.refresh_from_db()
 
-    # 🔹 Retrieve (USAR queryset del ViewSet)
+    # 🔹 Retrieve
     def retrieve(self, request, pk=None):
         foro = self.get_object()
         serializer = ForoSerializer(foro)
@@ -67,7 +72,6 @@ class ForoViewSet(viewsets.ModelViewSet):
 
             self._subir_archivos(foro, archivos)
 
-            # 🔥 ASEGURA que el serializer vea la relación
             foro.refresh_from_db()
 
             return Response(

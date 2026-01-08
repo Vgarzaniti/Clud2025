@@ -37,7 +37,9 @@ export default function ForoDetalle() {
           ? respuestasData.filter((r) => r.foro === foroData.idForo)
           : [];
 
-        const materia = materias.find((m) => m.idMateria === foroData.materia);
+        const materia = materias.find(
+          (m) => m.idMateria === foroData.materia
+        );
 
         const foroEnriquecido = {
           ...foroData,
@@ -62,17 +64,21 @@ export default function ForoDetalle() {
     cargarDatos();
   }, [foroId]);
 
-  if (loading)
+  if (loading) {
     return (
-      <p className="text-center text-gray-400 mt-10">Cargando foro...</p>
+      <p className="text-center text-gray-400 mt-10">
+        Cargando foro...
+      </p>
     );
+  }
 
-  if (!foro)
+  if (!foro) {
     return (
       <p className="text-center text-red-400 mt-10">
         Foro no encontrado
       </p>
     );
+  }
 
   const respuestasOrdenadas = [...respuestas].sort((a, b) => {
     if (modoVista === "ranking") return b.puntaje - a.puntaje;
@@ -91,7 +97,7 @@ export default function ForoDetalle() {
             Materia: {foro.materia_nombre}
           </p>
 
-          {/* 🔥 ARCHIVOS ADJUNTOS */}
+          {/* Archivos adjuntos */}
           {foro.archivos && foro.archivos.length > 0 && (
             <div className="mt-4 border-t border-gray-700 pt-3">
               <p className="text-sm text-gray-400 mb-2">
@@ -114,6 +120,7 @@ export default function ForoDetalle() {
                         href={fa.archivo_url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        download
                         className="text-azulUTN hover:underline break-all"
                       >
                         {nombreArchivo}
@@ -220,7 +227,7 @@ export default function ForoDetalle() {
         </button>
       </div>
 
-      {/* Modal para responder */}
+      {/* Modal */}
       <Modal
         visible={mostrarRespuesta}
         onClose={() => setMostrarRespuesta(false)}
