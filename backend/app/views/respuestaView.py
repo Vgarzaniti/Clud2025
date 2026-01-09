@@ -99,6 +99,12 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         # 🔥 SUBIDA REAL DE ARCHIVOS
         self._subir_archivos(respuesta, archivos)
 
+        Puntaje.objects.create(
+            respuesta=respuesta,
+            usuario=respuesta.usuario,
+            valor=0
+        )
+
         respuesta.refresh_from_db()
 
         return Response(
