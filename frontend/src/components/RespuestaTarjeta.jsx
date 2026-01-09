@@ -1,37 +1,73 @@
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
+import { puntajeService } from "../services/puntajeService";
 
-export default function RespuestaTarjeta({ respuesta }) {
+export default function RespuestaTarjeta({ respuesta, onVoto }) {
     const textoRespuesta = respuesta.respuesta_texto || respuesta.respuesta || respuesta.contenido || "";
-    const [puntaje, setPuntaje] = useState(respuesta.puntaje || 0);
-    const [voto, setVoto] = useState(null);
+    const [enviando, setEnviando] = useState(false);
+    const [voto, setVoto] = useState(respuesta.voto_usuario ?? 0);
     const [expandido, setExpandido] = useState(false);
     const limite = 300;
+    const userId = 1;
+
+    const handleUpvote = async () => {
+
+      if (enviando) return;
+
+      const nuevoValor = voto === 1 ? 0 : 1;
+      const delta = nuevoValor - voto;
+  
+      try {
+        setEnviando(true);
+
+        const data = await puntajeService.votar({
+          respuestaId: respuesta.idRespuesta,
+          usuarioId: userId,
+          valor: nuevoValor
+        });
+
+        setVoto(data.voto_usuario);
+        onVoto(respuesta.idRespuesta, delta);
+
+      } catch (error) {
+
+        console.error("Error al votar 👍", error);
+        alert("No se pudo registrar el voto.");
+
+      } finally {
+
+        setEnviando(false);
+
+      }
+    };
+
+    const handleDownvote = async () => {
+      if (enviando) return;
+
+      const nuevoValor = voto === -1 ? 0 : -1;
+      const delta = nuevoValor - voto;
+
+      try {
+        setEnviando(true);
+
+        await puntajeService.votar({
+          respuestaId: respuesta.idRespuesta,
+          usuarioId: userId,
+          valor: nuevoValor,
+        });
+
+        setVoto(nuevoValor);
+        onVoto(respuesta.idRespuesta, delta);
+      } finally {
+        setEnviando(false);
+      }
+    };
+
 
     const textoCorto =
       textoRespuesta.length > limite
         ? textoRespuesta.slice(0, limite) + "..."
         : textoRespuesta;
-    
-    const handleUpvote = () => {
-        if (voto === "up") {
-            setPuntaje(puntaje - 1);
-            setVoto(null);
-        }else {
-            setPuntaje(voto === "down" ? puntaje + 2 : puntaje + 1);
-            setVoto("up");
-        }
-    };
-
-    const handleDownvote = () => {
-        if (voto === "down") {
-            setPuntaje(puntaje + 1);
-            setVoto(null);
-        } else {
-            setPuntaje(voto === "up" ? puntaje - 2 : puntaje - 1);
-            setVoto("down");
-        }
-    };
 
     return (
     <div className="bg-panel p-5 rounded-2xl border border-gray-700 shadow-md">
@@ -84,9 +120,10 @@ export default function RespuestaTarjeta({ respuesta }) {
         <span className="text-sm text-gray-400">Respuesta de {respuesta.autor || "Anonimo"}</span>
         <div className="flex items-center gap-2">
           <button
+            disabled={enviando}
             onClick={handleUpvote}
             className={`p-2 rounded-lg border transition ${
-              voto === "up"
+              voto === 1
                 ? "bg-green-600 border-green-500"
                 : "bg-fondo border-gray-500 hover:bg-gray-800"
             }`}
@@ -96,20 +133,21 @@ export default function RespuestaTarjeta({ respuesta }) {
 
           <span
             className={`text-sm font-semibold w-8 text-center ${
-              puntaje > 0
+              respuesta.puntaje_neto > 0
                 ? "text-green-400"
-                : puntaje < 0
+                : respuesta.puntaje_neto < 0
                 ? "text-red-400"
                 : "text-gray-300"
             }`}
           >
-            {puntaje}
+            {respuesta.puntaje_neto}
           </span>
 
           <button
+            disabled={enviando}
             onClick={handleDownvote}
             className={`p-2 rounded-lg border transition ${
-              voto === "down"
+              voto === -1
                 ? "bg-red-600 border-red-500"
                 : "bg-fondo border-gray-500 hover:bg-gray-800"
             }`}

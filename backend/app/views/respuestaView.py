@@ -201,6 +201,7 @@ class RespuestaPuntajeView(APIView):
                 "total_dislikes": respuesta.total_dislikes,
                 "total_votos": respuesta.total_votos,
                 "puntaje_neto": respuesta.puntaje_neto,
+                "voto_usuario": puntaje_existente.valor
             },
             status=status.HTTP_200_OK
         )

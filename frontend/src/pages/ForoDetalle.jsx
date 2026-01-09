@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
 import CrearRespuesta from "../components/CrearRespuesta.jsx";
 import Modal from "../components/Modal.jsx";
@@ -16,14 +16,24 @@ export default function ForoDetalle() {
   const [modoVista, setModoVista] = useState("normal");
   const [loading, setLoading] = useState(true);
 
+  const cargarRespuestas = useCallback(async () => {
+      const respuestasData = await respuestaService.obtenerPorForo(foroId);
+
+      const ordenadas = [...respuestasData].sort(
+        (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
+      );
+
+      setRespuestas(ordenadas);
+    }, [foroId])
+
   useEffect(() => {
+
     const cargarDatos = async () => {
       try {
         setLoading(true);
 
-        const [foroData, respuestasData, materias] = await Promise.all([
+        const [foroData, materias] = await Promise.all([
           foroService.obtenerPorId(foroId),
-          respuestaService.obtenerPorTodos(),
           materiaService.obtenerTodos(),
         ]);
 
@@ -33,27 +43,18 @@ export default function ForoDetalle() {
           return;
         }
 
-        const respuestasForo = Array.isArray(respuestasData)
-          ? respuestasData.filter((r) => r.foro === foroData.idForo)
-          : [];
+        const materia = materias.find(m => m.idMateria === foroData.materia);
 
-        const materia = materias.find((m) => m.idMateria === foroData.materia);
-
-        const foroEnriquecido = {
+        setForo({
           ...foroData,
-          materia_nombre: materia ? materia.nombre : "Sin materia",
-          carrera_nombre: materia ? materia.carrera_nombre : "Sin carrera",
+          materia_nombre: materia?.nombre || "Sin materia",
+          carrera_nombre: materia?.carrera_nombre || "Sin carrera",
           usuario_nombre: foroData.usuario || "Anónimo",
-        };
+        });
 
-        const respuestasOrdenadas = [...respuestasForo].sort(
-          (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
-        );
-
-        setForo(foroEnriquecido);
-        setRespuestas(respuestasOrdenadas);
-      } catch (error) {
-        console.error("❌ Error al cargar datos del foro:", error);
+        await cargarRespuestas(); 
+      } catch (e) {
+        console.error(e);
       } finally {
         setLoading(false);
       }
@@ -61,6 +62,8 @@ export default function ForoDetalle() {
 
     cargarDatos();
   }, [foroId]);
+
+
 
   if (loading)
     return (
@@ -75,9 +78,21 @@ export default function ForoDetalle() {
     );
 
   const respuestasOrdenadas = [...respuestas].sort((a, b) => {
-    if (modoVista === "ranking") return b.puntaje - a.puntaje;
-    return new Date(a.fecha_creacion) - new Date(b.fecha_creacion);
+    return modoVista === "ranking"
+    ? b.puntaje_neto - a.puntaje_neto
+    : new Date(a.fecha_creacion) - new Date(b.fecha_creacion);
   });
+
+  const manejarVoto = (idRespuesta, delta) => {
+    setRespuestas(prev =>
+      prev.map(r =>
+        r.idRespuesta === idRespuesta
+          ? { ...r, puntaje_neto: r.puntaje_neto + delta }
+          : r
+      )
+    );
+  };
+
 
   return (
     <div className="max-w-7xl mx-auto mt-8 px-4 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -173,6 +188,7 @@ export default function ForoDetalle() {
                 <RespuestaTarjeta
                   key={res.idRespuesta}
                   respuesta={res}
+                  onVoto={manejarVoto}
                 />
               ))
             ) : (
@@ -230,9 +246,10 @@ export default function ForoDetalle() {
           materiaId={foro.materia}
           usuarioId={foro.usuario || 1}
           onClose={() => setMostrarRespuesta(false)}
-          onSave={(nuevaRespuesta) =>
-            setRespuestas((prev) => [...prev, nuevaRespuesta])
-          }
+          onSave={async() => {
+            await cargarRespuestas();
+            setMostrarRespuesta(false);
+          }}
         />
       </Modal>
     </div>

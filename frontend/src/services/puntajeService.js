@@ -1,12 +1,16 @@
 import api from "./api";
 
 export const puntajeService = {
+  votar: async ({ respuestaId, usuarioId, valor }) => {
+    const payload = {
+      respuesta: respuestaId, 
+      usuario: usuarioId,
+      valor
+    };
 
-    votar: async (respuestaId, valor) => {
-        const res = await api.post("/puntajes/", {
-            respuesta: respuestaId,
-            valor
-        });
-        return res.data;
-    }
-}
+    console.log("📤 Enviando voto:", payload); 
+
+    const { data } = await api.post("/puntaje/", payload);
+    return data;
+  }
+};
