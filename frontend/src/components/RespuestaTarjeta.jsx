@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
 import { puntajeService } from "../services/puntajeService";
+import Modal from "./Modal";
 
 export default function RespuestaTarjeta({ respuesta, onVoto }) {
     const textoRespuesta = respuesta.respuesta_texto || respuesta.respuesta || respuesta.contenido || "";
@@ -8,6 +9,9 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
     const [puntaje, setPuntaje] = useState(respuesta.puntaje_neto ?? 0);
     const [voto, setVoto] = useState(respuesta.voto_usuario ?? 0);
     const [expandido, setExpandido] = useState(false);
+    const [mostrarModal, setMostrarModal] = useState(false);
+    const [mensajeModal, setMensajeModal] = useState("");
+
     const limite = 300;
     const userId = 1;
 
@@ -34,7 +38,9 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
       } catch (error) {
 
         console.error("Error al votar 👍", error);
-        alert("No se pudo registrar el voto.");
+        setMensajeModal("Ya votaste esta respuesta.");
+        setMostrarModal(true);
+        return;
 
       } finally {
 
@@ -61,6 +67,13 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
         setVoto(nuevoValor);
         setPuntaje(data.puntaje_neto);
         onVoto(respuesta.idRespuesta, delta, nuevoValor);
+
+      } catch (error) {
+
+        console.error("Error al votar 👍", error);
+        setMensajeModal("Ya votaste esta respuesta.");
+        setMostrarModal(true);
+        return;
 
       } finally {
         setEnviando(false);
@@ -129,7 +142,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
         
         <div className="flex items-center gap-2">
           <button
-            disabled={enviando}
+            disabled={enviando || voto === 1}
             onClick={handleUpvote}
             className={`p-2 rounded-lg border transition-all duration-150
               ${voto === 1
@@ -153,7 +166,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           </span>
 
           <button
-            disabled={enviando}
+            disabled={enviando || voto === -1}
             onClick={handleDownvote}
             className={`p-2 rounded-lg border transition-all duration-150
               ${voto === -1
@@ -166,6 +179,29 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
 
         </div>
       </div>
+
+      <Modal
+        visible={mostrarModal}
+        onClose={() => setMostrarModal(false)}
+      >
+        <h3 className="text-lg font-semibold text-white mb-3">
+          Acción no permitida
+        </h3>
+
+        <p className="text-gray-300 mb-6">
+          {mensajeModal}
+        </p>
+
+        <button
+          onClick={() => setMostrarModal(false)}
+          className="w-full bg-azulUTN hover:bg-blue-500 transition py-2 rounded-lg text-white font-semibold"
+        >
+          Entendido
+        </button>
+      </Modal>
+
     </div>
+
   );
 }
+
