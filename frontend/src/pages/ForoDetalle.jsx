@@ -1,8 +1,9 @@
 import { useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
 import CrearRespuesta from "../components/CrearRespuesta.jsx";
 import Modal from "../components/Modal.jsx";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
@@ -16,14 +17,23 @@ export default function ForoDetalle() {
   const [modoVista, setModoVista] = useState("normal");
   const [loading, setLoading] = useState(true);
 
+  const cargarRespuestas = useCallback(async () => {
+      const respuestasData = await respuestaService.obtenerPorForo(foroId);
+
+      const ordenadas = [...respuestasData].sort(
+        (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
+      );
+
+      setRespuestas(ordenadas);
+    }, [foroId])
+
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
 
-        const [foroData, respuestasData, materias] = await Promise.all([
+        const [foroData, materias] = await Promise.all([
           foroService.obtenerPorId(foroId),
-          respuestaService.obtenerPorTodos(),
           materiaService.obtenerTodos(),
         ]);
 
@@ -33,38 +43,28 @@ export default function ForoDetalle() {
           return;
         }
 
-        const respuestasForo = Array.isArray(respuestasData)
-          ? respuestasData.filter((r) => r.foro === foroData.idForo)
-          : [];
-
-        const materia = materias.find(
-          (m) => m.idMateria === foroData.materia
-        );
+        const materia = materias.find(m => m.idMateria === foroData.materia);
 
         const foroEnriquecido = {
           ...foroData,
-          materia_nombre: materia ? materia.nombre : "Sin materia",
-          carrera_nombre: materia ? materia.carrera_nombre : "Sin carrera",
+          materia_nombre: materia?.nombre || "Sin materia",
+          carrera_nombre: materia?.carrera_nombre || "Sin carrera",
           usuario_nombre: foroData.usuario || "Anónimo",
         };
 
-        const respuestasOrdenadas = [...respuestasForo].sort(
-          (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
-        );
-
         setForo(foroEnriquecido);
-        setRespuestas(respuestasOrdenadas);
-      } catch (error) {
-        console.error("❌ Error al cargar datos del foro:", error);
+        await cargarRespuestas(); 
+
+      } catch (e) {
+        console.error(e);
       } finally {
         setLoading(false);
       }
-    };
-
+    }
     cargarDatos();
-  }, [foroId]);
+  }, [foroId, cargarRespuestas]);
 
-  if (loading) {
+  if (loading){
     return (
       <p className="text-center text-gray-400 mt-10">
         Cargando foro...
@@ -81,9 +81,24 @@ export default function ForoDetalle() {
   }
 
   const respuestasOrdenadas = [...respuestas].sort((a, b) => {
-    if (modoVista === "ranking") return b.puntaje - a.puntaje;
-    return new Date(a.fecha_creacion) - new Date(b.fecha_creacion);
+    return modoVista === "ranking"
+    ? b.puntaje_neto - a.puntaje_neto
+    : new Date(a.fecha_creacion) - new Date(b.fecha_creacion);
   });
+
+  const manejarVoto = (idRespuesta, delta, nuevoVoto) => {
+    setRespuestas(prev =>
+      prev.map(r =>
+        r.idRespuesta === idRespuesta
+          ? {
+              ...r,
+              puntaje_neto: r.puntaje_neto + delta,
+              voto_usuario: nuevoVoto
+            }
+          : r
+      )
+    );
+  };
 
   return (
     <div className="max-w-7xl mx-auto mt-8 px-4 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -168,7 +183,6 @@ export default function ForoDetalle() {
         {/* Respuestas */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={modoVista}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
@@ -180,6 +194,7 @@ export default function ForoDetalle() {
                 <RespuestaTarjeta
                   key={res.idRespuesta}
                   respuesta={res}
+                  onVoto={manejarVoto}
                 />
               ))
             ) : (
@@ -237,9 +252,10 @@ export default function ForoDetalle() {
           materiaId={foro.materia}
           usuarioId={foro.usuario || 1}
           onClose={() => setMostrarRespuesta(false)}
-          onSave={(nuevaRespuesta) =>
-            setRespuestas((prev) => [...prev, nuevaRespuesta])
-          }
+          onSave={async() => {
+            await cargarRespuestas();
+            setMostrarRespuesta(false);
+          }}
         />
       </Modal>
     </div>

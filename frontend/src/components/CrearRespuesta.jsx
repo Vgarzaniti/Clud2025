@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService";
 
-export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
+export default function CrearRespuesta({ foroId, onClose, onSave }) {
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
@@ -84,7 +84,6 @@ export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
       formDataAPI.append("foro", foroId);
       formDataAPI.append("respuesta_texto", formData.respuesta);
 
-      // 🔥 NO enviar materia (el backend la asigna)
       archivos.forEach((archivo) => {
         formDataAPI.append("archivos", archivo);
       });
