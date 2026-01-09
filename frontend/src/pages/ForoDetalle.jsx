@@ -83,15 +83,20 @@ export default function ForoDetalle() {
     : new Date(a.fecha_creacion) - new Date(b.fecha_creacion);
   });
 
-  const manejarVoto = (idRespuesta, delta) => {
+  const manejarVoto = (idRespuesta, delta, nuevoVoto) => {
     setRespuestas(prev =>
       prev.map(r =>
         r.idRespuesta === idRespuesta
-          ? { ...r, puntaje_neto: r.puntaje_neto + delta }
+          ? {
+              ...r,
+              puntaje_neto: r.puntaje_neto + delta,
+              voto_usuario: nuevoVoto
+            }
           : r
       )
     );
   };
+
 
 
   return (
@@ -176,7 +181,6 @@ export default function ForoDetalle() {
         {/* Respuestas */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={modoVista}
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}

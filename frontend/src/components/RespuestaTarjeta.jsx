@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
 import { puntajeService } from "../services/puntajeService";
 
 export default function RespuestaTarjeta({ respuesta, onVoto }) {
     const textoRespuesta = respuesta.respuesta_texto || respuesta.respuesta || respuesta.contenido || "";
     const [enviando, setEnviando] = useState(false);
+    const [puntaje, setPuntaje] = useState(respuesta.puntaje_neto ?? 0);
     const [voto, setVoto] = useState(respuesta.voto_usuario ?? 0);
     const [expandido, setExpandido] = useState(false);
     const limite = 300;
@@ -26,8 +27,9 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           valor: nuevoValor
         });
 
-        setVoto(data.voto_usuario);
-        onVoto(respuesta.idRespuesta, delta);
+        setVoto(nuevoValor);
+        setPuntaje(data.puntaje_neto);
+        onVoto(respuesta.idRespuesta, delta, nuevoValor);
 
       } catch (error) {
 
@@ -50,19 +52,24 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
       try {
         setEnviando(true);
 
-        await puntajeService.votar({
+        const data = await puntajeService.votar({
           respuestaId: respuesta.idRespuesta,
           usuarioId: userId,
           valor: nuevoValor,
         });
 
         setVoto(nuevoValor);
-        onVoto(respuesta.idRespuesta, delta);
+        setPuntaje(data.puntaje_neto);
+        onVoto(respuesta.idRespuesta, delta, nuevoValor);
+
       } finally {
         setEnviando(false);
       }
     };
 
+    useEffect(() => {
+      setPuntaje(respuesta.puntaje_neto ?? 0);
+    }, [respuesta.puntaje_neto]);
 
     const textoCorto =
       textoRespuesta.length > limite
@@ -117,43 +124,46 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
       )}
 
       <div className="flex justify-between items-center mt-4">
+
         <span className="text-sm text-gray-400">Respuesta de {respuesta.autor || "Anonimo"}</span>
+        
         <div className="flex items-center gap-2">
           <button
             disabled={enviando}
             onClick={handleUpvote}
-            className={`p-2 rounded-lg border transition ${
-              voto === 1
-                ? "bg-green-600 border-green-500"
-                : "bg-fondo border-gray-500 hover:bg-gray-800"
-            }`}
+            className={`p-2 rounded-lg border transition-all duration-150
+              ${voto === 1
+                ? "bg-green-600 border-green-500 scale-110 shadow-md text-white"
+                : "bg-fondo border-gray-500 hover:bg-gray-800"}
+            `}
           >
             <ThumbsUp size={16} />
           </button>
 
           <span
             className={`text-sm font-semibold w-8 text-center ${
-              respuesta.puntaje_neto > 0
+              puntaje > 0
                 ? "text-green-400"
-                : respuesta.puntaje_neto < 0
+                : puntaje < 0
                 ? "text-red-400"
                 : "text-gray-300"
             }`}
           >
-            {respuesta.puntaje_neto}
+            {puntaje}
           </span>
 
           <button
             disabled={enviando}
             onClick={handleDownvote}
-            className={`p-2 rounded-lg border transition ${
-              voto === -1
-                ? "bg-red-600 border-red-500"
-                : "bg-fondo border-gray-500 hover:bg-gray-800"
-            }`}
+            className={`p-2 rounded-lg border transition-all duration-150
+              ${voto === -1
+                ? "bg-red-600 border-red-500 scale-110 shadow-md text-white"
+                : "bg-fondo border-gray-500 hover:bg-gray-800"}
+            `}
           >
             <ThumbsDown size={16} />
           </button>
+
         </div>
       </div>
     </div>
