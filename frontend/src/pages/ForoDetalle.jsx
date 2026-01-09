@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
 import CrearRespuesta from "../components/CrearRespuesta.jsx";
 import Modal from "../components/Modal.jsx";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
@@ -27,7 +28,6 @@ export default function ForoDetalle() {
     }, [foroId])
 
   useEffect(() => {
-
     const cargarDatos = async () => {
       try {
         setLoading(true);
@@ -45,37 +45,40 @@ export default function ForoDetalle() {
 
         const materia = materias.find(m => m.idMateria === foroData.materia);
 
-        setForo({
+        const foroEnriquecido = {
           ...foroData,
           materia_nombre: materia?.nombre || "Sin materia",
           carrera_nombre: materia?.carrera_nombre || "Sin carrera",
           usuario_nombre: foroData.usuario || "Anónimo",
-        });
+        };
 
+        setForo(foroEnriquecido);
         await cargarRespuestas(); 
+
       } catch (e) {
         console.error(e);
       } finally {
         setLoading(false);
       }
-    };
-
+    }
     cargarDatos();
-  }, [foroId]);
+  }, [foroId, cargarRespuestas]);
 
-
-
-  if (loading)
+  if (loading){
     return (
-      <p className="text-center text-gray-400 mt-10">Cargando foro...</p>
+      <p className="text-center text-gray-400 mt-10">
+        Cargando foro...
+      </p>
     );
+  }
 
-  if (!foro)
+  if (!foro) {
     return (
       <p className="text-center text-red-400 mt-10">
         Foro no encontrado
       </p>
     );
+  }
 
   const respuestasOrdenadas = [...respuestas].sort((a, b) => {
     return modoVista === "ranking"
@@ -97,8 +100,6 @@ export default function ForoDetalle() {
     );
   };
 
-
-
   return (
     <div className="max-w-7xl mx-auto mt-8 px-4 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Columna principal */}
@@ -111,7 +112,7 @@ export default function ForoDetalle() {
             Materia: {foro.materia_nombre}
           </p>
 
-          {/* 🔥 ARCHIVOS ADJUNTOS */}
+          {/* Archivos adjuntos */}
           {foro.archivos && foro.archivos.length > 0 && (
             <div className="mt-4 border-t border-gray-700 pt-3">
               <p className="text-sm text-gray-400 mb-2">
@@ -134,6 +135,7 @@ export default function ForoDetalle() {
                         href={fa.archivo_url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        download
                         className="text-azulUTN hover:underline break-all"
                       >
                         {nombreArchivo}
@@ -240,7 +242,7 @@ export default function ForoDetalle() {
         </button>
       </div>
 
-      {/* Modal para responder */}
+      {/* Modal */}
       <Modal
         visible={mostrarRespuesta}
         onClose={() => setMostrarRespuesta(false)}
