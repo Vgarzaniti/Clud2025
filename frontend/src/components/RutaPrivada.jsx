@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth.js";
 
-export default function ProtectedRoute() {
+export default function RutaPrivada() {
   const { usuario, loading } = useAuth();
 
   // Mientras se valida la sesión

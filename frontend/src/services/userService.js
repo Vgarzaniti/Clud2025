@@ -1,6 +1,6 @@
 import api from './api';
 
-export const userService = {
+const userService = {
     
     login: async (email, password) => {
         const res = await api.post("/login/", {
@@ -25,4 +25,6 @@ export const userService = {
         await api.post("/logout/");
     },
 }
+
+export default userService;
 

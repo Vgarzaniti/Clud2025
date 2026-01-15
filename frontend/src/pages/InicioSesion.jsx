@@ -8,7 +8,7 @@ export default function InicioSesion() {
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        mail: "",
+        email: "",
         password: ""
     });
 
@@ -28,26 +28,56 @@ export default function InicioSesion() {
     const validarFormulario = () => {
         const nuevosErrores = {};
 
-        if (!emailRegex.test(formData.mail))
-            nuevosErrores.mail = "El formato del correo no es válido.";
+        if (!emailRegex.test(formData.email))
+            nuevosErrores.email = "El formato del correo no es válido.";
 
         if (!passwordRegex.test(formData.password))
             nuevosErrores.password =
             "La contraseña es incorrecta.";
+        
+        if (!formData.password)
+            nuevosErrores.password = "La contraseña es obligatoria";
 
         setErrores(nuevosErrores);
         return Object.keys(nuevosErrores).length === 0;
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (validarFormulario()) {
-            console.log("Datos confirmados:", formData);
-            alert("Usuario Confirmado");
+        if (!validarFormulario()) return;
+
+        try {
+            const response = await fetch("https://clud2025.onrender.com/api/login/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    login: true,
+                    email: formData.email,
+                    password: formData.password
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.mensaje || "Error al iniciar sesión");
+            }
+
+            // Guardar tokens
+            localStorage.setItem("access", data.access);
+            localStorage.setItem("refresh", data.refresh);
+            localStorage.setItem("usuario", JSON.stringify(data.usuario));
+
             navigate("/home");
+
+        } catch (error) {
+            setErrores({ general: error.message });
         }
-    }
+    };
+
 
     return (
         <div className="min-h-screen bg-fondo flex flex-col items-center justify-center text-white px-4">
@@ -59,14 +89,14 @@ export default function InicioSesion() {
                     <div>
                         <input
                             type="email"
-                            name="mail"
+                            name="email"
                             placeholder="Mail de usuario"
-                            value={formData.mail}
+                            value={formData.email}
                             onChange={handleChange}
                             className="w-full bg-gray-700 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-azulUTN placeholder-gray-400"
                         />
                         {
-                            errores.mail && (
+                            errores.email && (
                                 <p className="text-red-400 text-sm mt-1">{errores.mail}</p>
                             )
                         }
@@ -101,6 +131,11 @@ export default function InicioSesion() {
                         Iniciar Sesión
                     </button>
                 </form>
+
+                {errores.general && (
+                    <p className="text-red-400 text-center mt-2">{errores.general}</p>
+                )}
+
 
                 <div className="text-center mt-4 space-y-2">
                     <Link to="/olvidar-contrasena" className="text-azulUTN hover:underline block">
