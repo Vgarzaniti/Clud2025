@@ -91,3 +91,33 @@ class CambiarDatosView(generics.UpdateAPIView):
 
         usuario.save()
         return Response({"mensaje": "Datos actualizados correctamente."}, status=status.HTTP_200_OK)
+
+# ------------------------
+# 🔹 Logout (eliminar cookies)
+# ------------------------
+
+class LogoutView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        response = Response(
+            {"mensaje": "Logout exitoso"},
+            status=status.HTTP_200_OK
+        )
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+        return response
+    
+# ------------------------
+# 🔹 Datos de Usuario
+# ------------------------
+class UsuarioMeView(generics.RetrieveAPIView):
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def get_object(self):
+        return self.request.user
+
+
+
