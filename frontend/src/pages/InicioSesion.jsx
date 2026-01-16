@@ -8,6 +8,9 @@ export default function InicioSesion() {
     const { login } = useAuth();
     const navigate = useNavigate();
 
+    const [carga, setCarga] = useState(false);
+    const [mensaje, setMensaje] = useState(null); // { tipo: "ok" | "error", texto: "" }
+
     const [formData, setFormData] = useState({
         email: "",
         password: ""
@@ -24,7 +27,6 @@ export default function InicioSesion() {
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    /*const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;*/
 
     const validarFormulario = () => {
         const nuevosErrores = {};
@@ -43,22 +45,42 @@ export default function InicioSesion() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setMensaje(null);
 
         if (!validarFormulario()) return;
 
         try {
+
+            setCarga(true);
+
             await login(formData.email, formData.password);
+
             navigate("/home");
+            
+            setMensaje({
+                tipo: "ok",
+                texto: "Inicio de sesión exitoso"
+            });
+
+            setTimeout(() => navigate("/home"), 1200);
     
         } catch (error) {
             
+            setMensaje({
+            tipo: "error",
+            texto:
+                "Credenciales incorrectas. Intente nuevamente."
+            });
+            
             const mensaje =
                 error.response?.data?.non_field_errors?.[0] ||
-                "Credenciales inválidas";
+                "Credenciales inválidas. Intete nuevamente.";
 
             setErrores({ general: mensaje });
-        } 
-  };
+        } finally {
+            setCarga(false);
+        }
+    };
 
 
 
@@ -66,7 +88,9 @@ export default function InicioSesion() {
         <div className="min-h-screen bg-fondo flex flex-col items-center justify-center text-white px-4">
 
             <div className="bg-panel p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-700">
-                <h1 className="text-3xl font-bold text-center mb-6">Iniciar Sesión</h1>
+                <h1 className="text-3xl font-bold text-center mb-2">Iniciar Sesión</h1>
+
+                <p className="text-center mt-4 space-y-2 text-gray-400 mb-4">Si ya tienes una cuenta, inicia sesión nuevamente.</p>
 
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <div>
@@ -109,16 +133,27 @@ export default function InicioSesion() {
 
                     <button
                         type="submit"
-                        className="w-full bg-rojoUTN text-white py-3 rounded-full font-semibold bg-violet-800 hover:bg-violet-950 transition"
+                        disabled={carga}
+                        className={`w-full py-3 rounded-full font-semibold transition
+                            ${carga
+                                ? "bg-gray-600 cursor-not-allowed"
+                                : "bg-violet-800 hover:bg-violet-950"}
+                        `}
                     >
-                        Iniciar Sesión
+                        {carga ? "Iniciando sesión..." : "Iniciar Sesión"}
                     </button>
+
                 </form>
 
-                {errores.general && (
-                    <p className="text-red-400 text-center mt-2">{errores.general}</p>
+                {mensaje && (
+                    <p
+                        className={`text-center mt-3 text-sm font-medium
+                            ${mensaje.tipo === "ok" ? "text-green-400" : "text-red-400"}
+                        `}
+                    >
+                        {mensaje.texto}
+                    </p>
                 )}
-
 
                 <div className="text-center mt-4 space-y-2">
                     <Link to="/olvidar-contrasena" className="text-azulUTN hover:underline block">
