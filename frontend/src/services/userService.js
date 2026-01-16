@@ -4,15 +4,17 @@ const userService = {
     
     login: async (email, password) => {
         const res = await api.post("/login/", {
-        login: true,
-        email,
-        password,
+            login: true,
+            email,
+            password,
         });
         return res.data;
     },
 
     register: async (data) => {
-        const res = await api.post("/login/", data);
+        const res = await api.post("/login/", {
+            ...data,
+        });
         return res.data;
     },
 

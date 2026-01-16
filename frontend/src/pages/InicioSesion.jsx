@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useState } from "react";
+import { useAuth } from "../context/useAuth";
 import { useNavigate } from "react-router-dom";
 
 export default function InicioSesion() {
-
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -23,20 +24,18 @@ export default function InicioSesion() {
     };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    /*const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;*/
 
     const validarFormulario = () => {
         const nuevosErrores = {};
 
-        if (!emailRegex.test(formData.email))
+        if (!emailRegex.test(formData.email)) {
             nuevosErrores.email = "El formato del correo no es válido.";
+        }
 
-        if (!passwordRegex.test(formData.password))
-            nuevosErrores.password =
-            "La contraseña es incorrecta.";
-        
-        if (!formData.password)
+        if (!formData.password) {
             nuevosErrores.password = "La contraseña es obligatoria";
+        }
 
         setErrores(nuevosErrores);
         return Object.keys(nuevosErrores).length === 0;
@@ -48,35 +47,19 @@ export default function InicioSesion() {
         if (!validarFormulario()) return;
 
         try {
-            const response = await fetch("https://clud2025.onrender.com/api/login/", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    login: true,
-                    email: formData.email,
-                    password: formData.password
-                })
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.mensaje || "Error al iniciar sesión");
-            }
-
-            // Guardar tokens
-            localStorage.setItem("access", data.access);
-            localStorage.setItem("refresh", data.refresh);
-            localStorage.setItem("usuario", JSON.stringify(data.usuario));
-
+            await login(formData.email, formData.password);
             navigate("/home");
-
+    
         } catch (error) {
-            setErrores({ general: error.message });
-        }
-    };
+            
+            const mensaje =
+                error.response?.data?.non_field_errors?.[0] ||
+                "Credenciales inválidas";
+
+            setErrores({ general: mensaje });
+        } 
+  };
+
 
 
     return (
@@ -97,7 +80,7 @@ export default function InicioSesion() {
                         />
                         {
                             errores.email && (
-                                <p className="text-red-400 text-sm mt-1">{errores.mail}</p>
+                                <p className="text-red-400 text-sm mt-1">{errores.email}</p>
                             )
                         }
                     </div>

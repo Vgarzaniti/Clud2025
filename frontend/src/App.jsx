@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import RutasPrivadas from "./components/RutaPrivada.jsx";
+import RutaPrivada from "./components/RutaPrivada.jsx";
 
 import Home from "./pages/Home.jsx"
 import Carreras from "./pages/Carreras.jsx";
@@ -27,7 +27,7 @@ function App() {
         </Route>
         
         {/* Rutas protegidas */}
-        <Route element={<RutasPrivadas />}>
+        <Route element={<RutaPrivada />}>
           <Route element={<MainLayout />}>
             <Route path="/home" element={<Home />} />
             <Route path="/carreras" element={<Carreras />} />
