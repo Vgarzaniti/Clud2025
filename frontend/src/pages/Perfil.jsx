@@ -11,8 +11,10 @@ import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
 import { materiaService } from "../services/materiaService.js";
 import { carreraService } from "../services/carreraService.js";
+import { useAuth } from "../context/useAuth.js";
 
 export default function Perfil() {
+  const { usuario, actualizarUsuario } = useAuth();
   const [vista, setVista] = useState("foros");
   const [mostrarEditar, setMostrarEditar] = useState(false);
   const [foroSeleccionado, setForoSeleccionado] = useState(null);
@@ -29,21 +31,16 @@ export default function Perfil() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const usuario = {
-    id: 1,
-    nombre: "Juan Pérez",
-    username: "jperez",
-    email: "juanperez@utn.edu.ar",
-  };
-
     useEffect(() => {
+        if (!usuario?.idUsuario) return;
+
         const cargarDatos = async () => {
             try {
                 setCarga(true);
 
                 const [forosUsuario, respuestasUsuario, materiasBD, carrerasBD] = await Promise.all([
-                    foroService.buscarUsuario(usuario.id),
-                    respuestaService.buscarUsuario(usuario.id),
+                    foroService.buscarUsuario(usuario.idUsuario),
+                    respuestaService.buscarUsuario(usuario.idUsuario),
                     materiaService.obtenerTodos(),
                     carreraService.obtenerTodos(),
                 ]);
@@ -68,7 +65,7 @@ export default function Perfil() {
             };
 
         cargarDatos();
-    },  [usuario.id]);
+    },  [usuario.idUsuario]);
 
     const forosEnriquecidos = useMemo(() => {
         if (!foros.length || !materias.length) return [];
@@ -134,6 +131,7 @@ export default function Perfil() {
     };
 
     const handleGuardarUsuario = (nuevoUsuario) => {
+        actualizarUsuario(nuevoUsuario);
         console.log("Usuario editado:", nuevoUsuario);
         setMostrarEditarUsuario(false);
     };
@@ -175,8 +173,8 @@ export default function Perfil() {
       {/* Panel lateral usuario */}
       <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto self-start">
         <div className="shadow-gray-900 shadow-lg w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-2xl font-bold text-fondo absolute -top-12 left-1/2 transform -translate-x-1/2">
-          {usuario.nombre
-            ? usuario.nombre
+          {usuario.username
+            ? usuario.username
                 .split(" ")
                 .map((n) => n[0])
                 .join("")
@@ -187,7 +185,7 @@ export default function Perfil() {
         <div className="mt-15 space-y-2 text-left">
           <div>
             <p className="font-semibold text-white">Nombre Completo</p>
-            <p className="ml-2 text-gray-400">{usuario.nombre}</p>
+            <p className="ml-2 text-gray-400">{usuario.nombreYapellido}</p>
           </div>
           <div>
             <p className="font-semibold text-white">Nombre Usuario</p>

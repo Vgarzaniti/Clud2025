@@ -26,6 +26,20 @@ const userService = {
     logout: async () => {
         await api.post("/logout/");
     },
+
+    cambiarDatos: async ({ username, password }) => {
+        const payload = {};
+
+        if (username) payload.nuevo_username = username;
+        if (password) payload.password_nueva = password;
+
+        const response = await api.put(
+            "/usuario/cambiar_datos/",
+            payload
+        );
+
+        return response.data;
+    },
 }
 
 export default userService;

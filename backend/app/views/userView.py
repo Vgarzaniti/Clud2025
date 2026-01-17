@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
 from ..models import Usuario
+from .authentication import CookieJWTAuthentication
 from ..serializers.usuario_serializer import (
     UsuarioSerializer,
     LoginSerializer,
@@ -73,7 +74,7 @@ class UsuarioView(generics.GenericAPIView):
 class CambiarDatosView(generics.UpdateAPIView):
     serializer_class = CambiarDatosSerializer
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication]
 
     def get_object(self):
         return self.request.user
@@ -114,7 +115,7 @@ class LogoutView(generics.GenericAPIView):
 class UsuarioMeView(generics.RetrieveAPIView):
     serializer_class = UsuarioSerializer
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication]
 
     def get_object(self):
         return self.request.user

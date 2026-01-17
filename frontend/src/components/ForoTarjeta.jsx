@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { foroService } from "../services/foroService";
+import { useAuth } from "../context/useAuth.js"
 import "../input.css";
 
 export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onEliminar }) {
+  const { usuario } = useAuth();
   const navigate = useNavigate();
   const [totalRespuestas, setTotalRespuestas] = useState(0);
   const [loadingResp, setLoadingResp] = useState(true);

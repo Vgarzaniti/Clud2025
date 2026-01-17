@@ -19,13 +19,18 @@ export function AuthProvider({ children }) {
     setUsuario(data.usuario);
   };
 
+  const actualizarUsuario = (data) => {
+    setUsuario(data);
+  };
+
+
   const logout = async () => {
     await authService.logout();
     setUsuario(null);
   };
 
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, loading }}>
+    <AuthContext.Provider value={{ usuario, login, actualizarUsuario,logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
