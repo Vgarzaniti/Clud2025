@@ -1,6 +1,16 @@
 import api from './api';
 
 const userService = {
+
+    obtenerTodos: async () => {
+        const res = await api.get("/usuarios/");
+        return res.data;
+    },
+
+    obtenerPorId: async (id) => {
+        const res = await api.get(`/usuarios/${id}/`);
+        return res.data;
+    },
     
     login: async (email, password) => {
         const res = await api.post("/login/", {

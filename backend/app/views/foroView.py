@@ -1,6 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated
 
 from ..models import Foro, ForoArchivo, Archivo
 from ..serializers.foro_serializer import ForoSerializer
@@ -9,14 +10,19 @@ from .hash import file_hash
 
 class ForoViewSet(viewsets.ModelViewSet):
     serializer_class = ForoSerializer
+    permission_classes = [IsAuthenticated]
 
     # 🔥 CLAVE: permite multipart/form-data
     parser_classes = (MultiPartParser, FormParser)
 
     # 🔥 CLAVE: optimiza carga de archivos
-    queryset = Foro.objects.prefetch_related(
-        'archivos__archivo'
-    ).order_by('-fecha_creacion')
+    queryset = Foro.objects.select_related(
+        "usuario",
+        "materia"
+    ).prefetch_related(
+        "archivos__archivo"
+    ).order_by("-fecha_creacion")
+
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod
@@ -66,20 +72,22 @@ class ForoViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         archivos = request.FILES.getlist('archivos')
 
-        serializer = ForoSerializer(data=data)
-        if serializer.is_valid():
-            foro = serializer.save()
+        serializer = ForoSerializer(
+            data=data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
 
-            self._subir_archivos(foro, archivos)
+        # 🔥 El serializer.create() obtiene el usuario del contexto automáticamente
+        foro = serializer.save()
 
-            foro.refresh_from_db()
+        self._subir_archivos(foro, archivos)
 
-            return Response(
-                ForoSerializer(foro).data,
-                status=status.HTTP_201_CREATED
-            )
+        return Response(
+            ForoSerializer(foro, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # 🔹 Update
     def update(self, request, *args, **kwargs):

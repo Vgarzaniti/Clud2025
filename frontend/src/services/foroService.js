@@ -1,5 +1,4 @@
 import api from "./api";
-import { materiaService } from "./materiaService";
 import { respuestaService } from "./respuestaService";
 
 const normalizarRespuesta = (data) => {
@@ -9,23 +8,22 @@ const normalizarRespuesta = (data) => {
 };
 
 export const foroService = {
+  
   // =============================
   // OBTENER TODOS
   // =============================
   obtenerTodos: async () => {
+  
     const response = await api.get("/foros/");
-    const foros = response.data;
-    const materias = await materiaService.obtenerTodos();
 
-    return foros.map((foro) => {
-      const materia = materias.find((m) => m.idMateria === foro.materia);
-      return {
-        ...foro,
-        materia_nombre: materia?.nombre || "Sin materia",
-        carrera_nombre: materia?.carrera_nombre || "Sin carrera",
-      };
-    });
+    return response.data.map((foro) => ({
+      ...foro,
+      usuario_nombre: foro.usuario?.username ?? "Usuario desconocido",
+      nombreCompleto: foro.usuario?.nombreYapellido ?? "",
+      materia_nombre: foro.materia?.nombre ?? "Sin materia",
+    }));
   },
+
 
   // =============================
   // OBTENER POR ID
@@ -54,14 +52,8 @@ export const foroService = {
   // =============================
   crear: async (datos) => {
     try {
-      const esFormData = datos instanceof FormData;
-
-      const res = await api.post("/foros/", datos, {
-        headers: esFormData
-          ? { "Content-Type": "multipart/form-data" }
-          : {},
-      });
-
+      // 🔥 NO forzar Content-Type: Axios lo manejará automáticamente con FormData
+      const res = await api.post("/foros/", datos);
       return res.data;
     } catch (error) {
       console.error("❌ Error al crear el foro:", error);
@@ -74,14 +66,8 @@ export const foroService = {
   // =============================
   editar: async (id, datos) => {
     try {
-      const esFormData = datos instanceof FormData;
-
-      const res = await api.put(`/foros/${id}/`, datos, {
-        headers: esFormData
-          ? { "Content-Type": "multipart/form-data" }
-          : {},
-      });
-
+      // 🔥 NO forzar Content-Type: Axios lo manejará automáticamente con FormData
+      const res = await api.put(`/foros/${id}/`, datos);
       return res.data;
     } catch (error) {
       console.error(`❌ Error al editar foro ${id}`, error);

@@ -41,4 +41,9 @@ class CambiarDatosSerializer(serializers.Serializer):
             raise serializers.ValidationError("La contraseña actual es incorrecta.")
         return data
     
+class UsuarioForoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = ("id", "username", "nombreYapellido")
+    
 
