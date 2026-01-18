@@ -23,7 +23,6 @@ class ForoViewSet(viewsets.ModelViewSet):
         "archivos__archivo"
     ).order_by("-fecha_creacion")
 
-
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod
     def _procesar_archivo(archivo_file, foro):
@@ -72,22 +71,17 @@ class ForoViewSet(viewsets.ModelViewSet):
         data = request.data.copy()
         archivos = request.FILES.getlist('archivos')
 
-        serializer = ForoSerializer(
-            data=data,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-
-        # 🔥 El serializer.create() obtiene el usuario del contexto automáticamente
-        foro = serializer.save()
-
+        serializer = ForoSerializer(data=data)
+        if serializer.is_valid():
+            foro = serializer.save()
+        
         self._subir_archivos(foro, archivos)
+        foro.refresh_from_db()
 
         return Response(
-            ForoSerializer(foro, context={'request': request}).data,
+            ForoSerializer(foro).data,
             status=status.HTTP_201_CREATED
         )
-
 
     # 🔹 Update
     def update(self, request, *args, **kwargs):

@@ -21,6 +21,7 @@ export const foroService = {
       usuario_nombre: foro.usuario?.username ?? "Usuario desconocido",
       nombreCompleto: foro.usuario?.nombreYapellido ?? "",
       materia_nombre: foro.materia?.nombre ?? "Sin materia",
+      carrera_nombre: foro.materia?.carrera_nombre || "Sin carrera",
     }));
   },
 
@@ -52,8 +53,14 @@ export const foroService = {
   // =============================
   crear: async (datos) => {
     try {
-      // 🔥 NO forzar Content-Type: Axios lo manejará automáticamente con FormData
-      const res = await api.post("/foros/", datos);
+      const esFormData = datos instanceof FormData;
+
+      const res = await api.post("/foros/", datos, {
+        headers: esFormData
+          ? { "Content-Type": "multipart/form-data" }
+          : {},
+      });
+
       return res.data;
     } catch (error) {
       console.error("❌ Error al crear el foro:", error);
@@ -65,10 +72,18 @@ export const foroService = {
   // EDITAR (FORMDATA)
   // =============================
   editar: async (id, datos) => {
+    
     try {
-      // 🔥 NO forzar Content-Type: Axios lo manejará automáticamente con FormData
-      const res = await api.put(`/foros/${id}/`, datos);
+      const esFormData = datos instanceof FormData;
+
+      const res = await api.put(`/foros/${id}/`, datos, {
+        headers: esFormData
+          ? { "Content-Type": "multipart/form-data" }
+          : {},
+      });
+
       return res.data;
+      
     } catch (error) {
       console.error(`❌ Error al editar foro ${id}`, error);
       throw error;

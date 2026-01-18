@@ -3,12 +3,14 @@ import { FiTrash2 } from "react-icons/fi";
 import { foroService } from "../services/foroService.js";
 import { materiaService } from "../services/materiaService.js";
 import { carreraService } from "../services/carreraService.js";
+import { useAuth } from "../context/useAuth.js";
 
 export default function CrearForo({ onClose, onForoCreado }) {
-
+  const { usuario } = useAuth();
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
+  // eslint-disable-next-line no-unused-vars
   const [materias, setMaterias] = useState([]);
   const [carreras, setCarreras] = useState([]);
   const [materiasFiltradas, setMateriasFiltradas] = useState([]);
@@ -22,7 +24,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
     carrera: "",
     materia: "",
     pregunta: "",
-    /*archivos: "",*/
+    archivos: "",
   });
 
   useEffect(() => {
@@ -93,7 +95,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
     return Object.keys(nuevosErrores).length === 0;
   };
 
-  // 🔥 ÚNICO CAMBIO REAL: FormData + archivos
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -108,7 +109,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
 
     try {
       const data = new FormData();
-
+      data.append("usuario", usuario.idUsuario);
       data.append("materia", parseInt(formData.materia));
       data.append("pregunta", formData.pregunta);
 
