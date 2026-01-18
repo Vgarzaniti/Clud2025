@@ -136,7 +136,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
           errorMsg = JSON.stringify(error.response.data, null, 2);
         }
       }
-      alert(`❌ Error: ${errorMsg}\n\nSi el problema persiste, intenta:\n1. Recarga la página (F5)\n2. Limpia caché del navegador (Ctrl+Shift+Delete)\n3. Reintenta en unos minutos (servidor actualizando)`);
+      alert(`❌ Error: ${errorMsg}`);
     } finally {
       setCargando(false);
     }
