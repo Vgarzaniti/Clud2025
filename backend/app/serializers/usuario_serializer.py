@@ -40,3 +40,10 @@ class CambiarDatosSerializer(serializers.Serializer):
         if not usuario.check_password(data['password_actual']):
             raise serializers.ValidationError("La contraseña actual es incorrecta.")
         return data
+    
+class UsuarioForoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Usuario
+        fields = ("id", "username", "nombreYapellido")
+    
+

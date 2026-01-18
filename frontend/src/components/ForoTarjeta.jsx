@@ -88,7 +88,7 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
       </p>
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
-        <span>Autor: {foro.usuario || "Anónimo"}</span>
+        <span>Autor: {foro.usuario?.username || "Anónimo"}</span>
         <span className="flex items-center gap-2">
           💬
           {loadingResp ? (

@@ -5,6 +5,7 @@ import { materiaService } from "../services/materiaService.js";
 import { carreraService } from "../services/carreraService.js";
 
 export default function CrearForo({ onClose, onForoCreado }) {
+
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
@@ -21,25 +22,8 @@ export default function CrearForo({ onClose, onForoCreado }) {
     carrera: "",
     materia: "",
     pregunta: "",
-    archivos: "",
+    /*archivos: "",*/
   });
-
-  useEffect(() => {
-    const cargarDatos = async () => {
-      try {
-        const [carrerasBD, materiasBD] = await Promise.all([
-          carreraService.obtenerTodos(),
-          materiaService.obtenerTodos(),
-        ]);
-        setCarreras(carrerasBD);
-        setMaterias(materiasBD);
-        setMateriasFiltradas(materiasBD);
-      } catch (error) {
-        console.error("Error al cargar datos:", error);
-      }
-    };
-    cargarDatos();
-  }, []);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -59,14 +43,13 @@ export default function CrearForo({ onClose, onForoCreado }) {
 
         setCarreras(carrerasBD);
         setMaterias(materiasBD);
-        setMateriasFiltradas(materiasBD); // 🔥 CLAVE
+        setMateriasFiltradas(materiasBD);
       } catch (error) {
         console.error("Error al cargar datos:", error);
       }
     };
     cargarDatos();
   }, []);
-
 
 
   const hadleArchivoChange = (e) => {
@@ -126,7 +109,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
     try {
       const data = new FormData();
 
-      data.append("usuario", 1); // ⚠️ luego reemplazar por JWT
       data.append("materia", parseInt(formData.materia));
       data.append("pregunta", formData.pregunta);
 
@@ -140,8 +122,21 @@ export default function CrearForo({ onClose, onForoCreado }) {
       onForoCreado(foroCreado);
       onClose();
     } catch (error) {
-      console.error("❌ Error al publicar el foro:", error);
-      alert("Hubo un error al publicar el foro. Verifica la consola.");
+      console.error("❌ Error completo:", error);
+      console.error("❌ Response data:", error.response?.data);
+      
+      // Mejor manejo del error
+      let errorMsg = error.message;
+      if (error.response?.data) {
+        if (typeof error.response.data === 'string') {
+          errorMsg = error.response.data;
+        } else if (error.response.data.usuario) {
+          errorMsg = `Usuario error: ${JSON.stringify(error.response.data.usuario)}`;
+        } else {
+          errorMsg = JSON.stringify(error.response.data, null, 2);
+        }
+      }
+      alert(`❌ Error: ${errorMsg}`);
     } finally {
       setCargando(false);
     }

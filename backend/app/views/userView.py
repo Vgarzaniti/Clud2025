@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
 from ..models import Usuario
+from .authentication import CookieJWTAuthentication
 from ..serializers.usuario_serializer import (
     UsuarioSerializer,
     LoginSerializer,
@@ -73,7 +74,7 @@ class UsuarioView(generics.GenericAPIView):
 class CambiarDatosView(generics.UpdateAPIView):
     serializer_class = CambiarDatosSerializer
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication]
 
     def get_object(self):
         return self.request.user
@@ -91,3 +92,33 @@ class CambiarDatosView(generics.UpdateAPIView):
 
         usuario.save()
         return Response({"mensaje": "Datos actualizados correctamente."}, status=status.HTTP_200_OK)
+
+# ------------------------
+# 🔹 Logout (eliminar cookies)
+# ------------------------
+
+class LogoutView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        response = Response(
+            {"mensaje": "Logout exitoso"},
+            status=status.HTTP_200_OK
+        )
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+        return response
+    
+# ------------------------
+# 🔹 Datos de Usuario
+# ------------------------
+class UsuarioMeView(generics.RetrieveAPIView):
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+
+    def get_object(self):
+        return self.request.user
+
+
+

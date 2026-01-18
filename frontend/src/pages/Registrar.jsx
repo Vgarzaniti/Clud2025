@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import userService from "../services/userService";
 
 export default function Register() {
 
@@ -15,12 +16,15 @@ export default function Register() {
         confirmarPassword: ""
     });
 
+    const [carga, setCarga] = useState(false);
+    const [mensaje, setMensaje] = useState(null);
+
+
     const [errores, setErrores] = useState({});
     const [mostrarContrasena, setMostrarContrasena] = useState(false);
     const [mostrarConfirmarContrasena, setMostrarConfirmarContrasena] = useState(false);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
     const handleChange = (e) => {
         setFormData({
@@ -38,10 +42,6 @@ export default function Register() {
         if (!emailRegex.test(formData.email))
         nuevosErrores.email = "El formato del correo no es válido.";
 
-        if (!passwordRegex.test(formData.password))
-            nuevosErrores.password =
-            "La contraseña debe tener al menos 8 caracteres, una mayúscula y un carácter especial.";
-
         if (formData.password !== formData.confirmarPassword)
             nuevosErrores.confirmarPassword = "Las contraseñas no coinciden.";
 
@@ -49,26 +49,49 @@ export default function Register() {
         return Object.keys(nuevosErrores).length === 0;
     }
 
-    const password = formData.password;
-
-    const requisitosContraseña = {
-        length: password.length >= 8,
-        mayuscula: /[A-Z]/.test(password),
-        minuscula: /[a-z]/.test(password),
-        numero: /\d/.test(password),
-        especial: /[@$!%*?&]/.test(password),
-    }
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setMensaje(null);
 
-        if (validarFormulario()) {
-            console.log("Datos registrados:", formData);
-            alert("Registro exitoso");
-            
-            navigate("/home");
+        if (!validarFormulario()) return;
+
+        try {
+
+            setCarga(true);
+
+            await userService.register({
+                nombreYapellido: formData.nombreCompleto,
+                username: formData.nombreUsuario,
+                email: formData.email,
+                password: formData.password,
+            });
+
+            setMensaje({
+                tipo: "ok",
+                texto: "Registro exitoso. Redirigiendo..."
+            });
+
+            setTimeout(() => navigate("/inicio-sesion"), 1200);
+
+            navigate("/inicio-sesion");
+
+        } catch (error) {
+
+            setMensaje({
+                tipo: "error",
+                texto:
+                    "Usuario o correo ya registrado. Intente con otro."
+                });
+
+            setErrores({
+                general:
+                    error.response?.data?.mensaje ||
+                    "Error al registrar usuario"
+            });
+        } finally {
+            setCarga(false);
         }
-    }
+    };
     
     return (
         <div className="min-h-screen bg-fondo flex flex-col items-center justify-center text-white px-4">
@@ -148,23 +171,6 @@ export default function Register() {
                             )
                         }
 
-                        <ul className="mt-2 text-sm space-y-1">
-                            <li className={requisitosContraseña.length ? "text-green-400" : "text-red-400"}>
-                            • Mínimo 8 caracteres
-                            </li>
-                            <li className={requisitosContraseña.mayuscula ? "text-green-400" : "text-red-400"}>
-                            • Al menos una letra mayúscula
-                            </li>
-                            <li className={requisitosContraseña.minuscula ? "text-green-400" : "text-red-400"}>
-                            • Al menos una letra minúscula
-                            </li>
-                            <li className={requisitosContraseña.numero ? "text-green-400" : "text-red-400"}>
-                            • Al menos un número
-                            </li>
-                            <li className={requisitosContraseña.especial ? "text-green-400" : "text-red-400"}>
-                            • Al menos un símbolo especial (@ $ ! % * ? &)
-                            </li>
-                        </ul>
                     </div>
                     
                     <div className="relative">
@@ -197,11 +203,27 @@ export default function Register() {
 
                     <button
                         type="submit"
-                        className="w-full bg-rojoUTN text-white py-3 rounded-full font-semibold bg-violet-800 hover:bg-violet-950 transition"
+                        disabled={carga}
+                        className={`w-full py-3 rounded-full font-semibold transition
+                            ${carga
+                                ? "bg-gray-600 cursor-not-allowed"
+                                : "bg-violet-800 hover:bg-violet-950"}
+                        `}
                     >
-                        Registrarse
+                        {carga ? "Registrando..." : "Registrarse"}
                     </button>
                 </form>
+
+                {mensaje && (
+                    <p
+                        className={`text-center mt-3 text-sm font-medium
+                            ${mensaje.tipo === "ok" ? "text-green-400" : "text-red-400"}
+                        `}
+                    >
+                        {mensaje.texto}
+                    </p>
+                )}
+
 
                 <div className="text-center mt-4">
                     <p className="text-gray-400">
