@@ -4,6 +4,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
 from ..models import Usuario
+from rest_framework.generics import RetrieveAPIView
 from .authentication import CookieJWTAuthentication
 from ..serializers.usuario_serializer import (
     UsuarioSerializer,
@@ -16,6 +17,8 @@ from ..serializers.usuario_serializer import (
 # ------------------------
 class UsuarioView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
 
     def post(self, request, *args, **kwargs):
         # Detectar si es login o registro
@@ -120,5 +123,11 @@ class UsuarioMeView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
-
-
+class UsuarioDetailView(RetrieveAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+    
+    lookup_field = 'idUsuario'
+    lookup_url_kwarg = 'idUsuario'

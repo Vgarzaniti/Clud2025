@@ -14,6 +14,7 @@ class ForoArchivoSerializer(serializers.ModelSerializer):
 
 class ForoSerializer(serializers.ModelSerializer):
     archivos = ForoArchivoSerializer(many=True, read_only=True)
+    usuario = serializers.SerializerMethodField()
 
     class Meta:
         model = Foro
@@ -26,4 +27,11 @@ class ForoSerializer(serializers.ModelSerializer):
             'fecha_actualizacion',
             'archivos'
         ]
+    def get_usuario(self, obj):
+        return {
+            "idUsuario": obj.usuario.idUsuario,
+            "nombreYapellido": obj.usuario.nombreYapellido,
+            "email": obj.usuario.email,
+            "username": obj.usuario.username
+        }
 

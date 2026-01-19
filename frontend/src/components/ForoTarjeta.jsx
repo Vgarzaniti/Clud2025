@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { foroService } from "../services/foroService";
 import "../input.css";
 
+
 export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onEliminar }) {
   const navigate = useNavigate();
   const [totalRespuestas, setTotalRespuestas] = useState(0);
@@ -37,6 +38,8 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
       activo = false;
     };
   }, [foro.idForo]);
+
+  console.log("Foro completo:", foro);
 
   return (
     <div
@@ -88,7 +91,7 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
       </p>
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
-        <span>Autor: {foro.usuario?.username || "Anónimo"}</span>
+        <span>Autor: {foro.nombreCompleto || foro.usuario_nombre}</span>
         <span className="flex items-center gap-2">
           💬
           {loadingResp ? (

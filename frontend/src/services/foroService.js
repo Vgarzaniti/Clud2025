@@ -1,10 +1,44 @@
 import api from "./api";
 import { respuestaService } from "./respuestaService";
+import userService from "./userService";
 
 const normalizarRespuesta = (data) => {
   if (Array.isArray(data)) return data;
   if (data?.results) return data.results;
   return [];
+};
+
+const normalizarForo = async (foro) => {
+  let usuario_nombre = "Usuario desconocido";
+  let nombreCompleto = "";
+
+  // 🔹 Si el backend manda SOLO el ID del usuario
+  if (typeof foro.usuario === "number") {
+    try {
+      const usuario = await userService.obtenerPorId(foro.usuario);
+      usuario_nombre = usuario.username;
+      nombreCompleto = usuario.nombreYapellido;
+    } catch (error) {
+      console.warn("⚠️ No se pudo obtener usuario", error);
+    }
+  }
+
+  // 🔹 Si el backend manda el objeto usuario
+  if (typeof foro.usuario === "object" && foro.usuario !== null) {
+    usuario_nombre = foro.usuario.username ?? "Usuario desconocido";
+    nombreCompleto = foro.usuario.nombreYapellido ?? "";
+  }
+
+  return {
+    ...foro,
+    usuario_nombre,
+    nombreCompleto,
+    materia_nombre: foro.materia?.nombre ?? foro.materia_nombre ?? "Sin materia",
+    carrera_nombre:
+      foro.materia?.carrera_nombre ??
+      foro.carrera_nombre ??
+      "Sin carrera",
+  };
 };
 
 export const foroService = {
@@ -13,16 +47,8 @@ export const foroService = {
   // OBTENER TODOS
   // =============================
   obtenerTodos: async () => {
-  
     const response = await api.get("/foros/");
-
-    return response.data.map((foro) => ({
-      ...foro,
-      usuario_nombre: foro.usuario?.username ?? "Usuario desconocido",
-      nombreCompleto: foro.usuario?.nombreYapellido ?? "",
-      materia_nombre: foro.materia?.nombre ?? "Sin materia",
-      carrera_nombre: foro.materia?.carrera_nombre || "Sin carrera",
-    }));
+    return Promise.all(response.data.map(normalizarForo));
   },
 
 
@@ -30,20 +56,44 @@ export const foroService = {
   // OBTENER POR ID
   // =============================
   obtenerPorId: async (id) => {
-    try {
-      const foroRes = await api.get(`/foros/${id}/`);
-      const respuestas = await respuestaService.obtenerPorTodos();
+  try {
+    const foroRes = await api.get(`/foros/${id}/`);
+    const respuestas = await respuestaService.obtenerPorTodos();
 
-      const respuestasDelForo = respuestas.filter(
-        (r) => String(r.foro) === String(id)
-      );
+    const respuestasDelForo = respuestas.filter(
+      (r) => String(r.foro) === String(id)
+    );
+
+    const foroNormalizado = await normalizarForo(foroRes.data);
+
+    return {
+      ...foroNormalizado,
+      totalRespuestas: respuestasDelForo.length,
+    };
+  } catch (error) {
+    console.error(`❌ Error al obtener foro ${id}`, error);
+    throw error;
+  }
+},
+
+obtenerConUsuario: async (id) => {
+    try {
+      // Obtener foro
+      const foroRes = await api.get(`/foros/${id}/`);
+      const foro = foroRes.data;
+
+      // Obtener usuario creador
+      const usuario = await userService.obtenerPorId(foro.usuario);
 
       return {
-        ...foroRes.data,
-        totalRespuestas: respuestasDelForo.length,
+        ...foro,
+        nombreCompleto: usuario.nombreYapellido,
+        username: usuario.username,
       };
     } catch (error) {
-      console.error(`❌ Error al obtener foro ${id}`, error);
+      const usuario = { username: "Usuario eliminado" }
+      console.error("❌ Error al obtener foro con usuario", error);
+      console.error(usuario)
       throw error;
     }
   },
