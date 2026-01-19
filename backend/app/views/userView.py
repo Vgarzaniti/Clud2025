@@ -126,8 +126,6 @@ class UsuarioMeView(generics.RetrieveAPIView):
 class UsuarioDetailView(RetrieveAPIView):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [CookieJWTAuthentication]
     
     lookup_field = 'idUsuario'
     lookup_url_kwarg = 'idUsuario'

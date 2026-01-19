@@ -17,6 +17,9 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
         setLoadingResp(true);
         const data = await foroService.obtenerPorId(foro.idForo, true);
 
+        foro.usuario_nombre = foro.usuario?.username ?? "Usuario desconocido";
+        foro.nombreCompleto = foro.usuario?.nombreYapellido ?? "";
+
         if (activo) {
           setTotalRespuestas(data.totalRespuestas);
         }
@@ -91,7 +94,7 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
       </p>
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
-        <span>Autor: {foro.nombreCompleto || foro.usuario_nombre}</span>
+        <span>Autor: {foro.usuario_nombre || foro.nombreCompleto || "Anonimo"}</span>
         <span className="flex items-center gap-2">
           💬
           {loadingResp ? (

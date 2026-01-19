@@ -1,6 +1,5 @@
 import api from "./api";
 import { respuestaService } from "./respuestaService";
-import userService from "./userService";
 
 const normalizarRespuesta = (data) => {
   if (Array.isArray(data)) return data;
@@ -8,38 +7,21 @@ const normalizarRespuesta = (data) => {
   return [];
 };
 
-const normalizarForo = async (foro) => {
-  let usuario_nombre = "Usuario desconocido";
-  let nombreCompleto = "";
-
-  // 🔹 Si el backend manda SOLO el ID del usuario
-  if (typeof foro.usuario === "number") {
-    try {
-      const usuario = await userService.obtenerPorId(foro.usuario);
-      usuario_nombre = usuario.username;
-      nombreCompleto = usuario.nombreYapellido;
-    } catch (error) {
-      console.warn("⚠️ No se pudo obtener usuario", error);
-    }
-  }
-
-  // 🔹 Si el backend manda el objeto usuario
-  if (typeof foro.usuario === "object" && foro.usuario !== null) {
-    usuario_nombre = foro.usuario.username ?? "Usuario desconocido";
-    nombreCompleto = foro.usuario.nombreYapellido ?? "";
-  }
+const normalizarForo = (foro) => {
+  const usuario = foro.usuario ?? {};
 
   return {
     ...foro,
-    usuario_nombre,
-    nombreCompleto,
-    materia_nombre: foro.materia?.nombre ?? foro.materia_nombre ?? "Sin materia",
-    carrera_nombre:
-      foro.materia?.carrera_nombre ??
-      foro.carrera_nombre ??
-      "Sin carrera",
+    usuario_nombre:
+      usuario.nombreYapellido ||
+      usuario.username ||
+      "Usuario desconocido",
+    nombreCompleto: usuario.nombreYapellido || "",
+    materia_nombre: foro.materia_nombre ?? "Sin materia",
+    carrera_nombre: foro.carrera_nombre ?? "Sin carrera",
   };
 };
+
 
 export const foroService = {
   
@@ -82,13 +64,10 @@ obtenerConUsuario: async (id) => {
       const foroRes = await api.get(`/foros/${id}/`);
       const foro = foroRes.data;
 
-      // Obtener usuario creador
-      const usuario = await userService.obtenerPorId(foro.usuario);
-
       return {
         ...foro,
-        nombreCompleto: usuario.nombreYapellido,
-        username: usuario.username,
+        nombreCompleto: foro.usuario?.nombreYapellido,
+        username: foro.usuario?.username,
       };
     } catch (error) {
       const usuario = { username: "Usuario eliminado" }

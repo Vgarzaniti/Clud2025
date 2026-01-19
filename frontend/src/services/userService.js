@@ -25,7 +25,9 @@ const userService = {
         const res = await api.post("/login/", {
             ...data,
         });
+        console.log("Usuario nuevo", res.data);
         return res.data;
+        
     },
 
     me: async () => {

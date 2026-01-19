@@ -9,7 +9,6 @@ from .hash import file_hash
 
 
 class ForoViewSet(viewsets.ModelViewSet):
-    serializer_class = ForoSerializer
     permission_classes = [IsAuthenticated]
 
     # 🔥 CLAVE: permite multipart/form-data
@@ -22,6 +21,8 @@ class ForoViewSet(viewsets.ModelViewSet):
     ).prefetch_related(
         "archivos__archivo"
     ).order_by("-fecha_creacion")
+    
+    serializer_class = ForoSerializer
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod
@@ -72,9 +73,10 @@ class ForoViewSet(viewsets.ModelViewSet):
         archivos = request.FILES.getlist('archivos')
 
         serializer = ForoSerializer(data=data)
-        if serializer.is_valid():
-            foro = serializer.save()
-        
+        serializer.is_valid(raise_exception=True)
+
+        foro = serializer.save(usuario=request.user)
+
         self._subir_archivos(foro, archivos)
         foro.refresh_from_db()
 
@@ -99,7 +101,7 @@ class ForoViewSet(viewsets.ModelViewSet):
 
         serializer = ForoSerializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        foro = serializer.save()
+        foro = serializer.save(usuario=request.user)
 
         # 🔹 Eliminar relación foro ↔ archivo (NO borra Cloudinary)
         for archivo_id in archivos_a_eliminar:

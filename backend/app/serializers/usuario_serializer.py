@@ -45,8 +45,14 @@ class CambiarDatosSerializer(serializers.Serializer):
         return data
     
 class UsuarioForoSerializer(serializers.ModelSerializer):
+    nombreYapellido = serializers.SerializerMethodField()
+    
     class Meta:
         model = Usuario
-        fields = ("id", "username", "nombreYapellido")
+        fields = ("idUsuario", "username", "nombreYapellido")
+    
+    def get_nombreYapellido(self, obj):
+        nombre = f"{obj.first_name} {obj.last_name}".strip()
+        return nombre if nombre else None
     
 
