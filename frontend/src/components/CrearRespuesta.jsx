@@ -1,15 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService";
+import { useAuth } from "../context/useAuth.js";
 
 export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
+  const { usuario } = useAuth();
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
   const [formData, setFormData] = useState({ respuesta: "" });
   const textareaRef = useRef(null);
   const [cargando, setCargando] = useState(false);
-  const userId = 1;
+  const userId = usuario.idUsuario;
 
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
