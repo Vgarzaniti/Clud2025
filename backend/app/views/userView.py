@@ -73,21 +73,29 @@ class UsuarioView(generics.GenericAPIView):
 class CambiarDatosView(generics.UpdateAPIView):
     serializer_class = CambiarDatosSerializer
     permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = [JWTAuthentication]
+    authentication_classes = [CookieJWTAuthentication]
 
     def get_object(self):
         return self.request.user
 
     def update(self, request, *args, **kwargs):
         usuario = self.get_object()
-        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer = self.get_serializer(
+            data=request.data,
+            context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        if 'password_nueva' in data:
-            usuario.password = make_password(data['password_nueva'])
-        if 'nuevo_username' in data:
-            usuario.username = data['nuevo_username']
+        if data.get("nuevo_username"):
+            usuario.username = data["nuevo_username"]
+
+        if data.get("password_nueva"):
+            usuario.password = make_password(data["password_nueva"])
 
         usuario.save()
-        return Response({"mensaje": "Datos actualizados correctamente."}, status=status.HTTP_200_OK)
+
+        return Response(
+            {"mensaje": "Datos actualizados correctamente."},
+            status=status.HTTP_200_OK
+        )
