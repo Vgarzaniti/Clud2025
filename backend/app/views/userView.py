@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
+from .authentication import CookieJWTAuthentication
 from ..models import Usuario
 from ..serializers.usuario_serializer import (
     UsuarioSerializer,
