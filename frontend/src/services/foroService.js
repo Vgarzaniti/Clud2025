@@ -38,27 +38,27 @@ export const foroService = {
   // OBTENER POR ID
   // =============================
   obtenerPorId: async (id) => {
-  try {
-    const foroRes = await api.get(`/foros/${id}/`);
-    const respuestas = await respuestaService.obtenerPorTodos();
+    try {
+      const foroRes = await api.get(`/foros/${id}/`);
+      const respuestas = await respuestaService.obtenerPorTodos();
 
-    const respuestasDelForo = respuestas.filter(
-      (r) => String(r.foro) === String(id)
-    );
+      const respuestasDelForo = respuestas.filter(
+        (r) => String(r.foro) === String(id)
+      );
 
-    const foroNormalizado = await normalizarForo(foroRes.data);
+      const foroNormalizado = await normalizarForo(foroRes.data);
 
-    return {
-      ...foroNormalizado,
-      totalRespuestas: respuestasDelForo.length,
-    };
-  } catch (error) {
-    console.error(`❌ Error al obtener foro ${id}`, error);
-    throw error;
-  }
-},
+      return {
+        ...foroNormalizado,
+        totalRespuestas: respuestasDelForo.length,
+      };
+    } catch (error) {
+      console.error(`❌ Error al obtener foro ${id}`, error);
+      throw error;
+    }
+  },
 
-obtenerConUsuario: async (id) => {
+  obtenerConUsuario: async (id) => {
     try {
       // Obtener foro
       const foroRes = await api.get(`/foros/${id}/`);
@@ -103,13 +103,8 @@ obtenerConUsuario: async (id) => {
   editar: async (id, datos) => {
     
     try {
-      const esFormData = datos instanceof FormData;
 
-      const res = await api.put(`/foros/${id}/`, datos, {
-        headers: esFormData
-          ? { "Content-Type": "multipart/form-data" }
-          : {},
-      });
+      const res = await api.patch(`/foros/${id}/`, datos);
 
       return res.data;
       

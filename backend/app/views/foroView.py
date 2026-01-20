@@ -87,7 +87,7 @@ class ForoViewSet(viewsets.ModelViewSet):
 
     # 🔹 Update
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+        #partial = kwargs.pop('partial', False)
         instance = self.get_object()
         data = request.data.copy()
 
@@ -99,7 +99,7 @@ class ForoViewSet(viewsets.ModelViewSet):
                 int(x) for x in archivos_a_eliminar.split(',')
             ]
 
-        serializer = ForoSerializer(instance, data=data, partial=partial)
+        serializer = ForoSerializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         foro = serializer.save(usuario=request.user)
 
