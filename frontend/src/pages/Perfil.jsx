@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ForoTarjeta from "../components/ForoTarjeta.jsx";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "../components/Modal.jsx";
 import EditarRespuesta from "../components/EditarRespuesta.jsx";
@@ -27,6 +28,7 @@ export default function Perfil() {
   const [carreras, setCarreras] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [respuestas, setRespuestas] = useState([]);
+  const [eliminando, setEliminando] = useState(false);
   const [carga, setCarga] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -142,24 +144,29 @@ export default function Perfil() {
     };
 
   const handleConfirmarEliminacion = async () => {
+    if (eliminando) return;
+
     try {
-        if (elementoAEliminar.tipo === "foro") {
-            await foroService.eliminar(elementoAEliminar.idForo);
-            setForos((prev) =>
-              prev.filter((f) => f.idForo !== elementoAEliminar.idForo)
-            );
-        } else if (elementoAEliminar.tipo === "respuesta") {
-            await respuestaService.eliminar(elementoAEliminar.idRespuesta);
-            setRespuestas((prev) =>
-              prev.filter((r) => r.idRespuesta !== elementoAEliminar.idRespuesta)
-            );
-        }
+      setEliminando(true);
+
+      if (elementoAEliminar.tipo === "foro") {
+        await foroService.eliminar(elementoAEliminar.idForo);
+        setForos((prev) =>
+          prev.filter((f) => f.idForo !== elementoAEliminar.idForo)
+        );
+      } else if (elementoAEliminar.tipo === "respuesta") {
+        await respuestaService.eliminar(elementoAEliminar.idRespuesta);
+        setRespuestas((prev) =>
+          prev.filter((r) => r.idRespuesta !== elementoAEliminar.idRespuesta)
+        );
+      }
     } catch (error) {
-        console.error("❌ Error al eliminar:", error);
-        alert("No se pudo eliminar el elemento. Intenta nuevamente.");
+      console.error("❌ Error al eliminar:", error);
+      alert("No se pudo eliminar el elemento. Intenta nuevamente.");
     } finally {
-        setMostrarConfirmar(false);
-        setElementoAEliminar(null);
+      setEliminando(false);
+      setMostrarConfirmar(false);
+      setElementoAEliminar(null);
     }
   };
 
@@ -343,13 +350,23 @@ export default function Perfil() {
           <div className="flex justify-center gap-1">
             <button
               onClick={handleConfirmarEliminacion}
-              className="bg-red-600 px-5 py-2 rounded-lg text-white hover:bg-red-700"
+              disabled={eliminando}
+              className={`px-5 py-2 rounded-lg text-white transition ${
+                eliminando
+                  ? "bg-red-400 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
             >
-              Eliminar
+              {eliminando ? "Eliminando..." : "Eliminar"}
             </button>
             <button
+              disabled={eliminando}
               onClick={() => setMostrarConfirmar(false)}
-              className="bg-gray-700 px-5 py-2 rounded-lg text-white hover:bg-gray-600"
+              className={`bg-gray-700 px-5 py-2 rounded-lg text-white ${
+                eliminando
+                  ? "hover:bg-gray-600 cursor-not-allowed"
+                  : "hover:bg-gray-600"
+              }`}
             >
               Cancelar
             </button>
