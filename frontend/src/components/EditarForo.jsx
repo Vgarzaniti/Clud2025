@@ -286,30 +286,33 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
                 {error && (
                     <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>
                 )}
+                <div className="max-h-40 overflow-y-auto pr-1 mt-2">
+                    
+                    {archivosExistentes.map((a, i) => {
 
-                {archivosExistentes.map((a, i) => {
+                        return (
+                            <li key={i} className="flex justify-between bg-gray-800 px-3 py-2 mb-2 mt-2 rounded-lg">
+                                <div className="flex flex-col">
+                                    <span>📎 {a.name || a.archivo_url?.split("/").pop()}</span>
+                                    {a.size && (
+                                        <span className="text-xs text-gray-400">
+                                            {(a.size / 1024 / 1024).toFixed(2)} MB
+                                        </span>
+                                    )}
+                                </div>
 
-                    return (
-                        <li key={i} className="flex justify-between bg-gray-800 px-3 py-2 mb-2 mt-2 rounded-lg">
-                            <div className="flex flex-col">
-                                <span>📎 {a.name || a.archivo_url?.split("/").pop()}</span>
-                                {a.size && (
-                                    <span className="text-xs text-gray-400">
-                                        {(a.size / 1024 / 1024).toFixed(2)} MB
-                                    </span>
-                                )}
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => handleEliminarArchivo(a, i)}
-                                className="text-red-400 hover:text-red-600"
-                            >
-                                <FiTrash2 size={18}/>
-                            </button>
-                        </li>
-                    );
-                })}
+                                <button
+                                    type="button"
+                                    onClick={() => handleEliminarArchivo(a, i)}
+                                    className="text-red-400 hover:text-red-600"
+                                >
+                                    <FiTrash2 size={18}/>
+                                </button>
+                            </li>
+                        );
+                    })}
+                    
+                </div>
             </div>
             <button
                 type="submit"
