@@ -39,19 +39,21 @@ const userService = {
         await api.post("/logout/");
     },
 
-    cambiarDatos: async ({ username, password }) => {
+    cambiarDatos: async ({ username, passwordActual, passwordNueva }) => {
         const payload = {};
 
         if (username) payload.nuevo_username = username;
-        if (password) payload.password_nueva = password;
 
-        const response = await api.put(
-            "/usuario/cambiar_datos/",
-            payload
-        );
+        if (passwordNueva) {
+            payload.password_actual = passwordActual;
+            payload.password_nueva = passwordNueva;
+        }
 
-        return response.data;
-    },
+        return api.patch("/usuario/cambiar_datos/", payload, {
+            withCredentials: true,
+        });
+    }
+
 }
 
 export default userService;

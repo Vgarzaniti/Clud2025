@@ -6,12 +6,15 @@ import { useNavigate } from "react-router-dom";
 export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
   const [formData, setFormData] = useState({
     username: "",
+    passwordActual: "",
     passwordNueva: "",
     confirmarPassword: "",
   });
+
   const navigate = useNavigate();
   const [errores, setErrores] = useState({});
   const [cargando, setCargando] = useState(false);
+  const [mostrarActual, setMostrarActual] = useState(false);
   const [mostrarPassword, setMostrarPassword] = useState(false);
   const [mostrarConfirmar, setMostrarConfirmar] = useState(false);
 
@@ -32,10 +35,16 @@ export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
     }
 
     if (formData.passwordNueva) {
+      if (!formData.passwordActual) {
+        nuevosErrores.passwordActual =
+          "Debes ingresar tu contraseña actual.";
+      }
+
       if (formData.passwordNueva.length < 8) {
         nuevosErrores.passwordNueva =
           "La contraseña debe tener al menos 8 caracteres.";
       }
+
       if (formData.passwordNueva !== formData.confirmarPassword) {
         nuevosErrores.confirmarPassword = "Las contraseñas no coinciden.";
       }
@@ -52,10 +61,16 @@ export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
     try {
       setCargando(true);
 
-      await userService.cambiarDatos({
+      const payload = {
         username: formData.username,
-        password: formData.passwordNueva || undefined,
-      });
+      };
+
+      if (formData.passwordNueva) {
+        payload.passwordActual = formData.passwordActual;
+        payload.passwordNueva = formData.passwordNueva;
+      }
+
+      await userService.cambiarDatos(payload);
 
       onSave({
         ...usuarioActual,
@@ -73,7 +88,15 @@ export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
       onClose();
     } catch (error) {
       console.error("❌ Error al actualizar perfil:", error);
-      alert("No se pudieron actualizar los datos.");
+
+      const data = error.response?.data;
+
+      // 🔥 MENSAJE ESPECÍFICO SIN TOCAR BACKEND
+      if (formData.passwordNueva) {
+        alert("La contraseña actual no es correcta.");
+      } else {
+        alert("No se pudieron actualizar los datos.");
+      }
     } finally {
       setCargando(false);
     }
@@ -120,6 +143,35 @@ export default function EditarUsuario({ usuarioActual, onSave, onClose }) {
         />
         {errores.username && (
           <p className="text-red-500 text-sm mt-1">{errores.username}</p>
+        )}
+      </div>
+
+      {/* Contraseña actual */}
+      <div>
+        <label className="block mb-1">Contraseña actual</label>
+        <div className="relative">
+          <input
+            type={mostrarActual ? "text" : "password"}
+            value={formData.passwordActual}
+            onChange={(e) =>
+              setFormData({ ...formData, passwordActual: e.target.value })
+            }
+            className={`w-full p-2 rounded-xl bg-fondo border ${
+              errores.passwordActual ? "border-red-500" : "border-gray-600"
+            }`}
+          />
+          <button
+            type="button"
+            onClick={() => setMostrarActual(!mostrarActual)}
+            className="absolute right-3 top-2.5 text-gray-400"
+          >
+            {mostrarActual ? <FiEyeOff /> : <FiEye />}
+          </button>
+        </div>
+        {errores.passwordActual && (
+          <p className="text-red-500 text-sm mt-1">
+            {errores.passwordActual}
+          </p>
         )}
       </div>
 
