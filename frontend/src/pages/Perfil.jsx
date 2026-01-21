@@ -13,6 +13,7 @@ import { respuestaService } from "../services/respuestaService.js";
 import { materiaService } from "../services/materiaService.js";
 import { carreraService } from "../services/carreraService.js";
 import { useAuth } from "../context/useAuth.js";
+import EstadoVacio from "../components/EstadoVacio.jsx";
 
 export default function Perfil() {
   const { usuario, actualizarUsuario } = useAuth();
@@ -33,27 +34,27 @@ export default function Perfil() {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
+  const ordenarPorFecha = (arr) =>
+    arr
+      .filter((e) => e.fecha_creacion)
+      .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
+
     useEffect(() => {
-        if (!usuario?.idUsuario) return;
+        if (!usuario) return;
 
         const cargarDatos = async () => {
             try {
                 setCarga(true);
 
                 const [forosUsuario, respuestasUsuario, materiasBD, carrerasBD] = await Promise.all([
-                    foroService.buscarUsuario(usuario.idUsuario),
-                    respuestaService.buscarUsuario(usuario.idUsuario),
+                    foroService.misForos(),
+                    respuestaService.misRespuestas(),
                     materiaService.obtenerTodos(),
                     carreraService.obtenerTodos(),
                 ]);
 
                 setCarreras(carrerasBD);
                 setMaterias(materiasBD);
-
-                const ordenarPorFecha = (arr) =>
-                  arr
-                    .filter((e) => e.fecha_creacion)
-                    .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
 
                 setForos(ordenarPorFecha(forosUsuario));
                 setRespuestas(ordenarPorFecha(respuestasUsuario));
@@ -67,7 +68,7 @@ export default function Perfil() {
             };
 
         cargarDatos();
-    },  [usuario.idUsuario]);
+    },  [usuario]);
 
     const forosEnriquecidos = useMemo(() => {
         if (!foros.length || !materias.length) return [];
@@ -261,18 +262,22 @@ export default function Perfil() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {forosEnriquecidos.map((foro) => (
-                <ForoTarjeta
-                  key={foro.idForo}
-                  foro={foro}
-                  mostrarAcciones={true} 
-                  onEditar={(foro) => {
-                    setForoSeleccionado(foro);
-                    setMostrarEditar("foro");
-                  }}
-                  onEliminar={(foro) => handleEliminarClick(foro, "foro")}
-                />
-              ))}
+              {forosEnriquecidos.length === 0 ? (
+                <EstadoVacio mensaje="Todavía no creaste foros. ¡Animate a crear uno!" />
+              ) : (
+                forosEnriquecidos.map((foro) => (
+                  <ForoTarjeta
+                    key={foro.idForo}
+                    foro={foro}
+                    mostrarAcciones={true}
+                    onEditar={(foro) => {
+                      setForoSeleccionado(foro);
+                      setMostrarEditar("foro");
+                    }}
+                    onEliminar={(foro) => handleEliminarClick(foro, "foro")}
+                  />
+                ))
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -283,28 +288,32 @@ export default function Perfil() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {respuestasEnriquecidas.map((res) => (
-                <div key={res.idRespuesta} className="relative">
-                  <RespuestaTarjeta respuesta={res} />
-                  <div className="absolute top-5 right-5 flex gap-2">
-                    <button
-                      onClick={() => {
-                        setRespuestaSeleccionada(res);
-                        setMostrarEditar("respuesta");
-                      }}
-                      className="text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleEliminarClick(res, "respuesta")}
-                      className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700"
-                    >
-                      Eliminar
-                    </button>
+              {respuestasEnriquecidas.length === 0 ? (
+                <EstadoVacio mensaje="Todavía no participaste en ningún foro." />
+              ) : (
+                respuestasEnriquecidas.map((res) => (
+                  <div key={res.idRespuesta} className="relative">
+                    <RespuestaTarjeta respuesta={res} />
+                    <div className="absolute top-5 right-5 flex gap-2">
+                      <button
+                        onClick={() => {
+                          setRespuestaSeleccionada(res);
+                          setMostrarEditar("respuesta");
+                        }}
+                        className="text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleEliminarClick(res, "respuesta")}
+                        className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </motion.div>
           )}
         </AnimatePresence>

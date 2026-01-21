@@ -2,27 +2,34 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework.decorators import action
 from ..models import Foro, ForoArchivo, Archivo
 from ..serializers.foro_serializer import ForoSerializer
 from .hash import file_hash
 
 
 class ForoViewSet(viewsets.ModelViewSet):
+    queryset = Foro.objects.all()
+    serializer_class = ForoSerializer
     permission_classes = [IsAuthenticated]
 
     # 🔥 CLAVE: permite multipart/form-data
     parser_classes = (MultiPartParser, FormParser)
 
     # 🔥 CLAVE: optimiza carga de archivos
-    queryset = Foro.objects.select_related(
-        "usuario",
-        "materia"
-    ).prefetch_related(
-        "archivos__archivo"
-    ).order_by("-fecha_creacion")
+    def get_queryset(self):
+        return Foro.objects.select_related(
+            "usuario", "materia"
+        ).prefetch_related(
+            "archivos__archivo"
+        ).order_by("-fecha_creacion")
     
-    serializer_class = ForoSerializer
+    # Lista de foros segun el id suario autenticado
+    @action(detail=False, methods=["get"], url_path="mios", permission_classes=[IsAuthenticated])
+    def mios(self, request):
+        queryset = self.get_queryset().filter(usuario=request.user)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod

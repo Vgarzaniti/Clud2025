@@ -47,4 +47,9 @@ export const respuestaService = {
       throw error;
     }
   },
+
+  misRespuestas: async () => {
+    const res = await api.get("/respuestas/mias/");
+    return res.data;
+  },
 };

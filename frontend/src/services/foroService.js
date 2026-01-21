@@ -151,4 +151,10 @@ export const foroService = {
       throw error;
     }
   },
+
+  misForos: async () => {
+    const res = await api.get("/foros/mios/");
+    return res.data;
+  },
+ 
 };
