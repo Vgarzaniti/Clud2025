@@ -9,19 +9,13 @@ const api = axios.create({
  * - Usa JSON para requests normales
  * - NO fuerza Content-Type cuando es FormData
  */
-api.interceptors.request.use(
-  (config) => {
-    // Si NO es FormData → usar JSON
-    if (!(config.data instanceof FormData)) {
-      config.headers["Content-Type"] = "application/json";
-    } else {
-      // 🔥 MUY IMPORTANTE: dejar que Axios setee multipart
-      delete config.headers["Content-Type"];
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem("access");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 /**
  * 🔹 Interceptor de RESPONSE (logging)

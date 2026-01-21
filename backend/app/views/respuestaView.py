@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import IsAuthenticated
 
 from ..models import (
     Respuesta,
@@ -147,20 +148,30 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data)
-
+    
+    def get_serializer_context(self):
+            context = super().get_serializer_context()
+            context['request'] = self.request
+            return context
 
 # =====================================================
 # 🔹 PUNTAJES (SIN CAMBIOS)
 # =====================================================
 class RespuestaPuntajeView(APIView):
 
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
-        serializer = PuntajeRespuestaSerializer(data=request.data)
+        serializer = PuntajeRespuestaSerializer(
+            data=request.data,
+            context={'request': request}
+        )
         serializer.is_valid(raise_exception=True)
 
         respuesta = serializer.validated_data['respuesta']
-        usuario = serializer.validated_data['usuario']
         nuevo_valor = serializer.validated_data['valor']
+
+        usuario = request.user
 
         puntaje_existente = Puntaje.objects.filter(
             respuesta=respuesta,
@@ -174,12 +185,14 @@ class RespuestaPuntajeView(APIView):
                 else nuevo_valor
             )
             puntaje_existente.save()
+            voto_final = puntaje_existente.valor
         else:
-            Puntaje.objects.create(
+            puntaje_existente = Puntaje.objects.create(
                 respuesta=respuesta,
                 usuario=usuario,
                 valor=nuevo_valor
             )
+            voto_final = nuevo_valor
 
         respuesta.total_likes = respuesta.puntajes.filter(
             valor=Puntaje.LIKE
@@ -197,11 +210,9 @@ class RespuestaPuntajeView(APIView):
 
         return Response(
             {
-                "total_likes": respuesta.total_likes,
-                "total_dislikes": respuesta.total_dislikes,
-                "total_votos": respuesta.total_votos,
                 "puntaje_neto": respuesta.puntaje_neto,
-                "voto_usuario": puntaje_existente.valor
+                "voto_usuario": voto_final
             },
             status=status.HTTP_200_OK
         )
+

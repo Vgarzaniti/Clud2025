@@ -18,7 +18,6 @@ router.register(r'respuestas', RespuestaViewSet, basename='respuesta')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('respuestas/puntaje/<int:respuesta_id>/', RespuestaPuntajeView.as_view(), name='respuesta-puntaje-detail'),
     path('puntaje/', RespuestaPuntajeView.as_view(), name='respuesta-puntaje'),
     path('login/', UsuarioView.as_view(), name='usuario'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

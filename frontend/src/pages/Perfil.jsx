@@ -36,6 +36,21 @@ export default function Perfil() {
     email: "juanperez@utn.edu.ar",
   };
 
+  const handleVotoRespuesta = (idRespuesta, delta, nuevoVoto) => {
+    setRespuestas(prev =>
+      prev.map(r =>
+        r.idRespuesta === idRespuesta
+          ? {
+              ...r,
+              puntaje_neto: (r.puntaje_neto ?? 0) + delta,
+              voto_usuario: nuevoVoto
+            }
+          : r
+      )
+    );
+  };
+
+
     useEffect(() => {
         const cargarDatos = async () => {
             try {
@@ -280,7 +295,7 @@ export default function Perfil() {
             >
               {respuestasEnriquecidas.map((res) => (
                 <div key={res.idRespuesta} className="relative">
-                  <RespuestaTarjeta respuesta={res} />
+                  <RespuestaTarjeta respuesta={res} onVoto={handleVotoRespuesta} />
                   <div className="absolute top-5 right-5 flex gap-2">
                     <button
                       onClick={() => {

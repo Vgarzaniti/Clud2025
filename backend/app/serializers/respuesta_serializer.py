@@ -3,10 +3,13 @@ from ..models import Respuesta, RespuestaArchivo, Puntaje
 
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
+    usuario = serializers.HiddenField(
+        default=serializers.CurrentUserDefault()
+    )
+    
     class Meta:
         model = Puntaje
-        fields = ['id', 'usuario', 'valor', 'respuesta']
-
+        fields = ['respuesta', 'valor', 'usuario']
 
 # 🔹 Serializador para los archivos
 class RespuestaArchivoSerializer(serializers.ModelSerializer):
@@ -23,7 +26,7 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
 # 🔹 Serializador principal de la Respuesta
 class RespuestaSerializer(serializers.ModelSerializer):
     archivos = RespuestaArchivoSerializer(many=True, read_only=True)
-    puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
+    voto_usuario = serializers.SerializerMethodField()
 
     # 🔥 FIX DEFINITIVO
     materia = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -39,9 +42,16 @@ class RespuestaSerializer(serializers.ModelSerializer):
             'respuesta_texto',
             'fecha_actualizacion',
             'archivos',
-            'puntajes',
             'total_likes',
             'total_dislikes',
             'total_votos',
-            'puntaje_neto'
+            'puntaje_neto',
+            'voto_usuario'
         ]
+    def get_voto_usuario(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return 0
+
+        puntaje = obj.puntajes.filter(usuario=request.user).first()
+        return puntaje.valor if puntaje else 0

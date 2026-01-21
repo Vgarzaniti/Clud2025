@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
-import { puntajeService } from "../services/puntajeService";
+import { puntajeService } from "../services/puntajeService.js";
+import { useAuth } from "../context/AuthContext.jsx";
 import Modal from "./Modal";
 
 export default function RespuestaTarjeta({ respuesta, onVoto }) {
+    const { usuario } = useAuth();
     const textoRespuesta = respuesta.respuesta_texto || respuesta.respuesta || respuesta.contenido || "";
     const [enviando, setEnviando] = useState(false);
     const [puntaje, setPuntaje] = useState(respuesta.puntaje_neto ?? 0);
@@ -13,7 +15,6 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
     const [mensajeModal, setMensajeModal] = useState("");
 
     const limite = 300;
-    const userId = 1;
 
     const handleUpvote = async () => {
 
@@ -27,7 +28,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
 
         const data = await puntajeService.votar({
           respuestaId: respuesta.idRespuesta,
-          usuarioId: userId,
+          usuarioId: usuario.idUsuario,
           valor: nuevoValor
         });
 
@@ -60,7 +61,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
 
         const data = await puntajeService.votar({
           respuestaId: respuesta.idRespuesta,
-          usuarioId: userId,
+          usuarioId: usuario.idUsuario,
           valor: nuevoValor,
         });
 
@@ -83,6 +84,10 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
     useEffect(() => {
       setPuntaje(respuesta.puntaje_neto ?? 0);
     }, [respuesta.puntaje_neto]);
+
+    useEffect(() => {
+      setVoto(respuesta.voto_usuario ?? 0);
+    }, [respuesta.voto_usuario]);
 
     const textoCorto =
       textoRespuesta.length > limite
