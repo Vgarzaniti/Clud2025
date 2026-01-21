@@ -23,9 +23,14 @@ export const respuestaService = {
     }
   },
   
-  async editar(id, formData) {
-    const { data } = await api.put(`/respuestas/${id}/`, formData);
-    return data;
+  editar: async(id, datos) =>{
+    try{
+      const res = await api.patch(`/respuestas/${id}/`, datos);
+      return res.data;
+    } catch (error) {
+      console.error(`❌ Error en la API con la respuesta ${id}:`, error);
+      throw error;
+    }
   },
 
   eliminar: async (id) => {

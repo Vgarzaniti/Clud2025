@@ -184,7 +184,7 @@ export default function ForoDetalle() {
               ))
             ) : (
               <p className="text-gray-400 italic">
-                No hay respuestas todavía.
+                No hay respuestas todavía. ¡Se el primero en responder!
               </p>
             )}
           </motion.div>

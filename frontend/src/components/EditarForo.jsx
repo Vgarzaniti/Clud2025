@@ -146,8 +146,8 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
         if (cargando) return;
 
         if (error) {
-        alert("Corrige los errores antes de publicar.");
-        return;
+            alert("Corrige los errores antes de publicar.");
+            return;
         }
 
         if (!validarFormulario()) return;

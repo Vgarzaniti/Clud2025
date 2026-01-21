@@ -101,11 +101,8 @@ export const foroService = {
   // EDITAR (FORMDATA)
   // =============================
   editar: async (id, datos) => {
-    
     try {
-
       const res = await api.patch(`/foros/${id}/`, datos);
-
       return res.data;
       
     } catch (error) {
