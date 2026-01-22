@@ -20,6 +20,7 @@ class ForoSerializer(serializers.ModelSerializer):
         required=False
     )
     usuario = UsuarioForoSerializer(read_only=True)
+    totalRespuestas = serializers.SerializerMethodField()
 
     usuario_id = serializers.PrimaryKeyRelatedField(
         source="usuario",
@@ -36,7 +37,11 @@ class ForoSerializer(serializers.ModelSerializer):
             "usuario_id",
             'materia',
             'pregunta',
+            'totalRespuestas',
             'fecha_creacion',
             'fecha_actualizacion',
             'archivos'
         ]
+    
+    def get_totalRespuestas(self, obj):
+        return obj.respuestas.count()

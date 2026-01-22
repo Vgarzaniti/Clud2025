@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { respuestaService } from "../services/respuestaService";
 import "../input.css";
 
 
@@ -9,33 +10,28 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
   const [loadingResp, setLoadingResp] = useState(true);
 
   useEffect(() => {
-    let activo = true;
-
-    const cargar = async () => {
+    const cargarTotalRespuestas = async () => {
       try {
         setLoadingResp(true);
 
-          if (activo) {
-          setTotalRespuestas(foro.totalRespuestas || 0);
-        }
-      } catch (error) {
-        if (activo) {
-          setTotalRespuestas(0);
-          console.error("Error al cargar datos del foro:", error);
-        }
+        const respuestas = await respuestaService.obtenerPorTodos();
+
+        const total = (respuestas || []).filter(
+          (r) => r.foro === foro.idForo
+        ).length;
+
+        setTotalRespuestas(total);
+      } catch (err) {
+        console.error("Error al cargar respuestas:", err);
       } finally {
-        if (activo) {
-          setLoadingResp(false);
-        }
+        setLoadingResp(false);
       }
     };
 
-    cargar();
-
-    return () => {
-      activo = false;
-    };
-  }, [foro]);
+    if (foro?.idForo) {
+      cargarTotalRespuestas();
+    }
+  }, [foro.idForo]);
 
   return (
     <div
@@ -71,7 +67,7 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
         )}
       </div>
 
-      <p className="text-gray-400 text-sm mt-2">
+      <p className="text-gray-400 text-sm mt-4">
         Materia: {foro.materiaNombre || foro.materia_nombre || "Sin materia"}
       </p>
 
@@ -79,14 +75,14 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
         Carrera: {foro.carreraNombre || foro.carrera_nombre || "Sin carrera"}
       </p>
 
-      <p className="text-gray-500 text-xs mt-2">
+      <p className="text-gray-500 text-xs mt-4">
         Creado:{" "}
         {foro.fecha_creacion
           ? new Date(foro.fecha_creacion).toLocaleString("es-AR")
           : "Fecha no disponible"}
       </p>
 
-      <div className="flex justify-between text-gray-400 text-sm mt-3">
+      <div className="flex justify-end text-gray-400 text-sm">
         <span className="flex items-center gap-2">
           💬
           {loadingResp ? (
