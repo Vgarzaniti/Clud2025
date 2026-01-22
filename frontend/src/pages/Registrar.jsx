@@ -42,6 +42,11 @@ export default function Register() {
         if (!emailRegex.test(formData.email))
         nuevosErrores.email = "El formato del correo no es válido.";
 
+        if (formData.password.length < 8) {
+            nuevosErrores.password =
+            "La contraseña debe tener al menos 8 caracteres.";
+        }
+
         if (formData.password !== formData.confirmarPassword)
             nuevosErrores.confirmarPassword = "Las contraseñas no coinciden.";
 
@@ -97,7 +102,8 @@ export default function Register() {
         <div className="min-h-screen bg-fondo flex flex-col items-center justify-center text-white px-4">
 
             <div className="bg-panel p-8 rounded-2xl shadow-lg w-full max-w-md border border-gray-700">
-                <h1 className="text-3xl font-bold text-center mb-6">Registrarse</h1>
+                <h1 className="text-3xl font-bold text-center mb-3">Registrarse</h1>
+                <p className="text-gray-400 mb-3 text-sm text-red-400">* Aviso: El nombre completo y el mail no se podran cambiar luego de registrarse.</p>
 
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     
@@ -105,7 +111,7 @@ export default function Register() {
                         <input
                             type="text"
                             name="nombreCompleto"
-                            placeholder="Nombre completo"
+                            placeholder="Nombre completo *"
                             value={formData.nombreCompleto}
                             onChange={handleChange}
                             className="w-full bg-gray-700 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-azulUTN placeholder-gray-400"
@@ -137,7 +143,7 @@ export default function Register() {
                         <input
                             type="email"
                             name="email"
-                            placeholder="Mail"
+                            placeholder="Mail *"
                             value={formData.email}
                             onChange={handleChange}
                             className="w-full bg-gray-700 px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-azulUTN placeholder-gray-400"
