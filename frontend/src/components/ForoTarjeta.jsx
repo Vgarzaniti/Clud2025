@@ -42,8 +42,6 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
     };
   }, [foro.idForo]);
 
-  console.log("Foro completo:", foro);
-
   return (
     <div
       onClick={() => navigate(`/foro/${foro.idForo}`)}

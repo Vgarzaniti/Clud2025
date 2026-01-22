@@ -142,19 +142,21 @@ export const foroService = {
   // =============================
   // BUSCAR POR USUARIO
   // =============================
-  buscarUsuario: async (usuarioId) => {
+  obtenerForosPorUsuario: async (usuarioId) => {
     try {
-      const res = await api.get(`/foros/?usuario=${usuarioId}`);
-      return normalizarRespuesta(res.data);
+      const response = await api.get("/foros/");
+      const foros = response.data;
+      
+      // Filtrar foros que coincidan con el ID del usuario
+      const forosFiltrados = foros.filter(
+        (foro) => String(foro.usuario) === String(usuarioId)
+      );
+      
+      return Promise.all(forosFiltrados.map(normalizarForo));
     } catch (error) {
-      console.error("❌ Error al buscar foros por usuario:", error);
+      console.error(`❌ Error al obtener foros del usuario ${usuarioId}:`, error);
       throw error;
     }
-  },
-
-  misForos: async () => {
-    const res = await api.get("/foros/mios/");
-    return res.data;
   },
  
 };

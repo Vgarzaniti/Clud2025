@@ -4,6 +4,7 @@ export const respuestaService = {
   
   obtenerPorTodos: async () => {
     const res = await api.get(`/respuestas/`);
+    console.log("Respuestas obtenidas:", res.data);
     return res.data;
   },
 
@@ -38,18 +39,24 @@ export const respuestaService = {
     return response.data;
   },
 
-  buscarUsuario: async (usuarioId) => {
+  // =============================
+  // OBTENER RESPUESTAS POR ID DE USUARIO
+  // =============================
+
+  obtenerRespuestasPorUsuario: async (usuarioId) => {
     try {
-      const res = await api.get(`/respuestas/?usuario=${usuarioId}`);
-      return res.data;
+      const response = await api.get("/respuestas/");
+      const foros = response.data;
+
+      // Filtrar respuestas que coincidan con el ID del usuario
+      const respuestasFiltradas = foros.filter(
+        (respuesta) => String(respuesta.usuario) === String(usuarioId)
+      );
+
+      return Promise.all(respuestasFiltradas);
     } catch (error) {
-      console.error("❌ Error al buscar respuestas por UsuarioId:", error);
+      console.error(`❌ Error al obtener respuestas del usuario ${usuarioId}:`, error);
       throw error;
     }
-  },
-
-  misRespuestas: async () => {
-    const res = await api.get("/respuestas/mias/");
-    return res.data;
   },
 };

@@ -40,15 +40,16 @@ export default function Perfil() {
       .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
 
     useEffect(() => {
-        if (!usuario) return;
+        if (!usuario.idUsuario) return;
 
         const cargarDatos = async () => {
             try {
+                console.log("Usuario completo:", usuario);
                 setCarga(true);
 
                 const [forosUsuario, respuestasUsuario, materiasBD, carrerasBD] = await Promise.all([
-                    foroService.misForos(),
-                    respuestaService.misRespuestas(),
+                    foroService.obtenerForosPorUsuario(usuario.idUsuario),
+                    respuestaService.obtenerRespuestasPorUsuario(usuario.idUsuario),
                     materiaService.obtenerTodos(),
                     carreraService.obtenerTodos(),
                 ]);
@@ -68,7 +69,7 @@ export default function Perfil() {
             };
 
         cargarDatos();
-    },  [usuario]);
+    },  [usuario.idUsuario]);
 
     const forosEnriquecidos = useMemo(() => {
         if (!foros.length || !materias.length) return [];
