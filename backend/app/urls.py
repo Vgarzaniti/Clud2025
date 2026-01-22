@@ -8,7 +8,7 @@ from .views.carreraMateriaView import (
 from .views.foroView import ForoViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views.respuestaView import RespuestaViewSet, RespuestaPuntajeView
-from .views.userView import UsuarioMeView, LogoutView, UsuarioDetailView
+from .views.userView import UsuarioMeView, LogoutView, UsuarioDetailView, UsuariosListView
 
 
 router = DefaultRouter()
@@ -22,6 +22,7 @@ urlpatterns = [
     path('login/', UsuarioView.as_view(), name='usuario'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('usuario/me/', UsuarioMeView.as_view(), name='usuario-me'),
+    path('usuarios/', UsuariosListView.as_view(), name='usuarios-list'),
     path('usuarios/<int:idUsuario>/', UsuarioDetailView.as_view(), name='usuario-detail'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('usuario/cambiar_datos/', CambiarDatosView.as_view(), name='cambiar_datos'),

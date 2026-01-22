@@ -4,7 +4,6 @@ export const respuestaService = {
   
   obtenerPorTodos: async () => {
     const res = await api.get(`/respuestas/`);
-    console.log("Respuestas obtenidas:", res.data);
     return res.data;
   },
 

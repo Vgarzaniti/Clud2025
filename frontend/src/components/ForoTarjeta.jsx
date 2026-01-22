@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { foroService } from "../services/foroService";
 import "../input.css";
 
 
@@ -15,18 +14,14 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
     const cargar = async () => {
       try {
         setLoadingResp(true);
-        const data = await foroService.obtenerPorId(foro.idForo, true);
 
-        foro.usuario_nombre = foro.usuario?.username ?? "Usuario desconocido";
-        foro.nombreCompleto = foro.usuario?.nombreYapellido ?? "";
-
-        if (activo) {
-          setTotalRespuestas(data.totalRespuestas);
+          if (activo) {
+          setTotalRespuestas(foro.totalRespuestas || 0);
         }
       } catch (error) {
         if (activo) {
           setTotalRespuestas(0);
-          console.error("Error al cargar el total de respuestas:", error);
+          console.error("Error al cargar datos del foro:", error);
         }
       } finally {
         if (activo) {
@@ -40,7 +35,7 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
     return () => {
       activo = false;
     };
-  }, [foro.idForo]);
+  }, [foro]);
 
   return (
     <div
@@ -92,7 +87,6 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
       </p>
 
       <div className="flex justify-between text-gray-400 text-sm mt-3">
-        <span>Autor: {foro.usuario_nombre || foro.nombreCompleto || "Anonimo"}</span>
         <span className="flex items-center gap-2">
           💬
           {loadingResp ? (

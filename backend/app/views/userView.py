@@ -129,3 +129,8 @@ class UsuarioDetailView(RetrieveAPIView):
     
     lookup_field = 'idUsuario'
     lookup_url_kwarg = 'idUsuario'
+
+class UsuariosListView(generics.ListAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.AllowAny]

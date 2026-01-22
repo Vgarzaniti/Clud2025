@@ -33,7 +33,6 @@ export const foroService = {
     return Promise.all(response.data.map(normalizarForo));
   },
 
-
   // =============================
   // OBTENER POR ID
   // =============================
@@ -76,6 +75,8 @@ export const foroService = {
       throw error;
     }
   },
+
+  
 
   // =============================
   // CREAR (FORMDATA)

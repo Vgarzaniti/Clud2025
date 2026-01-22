@@ -8,8 +8,15 @@ const userService = {
     },
 
     obtenerPorId: async (id) => {
-        const res = await api.get(`/usuarios/${id}/`);
-        return res.data;
+        const res = await api.get("/usuarios/");
+        const usuarios = res.data;
+            
+
+        const usuario = usuarios.find(
+            (u) => String(u.idUsuario) === String(id)
+        );
+
+        return usuario || null;
     },
     
     login: async (email, password) => {
@@ -52,7 +59,31 @@ const userService = {
         return api.patch("/usuario/cambiar_datos/", payload, {
             withCredentials: true,
         });
-    }
+    },
+
+    obtenerPorIdForo: async (usuarioId) => {
+        try {
+            const res = await api.get("/usuarios/");
+            const usuarios = res.data;
+            
+
+            const usuario = usuarios.find(
+                (u) => String(u.idUsuario) === String(usuarioId)
+            );
+            
+            console.log(usuario);
+            if (usuario) {
+                return {
+                    id: usuario.idUsuario,
+                    nombreCompleto: `${usuario.nombreYapellido}`, // Asegúrate de que estos campos existan
+                };
+            }
+            return null;
+        } catch (error) {
+            console.error(`❌ Error al obtener usuario ${usuarioId}:`, error);
+            throw error;
+        }
+    },
 
 }
 
