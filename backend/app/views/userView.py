@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
+from .authentication import CookieJWTAuthentication
 from ..models import Usuario
 from rest_framework.generics import RetrieveAPIView
 from .authentication import CookieJWTAuthentication
@@ -84,18 +85,25 @@ class CambiarDatosView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         usuario = self.get_object()
-        serializer = self.get_serializer(data=request.data, context={'request': request})
+        serializer = self.get_serializer(
+            data=request.data,
+            context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
-        if 'password_nueva' in data:
-            usuario.password = make_password(data['password_nueva'])
-        if 'nuevo_username' in data:
-            usuario.username = data['nuevo_username']
+        if data.get("nuevo_username"):
+            usuario.username = data["nuevo_username"]
+
+        if data.get("password_nueva"):
+            usuario.password = make_password(data["password_nueva"])
 
         usuario.save()
-        return Response({"mensaje": "Datos actualizados correctamente."}, status=status.HTTP_200_OK)
-
+        return Response(
+            {"mensaje": "Datos actualizados correctamente."},
+            status=status.HTTP_200_OK
+        )
+      
 # ------------------------
 # 🔹 Logout (eliminar cookies)
 # ------------------------
