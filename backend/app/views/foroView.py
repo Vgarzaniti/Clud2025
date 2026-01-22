@@ -23,13 +23,6 @@ class ForoViewSet(viewsets.ModelViewSet):
         ).prefetch_related(
             "archivos__archivo"
         ).order_by("-fecha_creacion")
-    
-    # Lista de foros segun el id suario autenticado
-    @action(detail=False, methods=["get"], url_path="mios", permission_classes=[IsAuthenticated])
-    def mios(self, request):
-        queryset = self.get_queryset().filter(usuario=request.user)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod

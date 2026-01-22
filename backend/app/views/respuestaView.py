@@ -31,12 +31,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     # 🔥 FIX CRÍTICO PARA ARCHIVOS
     parser_classes = (MultiPartParser, FormParser)
 
-    @action(detail=False, methods=["get"], url_path="mias", permission_classes=[IsAuthenticated])
-    def mias(self, request):
-        queryset = self.get_queryset().filter(usuario=request.user)
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
-
     # ===============================
     # 🔹 PROCESAR UN ARCHIVO
     # ===============================
