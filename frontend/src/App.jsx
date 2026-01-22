@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import RutaPrivada from "./components/RutaPrivada.jsx";
+
 import Home from "./pages/Home.jsx"
-import Encabezado from "./components/Encabezado.jsx";
 import Carreras from "./pages/Carreras.jsx";
 import Materia from "./pages/Materia.jsx";
 import ForoDetalle from "./pages/ForoDetalle.jsx";
@@ -26,13 +27,15 @@ function App() {
         </Route>
         
         {/* Rutas protegidas */}
-        <Route element={<MainLayout />}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/carreras" element={<Carreras />} />
-          <Route path="/materia/:nombre" element={<Materia />} />
-          <Route path="/foro/:foroId" element={<ForoDetalle />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/ayuda" element={<Ayuda />} />
+        <Route element={<RutaPrivada />}>
+          <Route element={<MainLayout />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/carreras" element={<Carreras />} />
+            <Route path="/materia/:nombre" element={<Materia />} />
+            <Route path="/foro/:foroId" element={<ForoDetalle />} />
+            <Route path="/perfil" element={<Perfil />} />
+            <Route path="/ayuda" element={<Ayuda />} />
+          </Route>
         </Route>
       </Routes>
     </Router>

@@ -22,7 +22,11 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
 
 # 🔹 Serializador principal de la Respuesta
 class RespuestaSerializer(serializers.ModelSerializer):
-    archivos = RespuestaArchivoSerializer(many=True, read_only=True)
+    archivos = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False
+    )
     puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
 
     # 🔥 FIX DEFINITIVO

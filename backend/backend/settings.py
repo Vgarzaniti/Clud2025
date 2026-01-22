@@ -21,6 +21,7 @@ import dj_database_url
 load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
+ENV = os.getenv("ENV", "development")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -87,9 +88,9 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "AUTH_COOKIE": "access_token",
     "AUTH_COOKIE_REFRESH": "refresh_token",
-    "AUTH_COOKIE_SECURE": True,       # ✅ True porque Render usa HTTPS
+    "AUTH_COOKIE_SECURE": ENV == "production",       # ✅ True porque Render usa HTTPS
     "AUTH_COOKIE_HTTP_ONLY": True,    # ✅ No accesible por JS
-    "AUTH_COOKIE_SAMESITE": "None",   # ✅ Necesario para Vercel + Render
+    "AUTH_COOKIE_SAMESITE": "None" if ENV == "production" else "Lax",   # ✅ Necesario para Vercel + Render
 }
 
 MIDDLEWARE = [

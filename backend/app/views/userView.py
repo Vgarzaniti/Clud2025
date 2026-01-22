@@ -5,6 +5,8 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.contrib.auth.hashers import make_password
 from .authentication import CookieJWTAuthentication
 from ..models import Usuario
+from rest_framework.generics import RetrieveAPIView
+from .authentication import CookieJWTAuthentication
 from ..serializers.usuario_serializer import (
     UsuarioSerializer,
     LoginSerializer,
@@ -16,6 +18,8 @@ from ..serializers.usuario_serializer import (
 # ------------------------
 class UsuarioView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
 
     def post(self, request, *args, **kwargs):
         # Detectar si es login o registro
@@ -95,8 +99,46 @@ class CambiarDatosView(generics.UpdateAPIView):
             usuario.password = make_password(data["password_nueva"])
 
         usuario.save()
-
         return Response(
             {"mensaje": "Datos actualizados correctamente."},
             status=status.HTTP_200_OK
         )
+      
+# ------------------------
+# 🔹 Logout (eliminar cookies)
+# ------------------------
+
+class LogoutView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        response = Response(
+            {"mensaje": "Logout exitoso"},
+            status=status.HTTP_200_OK
+        )
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+        return response
+    
+# ------------------------
+# 🔹 Datos de Usuario
+# ------------------------
+class UsuarioMeView(generics.RetrieveAPIView):
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
+
+    def get_object(self):
+        return self.request.user
+
+class UsuarioDetailView(RetrieveAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    
+    lookup_field = 'idUsuario'
+    lookup_url_kwarg = 'idUsuario'
+
+class UsuariosListView(generics.ListAPIView):
+    queryset = Usuario.objects.all()
+    serializer_class = UsuarioSerializer
+    permission_classes = [permissions.AllowAny]

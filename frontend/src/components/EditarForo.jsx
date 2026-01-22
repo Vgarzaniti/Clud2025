@@ -6,13 +6,17 @@ import { foroService } from "../services/foroService.js";
 
 export default function EditarForo({ foroActual, onClose, onSave }) {
     
-    const [archivos, setArchivos] = useState(foroActual.archivos || []);
+    const [archivosExistentes, setArchivosExistentes] = useState(foroActual.archivos || []);
+    const [archivosNuevos, setArchivosNuevos] = useState([]);
+    const [archivosAEliminar, setArchivosAEliminar] = useState([]);
+
     const [error, setError] = useState(null);
     const [erroresCampos, setErroresCampos] = useState({});
     const [materias, setMaterias] = useState([]); 
     const [carreras, setCarreras] = useState([]);
     const [materiasFiltradas, setMateriasFiltradas] = useState([]);
     const [cargando, setCargando] = useState(false);
+    const fileInputRef = useRef(null);
 
     const Limite_Individual_MB = 5;
     const Limite_Total_MB = 20;
@@ -80,32 +84,50 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
 
     const handlerArchivoChange = (e) => {
         const nuevosArchivos = Array.from(e.target.files);
-        let totalSize = archivos.reduce((acc, file) => acc + file.size, 0);
+        let totalSize = archivosExistentes.reduce(
+            (acc, file) => acc + file.size, 
+            0
+        );
         let errores = [];
 
         for (const file of nuevosArchivos) {
-        const sizeMB = file.size / (1024 * 1024);
-        if (sizeMB > Limite_Individual_MB) {
-            errores.push(`❌ ${file.name} excede el límite de ${Limite_Individual_MB}MB.`);
-        }
-        totalSize += file.size;
+            const sizeMB = file.size / (1024 * 1024);
+            if (sizeMB > Limite_Individual_MB) {
+                errores.push(`❌ ${file.name} excede el límite de ${Limite_Individual_MB}MB.`);
+            }
+            totalSize += file.size;
         }
 
         if (totalSize / (1024 * 1024) > Limite_Total_MB) {
-        errores.push(`❌ El tamaño total de archivos no puede superar ${Limite_Total_MB}MB.`);
+            errores.push(`❌ El tamaño total de archivos no puede superar ${Limite_Total_MB}MB.`);
         }
 
         if (errores.length > 0) {
-        setError(errores.join("\n"));
+            setError(errores.join("\n"));
         } else {
-        setError("");
-        setArchivos((prev) => [...prev, ...nuevosArchivos]);
+            setError("");
+            setArchivosNuevos((prev) => [...prev, ...nuevosArchivos]);
+            setArchivosExistentes((prev) => [...prev, ...nuevosArchivos]);
+            fileInputRef.current.value = "";
         }
     };
 
-    const handleEliminarArchivo = (index) => {
-        setArchivos((prev) => prev.filter((_, i) => i !== index));
-    }
+    const handleEliminarArchivo = (archivo, index) => {
+        // Si viene del backend (tiene id)
+        if (archivo.id) {
+            setArchivosAEliminar((prev) =>
+                prev.includes(archivo.id) ? prev : [...prev, archivo.id]
+            );
+        }
+
+        setArchivosExistentes((prev) => prev.filter((_, i) => i !== index));
+
+        // Si era nuevo, también sacarlo
+        setArchivosNuevos((prev) =>
+            prev.filter((a) => a !== archivo)
+        );
+    };
+
 
     const validarFormulario = () => {
         const nuevosErrores = {};
@@ -124,8 +146,8 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
         if (cargando) return;
 
         if (error) {
-        alert("Corrige los errores antes de publicar.");
-        return;
+            alert("Corrige los errores antes de publicar.");
+            return;
         }
 
         if (!validarFormulario()) return;
@@ -133,17 +155,27 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
         setCargando(true);
 
         try {
-        const foroEditado = {
-            ...foroActual,
-            materia: parseInt(formData.materia),
-            pregunta: formData.pregunta,
-        };
+            const formDataEnvio = new FormData();
 
-        await foroService.editar(foroEditado.idForo, foroEditado);
+            formDataEnvio.append("materia", parseInt(formData.materia));
+            formDataEnvio.append("pregunta", formData.pregunta);
+            
+            archivosNuevos.forEach((archivo) => {
+                formDataEnvio.append("archivos", archivo);
+            });
 
-        alert("✅ Foro editado correctamente.");
-        onSave(foroEditado);
-        onClose();
+            if (archivosAEliminar.length > 0) {
+                formDataEnvio.append(
+                    "archivos_a_eliminar",
+                    archivosAEliminar.join(",")
+                );
+            }
+
+            const foroEditado = await foroService.editar(foroActual.idForo, formDataEnvio);
+
+            alert("✅ Foro editado correctamente.");
+            onSave(foroEditado);
+            onClose();
         
     } catch (error) {
         console.error("❌ Error al editar el foro:", error);
@@ -242,6 +274,7 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
                     Máx. 5MB por archivo — 20MB total
                 </p>
                 <input
+                    ref={fileInputRef}
                     id="file-upload"
                     type="file"
                     multiple
@@ -253,33 +286,34 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
                 {error && (
                     <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>
                 )}
+                <div className="max-h-40 overflow-y-auto pr-1 mt-2">
+                    
+                    {archivosExistentes.map((a, i) => {
 
-                {archivos.length > 0 && (
-                    <ul className="text-sm text-gray-300 mt-3 max-h-[65px] overflow-y-auto">
-                        {archivos.map((a, i) => (
-                        <li
-                            key={i}
-                            className="flex items-center justify-between bg-gray-800 px-3 py-2 mb-2 rounded-lg"
-                        >
-                            <div className="flex flex-col">
-                            <span className="text-s">📎 {a.name}</span>
-                            <span className="text-xs text-gray-400">
-                                {(a.size / 1024 / 1024).toFixed(2)} MB
-                            </span>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => handleEliminarArchivo(i)}
-                                className="text-red-400 hover:text-red-600 transition"
-                            >
-                                <FiTrash2 size={18} />
-                            </button>
-                        </li>
-                        ))}
-                    </ul>
-                )}
+                        return (
+                            <li key={i} className="flex justify-between bg-gray-800 px-3 py-2 mb-2 mt-2 rounded-lg">
+                                <div className="flex flex-col">
+                                    <span>📎 {a.name || a.archivo_url?.split("/").pop()}</span>
+                                    {a.size && (
+                                        <span className="text-xs text-gray-400">
+                                            {(a.size / 1024 / 1024).toFixed(2)} MB
+                                        </span>
+                                    )}
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleEliminarArchivo(a, i)}
+                                    className="text-red-400 hover:text-red-600"
+                                >
+                                    <FiTrash2 size={18}/>
+                                </button>
+                            </li>
+                        );
+                    })}
+                    
+                </div>
             </div>
-
             <button
                 type="submit"
                 disabled={cargando}

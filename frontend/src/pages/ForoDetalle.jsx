@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
 import CrearRespuesta from "../components/CrearRespuesta.jsx";
 import Modal from "../components/Modal.jsx";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
 import { materiaService } from "../services/materiaService.js";
+import userService from "../services/userService.js";
 
 export default function ForoDetalle() {
   const { foroId } = useParams();
@@ -21,17 +23,19 @@ export default function ForoDetalle() {
       try {
         setLoading(true);
 
-        const [foroData, respuestasData, materias] = await Promise.all([
-          foroService.obtenerPorId(foroId),
-          respuestaService.obtenerPorTodos(),
-          materiaService.obtenerTodos(),
-        ]);
-
+        const foroData = await foroService.obtenerPorId(foroId);
+        console.log(foroData);
+        
         if (!foroData) {
           setForo(null);
           setRespuestas([]);
           return;
         }
+
+        const [respuestasData, materias] = await Promise.all([
+          respuestaService.obtenerPorTodos(),
+          materiaService.obtenerTodos(),
+        ]);
 
         const respuestasForo = Array.isArray(respuestasData)
           ? respuestasData.filter((r) => r.foro === foroData.idForo)
@@ -41,11 +45,13 @@ export default function ForoDetalle() {
           (m) => m.idMateria === foroData.materia
         );
 
+        const usuario = await userService.obtenerPorId(foroData.usuario);
+
         const foroEnriquecido = {
           ...foroData,
           materia_nombre: materia ? materia.nombre : "Sin materia",
           carrera_nombre: materia ? materia.carrera_nombre : "Sin carrera",
-          usuario_nombre: foroData.usuario || "Anónimo",
+          usuario_nombre: usuario?.nombreYapellido || "Anónimo",
         };
 
         const respuestasOrdenadas = [...respuestasForo].sort(
@@ -184,7 +190,7 @@ export default function ForoDetalle() {
               ))
             ) : (
               <p className="text-gray-400 italic">
-                No hay respuestas todavía.
+                No hay respuestas todavía. ¡Se el primero en responder!
               </p>
             )}
           </motion.div>

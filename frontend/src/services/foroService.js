@@ -1,5 +1,4 @@
 import api from "./api";
-import { materiaService } from "./materiaService";
 import { respuestaService } from "./respuestaService";
 
 const normalizarRespuesta = (data) => {
@@ -8,23 +7,30 @@ const normalizarRespuesta = (data) => {
   return [];
 };
 
+const normalizarForo = (foro) => {
+  const usuario = foro.usuario ?? {};
+
+  return {
+    ...foro,
+    usuario_nombre:
+      usuario.nombreYapellido ||
+      usuario.username ||
+      "Usuario desconocido",
+    nombreCompleto: usuario.nombreYapellido || "",
+    materia_nombre: foro.materia_nombre ?? "Sin materia",
+    carrera_nombre: foro.carrera_nombre ?? "Sin carrera",
+  };
+};
+
+
 export const foroService = {
+  
   // =============================
   // OBTENER TODOS
   // =============================
   obtenerTodos: async () => {
     const response = await api.get("/foros/");
-    const foros = response.data;
-    const materias = await materiaService.obtenerTodos();
-
-    return foros.map((foro) => {
-      const materia = materias.find((m) => m.idMateria === foro.materia);
-      return {
-        ...foro,
-        materia_nombre: materia?.nombre || "Sin materia",
-        carrera_nombre: materia?.carrera_nombre || "Sin carrera",
-      };
-    });
+    return Promise.all(response.data.map(normalizarForo));
   },
 
   // =============================
@@ -39,8 +45,10 @@ export const foroService = {
         (r) => String(r.foro) === String(id)
       );
 
+      const foroNormalizado = await normalizarForo(foroRes.data);
+
       return {
-        ...foroRes.data,
+        ...foroNormalizado,
         totalRespuestas: respuestasDelForo.length,
       };
     } catch (error) {
@@ -48,6 +56,27 @@ export const foroService = {
       throw error;
     }
   },
+
+  obtenerConUsuario: async (id) => {
+    try {
+      // Obtener foro
+      const foroRes = await api.get(`/foros/${id}/`);
+      const foro = foroRes.data;
+
+      return {
+        ...foro,
+        nombreCompleto: foro.usuario?.nombreYapellido,
+        username: foro.usuario?.username,
+      };
+    } catch (error) {
+      const usuario = { username: "Usuario eliminado" }
+      console.error("❌ Error al obtener foro con usuario", error);
+      console.error(usuario)
+      throw error;
+    }
+  },
+
+  
 
   // =============================
   // CREAR (FORMDATA)
@@ -74,15 +103,9 @@ export const foroService = {
   // =============================
   editar: async (id, datos) => {
     try {
-      const esFormData = datos instanceof FormData;
-
-      const res = await api.put(`/foros/${id}/`, datos, {
-        headers: esFormData
-          ? { "Content-Type": "multipart/form-data" }
-          : {},
-      });
-
+      const res = await api.patch(`/foros/${id}/`, datos);
       return res.data;
+      
     } catch (error) {
       console.error(`❌ Error al editar foro ${id}`, error);
       throw error;
@@ -120,13 +143,21 @@ export const foroService = {
   // =============================
   // BUSCAR POR USUARIO
   // =============================
-  buscarUsuario: async (usuarioId) => {
+  obtenerForosPorUsuario: async (usuarioId) => {
     try {
-      const res = await api.get(`/foros/?usuario=${usuarioId}`);
-      return normalizarRespuesta(res.data);
+      const response = await api.get("/foros/");
+      const foros = response.data;
+      
+      // Filtrar foros que coincidan con el ID del usuario
+      const forosFiltrados = foros.filter(
+        (foro) => String(foro.usuario) === String(usuarioId)
+      );
+      
+      return Promise.all(forosFiltrados.map(normalizarForo));
     } catch (error) {
-      console.error("❌ Error al buscar foros por usuario:", error);
+      console.error(`❌ Error al obtener foros del usuario ${usuarioId}:`, error);
       throw error;
     }
   },
+ 
 };
