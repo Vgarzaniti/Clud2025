@@ -2,6 +2,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 
 from ..models import (
@@ -19,11 +20,13 @@ from .hash import file_hash
 
 
 class RespuestaViewSet(viewsets.ModelViewSet):
-    queryset = Respuesta.objects.prefetch_related(
-        'archivos__archivo'
-    ).order_by('-fecha_creacion')
-
     serializer_class = RespuestaSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Respuesta.objects.prefetch_related(
+            'archivos__archivo'
+        ).order_by('-fecha_creacion')
 
     # 🔥 FIX CRÍTICO PARA ARCHIVOS
     parser_classes = (MultiPartParser, FormParser)
@@ -117,8 +120,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     # 🔹 UPDATE
     # ===============================
     def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
+        #partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        data = request.data.copy()
 
         archivos_nuevos = request.FILES.getlist("archivos")
         archivos_a_eliminar = request.data.get("archivos_a_eliminar", [])
@@ -128,11 +132,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 int(x) for x in archivos_a_eliminar.split(',')
             ]
 
-        serializer = RespuestaSerializer(
-            instance, data=request.data, partial=partial
-        )
+        serializer = RespuestaSerializer(instance, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
-        respuesta = serializer.save()
+        respuesta = serializer.save(usuario=request.user)
 
         for archivo_id in archivos_a_eliminar:
             try:

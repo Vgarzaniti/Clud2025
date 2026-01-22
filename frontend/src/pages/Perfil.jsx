@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ForoTarjeta from "../components/ForoTarjeta.jsx";
 import RespuestaTarjeta from "../components/RespuestaTarjeta.jsx";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import Modal from "../components/Modal.jsx";
 import EditarRespuesta from "../components/EditarRespuesta.jsx";
@@ -11,8 +12,11 @@ import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
 import { materiaService } from "../services/materiaService.js";
 import { carreraService } from "../services/carreraService.js";
+import { useAuth } from "../context/useAuth.js";
+import EstadoVacio from "../components/EstadoVacio.jsx";
 
 export default function Perfil() {
+  const { usuario, actualizarUsuario } = useAuth();
   const [vista, setVista] = useState("foros");
   const [mostrarEditar, setMostrarEditar] = useState(false);
   const [foroSeleccionado, setForoSeleccionado] = useState(null);
@@ -25,16 +29,15 @@ export default function Perfil() {
   const [carreras, setCarreras] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [respuestas, setRespuestas] = useState([]);
+  const [eliminando, setEliminando] = useState(false);
   const [carga, setCarga] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const usuario = {
-    id: 1,
-    nombre: "Juan Pérez",
-    username: "jperez",
-    email: "juanperez@utn.edu.ar",
-  };
+  const ordenarPorFecha = (arr) =>
+    arr
+      .filter((e) => e.fecha_creacion)
+      .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
 
   const handleVotoRespuesta = (idRespuesta, delta, nuevoVoto) => {
     setRespuestas(prev =>
@@ -52,24 +55,22 @@ export default function Perfil() {
 
 
     useEffect(() => {
+        if (!usuario.idUsuario) return;
+
         const cargarDatos = async () => {
             try {
+                console.log("Usuario completo:", usuario);
                 setCarga(true);
 
                 const [forosUsuario, respuestasUsuario, materiasBD, carrerasBD] = await Promise.all([
-                    foroService.buscarUsuario(usuario.id),
-                    respuestaService.buscarUsuario(usuario.id),
+                    foroService.obtenerForosPorUsuario(usuario.idUsuario),
+                    respuestaService.obtenerRespuestasPorUsuario(usuario.idUsuario),
                     materiaService.obtenerTodos(),
                     carreraService.obtenerTodos(),
                 ]);
 
                 setCarreras(carrerasBD);
                 setMaterias(materiasBD);
-
-                const ordenarPorFecha = (arr) =>
-                  arr
-                    .filter((e) => e.fecha_creacion)
-                    .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
 
                 setForos(ordenarPorFecha(forosUsuario));
                 setRespuestas(ordenarPorFecha(respuestasUsuario));
@@ -83,7 +84,7 @@ export default function Perfil() {
             };
 
         cargarDatos();
-    },  [usuario.id]);
+    },  [usuario.idUsuario]);
 
     const forosEnriquecidos = useMemo(() => {
         if (!foros.length || !materias.length) return [];
@@ -149,6 +150,7 @@ export default function Perfil() {
     };
 
     const handleGuardarUsuario = (nuevoUsuario) => {
+        actualizarUsuario(nuevoUsuario);
         console.log("Usuario editado:", nuevoUsuario);
         setMostrarEditarUsuario(false);
     };
@@ -159,24 +161,29 @@ export default function Perfil() {
     };
 
   const handleConfirmarEliminacion = async () => {
+    if (eliminando) return;
+
     try {
-        if (elementoAEliminar.tipo === "foro") {
-            await foroService.eliminar(elementoAEliminar.idForo);
-            setForos((prev) =>
-              prev.filter((f) => f.idForo !== elementoAEliminar.idForo)
-            );
-        } else if (elementoAEliminar.tipo === "respuesta") {
-            await respuestaService.eliminar(elementoAEliminar.idRespuesta);
-            setRespuestas((prev) =>
-              prev.filter((r) => r.idRespuesta !== elementoAEliminar.idRespuesta)
-            );
-        }
+      setEliminando(true);
+
+      if (elementoAEliminar.tipo === "foro") {
+        await foroService.eliminar(elementoAEliminar.idForo);
+        setForos((prev) =>
+          prev.filter((f) => f.idForo !== elementoAEliminar.idForo)
+        );
+      } else if (elementoAEliminar.tipo === "respuesta") {
+        await respuestaService.eliminar(elementoAEliminar.idRespuesta);
+        setRespuestas((prev) =>
+          prev.filter((r) => r.idRespuesta !== elementoAEliminar.idRespuesta)
+        );
+      }
     } catch (error) {
-        console.error("❌ Error al eliminar:", error);
-        alert("No se pudo eliminar el elemento. Intenta nuevamente.");
+      console.error("❌ Error al eliminar:", error);
+      alert("No se pudo eliminar el elemento. Intenta nuevamente.");
     } finally {
-        setMostrarConfirmar(false);
-        setElementoAEliminar(null);
+      setEliminando(false);
+      setMostrarConfirmar(false);
+      setElementoAEliminar(null);
     }
   };
 
@@ -190,8 +197,8 @@ export default function Perfil() {
       {/* Panel lateral usuario */}
       <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto self-start">
         <div className="shadow-gray-900 shadow-lg w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-2xl font-bold text-fondo absolute -top-12 left-1/2 transform -translate-x-1/2">
-          {usuario.nombre
-            ? usuario.nombre
+          {usuario.username
+            ? usuario.username
                 .split(" ")
                 .map((n) => n[0])
                 .join("")
@@ -202,7 +209,7 @@ export default function Perfil() {
         <div className="mt-15 space-y-2 text-left">
           <div>
             <p className="font-semibold text-white">Nombre Completo</p>
-            <p className="ml-2 text-gray-400">{usuario.nombre}</p>
+            <p className="ml-2 text-gray-400">{usuario.nombreYapellido}</p>
           </div>
           <div>
             <p className="font-semibold text-white">Nombre Usuario</p>
@@ -271,18 +278,22 @@ export default function Perfil() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {forosEnriquecidos.map((foro) => (
-                <ForoTarjeta
-                  key={foro.idForo}
-                  foro={foro}
-                  mostrarAcciones={true} 
-                  onEditar={(foro) => {
-                    setForoSeleccionado(foro);
-                    setMostrarEditar("foro");
-                  }}
-                  onEliminar={(foro) => handleEliminarClick(foro, "foro")}
-                />
-              ))}
+              {forosEnriquecidos.length === 0 ? (
+                <EstadoVacio mensaje="Todavía no creaste foros. ¡Animate a crear uno!" />
+              ) : (
+                forosEnriquecidos.map((foro) => (
+                  <ForoTarjeta
+                    key={foro.idForo}
+                    foro={foro}
+                    mostrarAcciones={true}
+                    onEditar={(foro) => {
+                      setForoSeleccionado(foro);
+                      setMostrarEditar("foro");
+                    }}
+                    onEliminar={(foro) => handleEliminarClick(foro, "foro")}
+                  />
+                ))
+              )}
             </motion.div>
           ) : (
             <motion.div
@@ -293,28 +304,32 @@ export default function Perfil() {
               transition={{ duration: 0.3 }}
               className="space-y-4"
             >
-              {respuestasEnriquecidas.map((res) => (
-                <div key={res.idRespuesta} className="relative">
-                  <RespuestaTarjeta respuesta={res} onVoto={handleVotoRespuesta} />
-                  <div className="absolute top-5 right-5 flex gap-2">
-                    <button
-                      onClick={() => {
-                        setRespuestaSeleccionada(res);
-                        setMostrarEditar("respuesta");
-                      }}
-                      className="text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleEliminarClick(res, "respuesta")}
-                      className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700"
-                    >
-                      Eliminar
-                    </button>
+              {respuestasEnriquecidas.length === 0 ? (
+                <EstadoVacio mensaje="Todavía no participaste en ningún foro." />
+              ) : (
+                respuestasEnriquecidas.map((res) => (
+                  <div key={res.idRespuesta} className="relative">
+                    <RespuestaTarjeta respuesta={res} onVoto={handleVotoRespuesta} />
+                    <div className="absolute top-5 right-5 flex gap-2">
+                      <button
+                        onClick={() => {
+                          setRespuestaSeleccionada(res);
+                          setMostrarEditar("respuesta");
+                        }}
+                        className="text-sm bg-azulUTN text-white px-3 py-1 rounded-lg hover:bg-blue-600"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleEliminarClick(res, "respuesta")}
+                        className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -360,13 +375,23 @@ export default function Perfil() {
           <div className="flex justify-center gap-1">
             <button
               onClick={handleConfirmarEliminacion}
-              className="bg-red-600 px-5 py-2 rounded-lg text-white hover:bg-red-700"
+              disabled={eliminando}
+              className={`px-5 py-2 rounded-lg text-white transition ${
+                eliminando
+                  ? "bg-red-400 cursor-not-allowed"
+                  : "bg-red-600 hover:bg-red-700"
+              }`}
             >
-              Eliminar
+              {eliminando ? "Eliminando..." : "Eliminar"}
             </button>
             <button
+              disabled={eliminando}
               onClick={() => setMostrarConfirmar(false)}
-              className="bg-gray-700 px-5 py-2 rounded-lg text-white hover:bg-gray-600"
+              className={`bg-gray-700 px-5 py-2 rounded-lg text-white ${
+                eliminando
+                  ? "hover:bg-gray-600 cursor-not-allowed"
+                  : "hover:bg-gray-600"
+              }`}
             >
               Cancelar
             </button>

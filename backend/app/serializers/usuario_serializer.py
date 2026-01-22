@@ -15,6 +15,9 @@ class UsuarioSerializer(serializers.ModelSerializer):
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
 
+    def get_nombreYapellido(self, obj):
+        # Ajustá esto según tu modelo
+        return f"{obj.first_name} {obj.last_name}".strip()
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -31,12 +34,29 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CambiarDatosSerializer(serializers.Serializer):
-    password_actual = serializers.CharField(write_only=True)
-    password_nueva = serializers.CharField(required=False, write_only=True)
+    password_actual = serializers.CharField(write_only=True, required=False)
+    password_nueva = serializers.CharField(write_only=True, required=False)
     nuevo_username = serializers.CharField(required=False)
 
     def validate(self, data):
         usuario = self.context['request'].user
-        if not usuario.check_password(data['password_actual']):
-            raise serializers.ValidationError("La contraseña actual es incorrecta.")
+
+        # Si quiere cambiar la contraseña
+        if data.get("password_nueva"):
+            if not data.get("password_actual"):
+                raise serializers.ValidationError({
+                    "password_actual": "Debes ingresar la contraseña actual."
+                })
+
+            if not usuario.check_password(data["password_actual"]):
+                raise serializers.ValidationError({
+                    "password_actual": "La contraseña actual es incorrecta."
+                })
+
+        # Si no manda nada
+        if not data.get("nuevo_username") and not data.get("password_nueva"):
+            raise serializers.ValidationError(
+                "Debes enviar al menos un dato para actualizar."
+            )
+
         return data

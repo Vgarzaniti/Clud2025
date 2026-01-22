@@ -3,18 +3,19 @@ import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService.js";
 
 export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
-  const [archivos, setArchivos] = useState(
-    Array.isArray(respuestaActual.archivos)
-      ? respuestaActual.archivos
-      : []
-  );
+  
+  const [archivosExistentes, setArchivosExistentes] = useState(respuestaActual.archivos || []);
+  const [archivosNuevos, setArchivosNuevos] = useState([]);
+  const [archivosAEliminar, setArchivosAEliminar] = useState([]);
 
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
+  
   const [formData, setFormData] = useState({
     respuesta: respuestaActual.respuesta_texto || "",
   });
   const [cargando, setCargando] = useState(false);
+  const fileInputRef = useRef(null);
 
   const textareaRef = useRef(null);
   const LIMITE_INDIVIDUAL_MB = 5;
@@ -30,7 +31,7 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
 
   const handleArchivoChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
-    let totalSize = archivos.reduce((acc, file) => acc + (file.size || 0), 0);
+    let totalSize = archivosExistentes.reduce((acc, file) => acc + file.size, 0);
     let errores = [];
 
     for (const file of nuevosArchivos) {
@@ -49,18 +50,36 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
       setError(errores.join("\n"));
     } else {
       setError("");
-      setArchivos((prev) => [...prev, ...nuevosArchivos]);
+      setArchivosNuevos((prev) => [...prev, ...nuevosArchivos]);
+      setArchivosExistentes((prev) => [...prev, ...nuevosArchivos]);
+      fileInputRef.current.value = "";
     }
   };
 
-  const handleEliminarArchivo = (index) => {
-    setArchivos((prev) => prev.filter((_, i) => i !== index));
+  const handleEliminarArchivo = (archivo,index) => {
+    
+    // Si viene del backend (tiene id)
+    if (archivo.id) {
+      setArchivosAEliminar((prev) =>
+        prev.includes(archivo.id) ? prev : [...prev, archivo.id]
+      );
+    }
+
+    setArchivosExistentes((prev) => prev.filter((_, i) => i !== index));
+
+    // Si era nuevo, también sacarlo
+    setArchivosNuevos((prev) =>
+      prev.filter((a) => a !== archivo)
+    );
   };
 
   const validarFormulario = () => {
     const nuevosErrores = {};
+    
     if (!formData.respuesta.trim()) nuevosErrores.respuesta = "La respuesta no puede estar vacía.";
+    
     setErroresCampos(nuevosErrores);
+    
     return Object.keys(nuevosErrores).length === 0;
   };
 
@@ -80,15 +99,23 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
 
     try {
       const formDataAPI = new FormData();
+
       formDataAPI.append("respuesta_texto", formData.respuesta.trim());
       formDataAPI.append("usuario", respuestaActual.usuario);
       formDataAPI.append("foro", respuestaActual.foro);
       formDataAPI.append("materia", respuestaActual.materia);
 
       // Adjuntar solo los archivos nuevos (File)
-      archivos.forEach((file) => {
-        if (file instanceof File) formDataAPI.append("archivos", file);
+      archivosNuevos.forEach((archivo) => {
+        formDataAPI.append("archivos", archivo);
       });
+
+      if (archivosAEliminar.length > 0) {
+        formDataAPI.append(
+          "archivos_a_eliminar",
+          archivosAEliminar.join(",")
+        );
+      }
 
       const respuestaEditada = await respuestaService.editar(
         respuestaActual.idRespuesta,
@@ -98,9 +125,12 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
       alert("✅ Respuesta actualizada correctamente.");
       onSave(respuestaEditada);
       onClose();
+
     } catch (err) {
+
       console.error("❌ Error al editar respuesta:", err);
       alert("Ocurrió un error al guardar los cambios.");
+    
     } finally {
       setCargando(false);
     }
@@ -152,6 +182,7 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
             Máx. 5MB por archivo — 20MB total
           </p>
           <input
+            ref={fileInputRef}
             id="file-upload"
             type="file"
             multiple
@@ -160,42 +191,36 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
           />
         </label>
 
-        {error && <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>}
-
-        {archivos.length > 0 && (
-          <ul className="text-sm text-gray-300 mt-3 max-h-[65px] overflow-y-auto">
-            {archivos.map((a, i) => {
-              const isFile = a instanceof File;
-              const nombreArchivo = isFile
-                ? a.name
-                : a.archivo_url
-                ? a.archivo_url.split("/").pop()
-                : "Archivo";
-              const tamaño = isFile
-                ? `${(a.size / 1024 / 1024).toFixed(2)} MB`
-                : "Archivo existente";
-
-              return (
-                <li
-                  key={i}
-                  className="flex items-center justify-between bg-gray-800 px-3 py-2 mb-2 rounded-lg"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-s">📎 {nombreArchivo}</span>
-                    <span className="text-xs text-gray-400">{tamaño}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleEliminarArchivo(i)}
-                    className="text-red-400 hover:text-red-600 transition"
-                  >
-                    <FiTrash2 size={18} />
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+        {error && (
+          <p className="text-red-400 whitespace-pre-line text-sm mt-2">{error}</p>
         )}
+          
+        <div className="max-h-40 overflow-y-auto pr-1 mt-2">
+                    
+          {archivosExistentes.map((a, i) => {
+
+            return (
+              <li key={i} className="flex justify-between bg-gray-800 px-3 py-2 mb-2 mt-2 rounded-lg">
+                <div className="flex flex-col">
+                  <span>📎 {a.name || a.archivo_url?.split("/").pop()}</span>
+                  {a.size && (
+                    <span className="text-xs text-gray-400">
+                      {(a.size / 1024 / 1024).toFixed(2)} MB
+                   </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleEliminarArchivo(a, i)}
+                  className="text-red-400 hover:text-red-600"
+                >
+                  <FiTrash2 size={18}/>
+                </button>
+              </li>
+            );
+          })}      
+        </div>
       </div>
 
       <button
