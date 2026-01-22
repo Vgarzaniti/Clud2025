@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
 import { puntajeService } from "../services/puntajeService.js";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../context/useAuth.js";
 import Modal from "./Modal";
 
 export default function RespuestaTarjeta({ respuesta, onVoto }) {
@@ -31,6 +31,8 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           usuarioId: usuario.idUsuario,
           valor: nuevoValor
         });
+        
+        console.log("Respuesta al votar 👍:", data);
 
         setVoto(nuevoValor);
         setPuntaje(data.puntaje_neto);

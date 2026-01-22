@@ -3,7 +3,7 @@ import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService";
 import { useAuth } from "../context/useAuth.js";
 
-export default function CrearRespuesta({ foroId, materiaId, onClose, onSave }) {
+export default function CrearRespuesta({ foroId, onClose, onSave }) {
   const { usuario } = useAuth();
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
