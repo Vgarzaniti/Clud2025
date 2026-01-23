@@ -9,8 +9,10 @@ import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
 import { materiaService } from "../services/materiaService.js";
 /*import userService from "../services/userService.js";*/
+import { useAuth } from "../context/useAuth.js";
 
 export default function ForoDetalle() {
+  const { usuario } = useAuth();
   const { foroId } = useParams();
   const [foro, setForo] = useState(null);
   const [respuestas, setRespuestas] = useState([]);
@@ -211,6 +213,7 @@ export default function ForoDetalle() {
                   key={res.idRespuesta}
                   respuesta={res}
                   onVoto={manejarVoto}
+                  userId={usuario?.idUsuario}
                 />
               ))
             ) : (
@@ -266,7 +269,7 @@ export default function ForoDetalle() {
         <CrearRespuesta
           foroId={foro.idForo}
           materiaId={foro.materia}
-          usuarioId={foro.usuario || 1}
+          usuarioId={usuario?.idUsuario}
           onClose={() => setMostrarRespuesta(false)}
           onSave={async() => {
             await cargarRespuestas();

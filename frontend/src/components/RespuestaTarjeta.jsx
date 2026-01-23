@@ -26,6 +26,8 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
       try {
         setEnviando(true);
 
+        console.log("Usuario votando:", usuario);
+
         const data = await puntajeService.votar({
           respuestaId: respuesta.idRespuesta,
           usuarioId: usuario.idUsuario,
