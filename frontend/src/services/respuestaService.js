@@ -8,8 +8,12 @@ export const respuestaService = {
   },
 
   obtenerPorForo: async (foroId) => {
-    const res = await api.get(`/respuestas/?foro=${foroId}`);
-    return res.data;
+    const res = await api.get(`/respuestas/`);
+
+    const respuestasForo = Array.isArray(res.data)
+      ? res.data.filter((r) => r.foro === parseInt(foroId))
+      : [];
+    return respuestasForo;
   },
 
   async crear(formData) {

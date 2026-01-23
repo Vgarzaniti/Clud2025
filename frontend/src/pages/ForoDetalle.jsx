@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { foroService } from "../services/foroService.js";
 import { respuestaService } from "../services/respuestaService.js";
 import { materiaService } from "../services/materiaService.js";
-import userService from "../services/userService.js";
+/*import userService from "../services/userService.js";*/
 
 export default function ForoDetalle() {
   const { foroId } = useParams();
@@ -55,13 +55,13 @@ export default function ForoDetalle() {
           (m) => m.idMateria === foroData.materia
         );
 
-        const usuario = await userService.obtenerPorId(foroData.usuario);
+        const usuario = "luz";/*await userService.obtenerPorId(foroData.usuario);*/
 
         const foroEnriquecido = {
           ...foroData,
           materia_nombre: materia ? materia.nombre : "Sin materia",
           carrera_nombre: materia ? materia.carrera_nombre : "Sin carrera",
-          usuario_nombre: usuario?.nombreYapellido || "Anónimo",
+          usuario_nombre: usuario/*?.nombreYapellido || "Anónimo"*/,
         };
 
         setForo(foroEnriquecido);
