@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
 import { puntajeService } from "../services/puntajeService.js";
+import { respuestaService } from "../services/respuestaService.js";
 import { useAuth } from "../context/useAuth.js";
 import Modal from "./Modal";
 
@@ -11,10 +12,39 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
     const [puntaje, setPuntaje] = useState(respuesta.puntaje_neto ?? 0);
     const [voto, setVoto] = useState(respuesta.voto_usuario ?? 0);
     const [expandido, setExpandido] = useState(false);
+    const [nombreForo, setNombreForo] = useState("");
     const [mostrarModal, setMostrarModal] = useState(false);
     const [mensajeModal, setMensajeModal] = useState("");
 
-    const limite = 300;
+    const limiteEnTexto = 300;
+    const limiteEnMuestra = 100;
+
+    useEffect(() => {
+      let activo = true;
+
+      const cargarNombreForo = async () => {
+        try {
+          const foro = await respuestaService.obtenerForoDeRespuesta(respuesta.foro);
+
+          if (activo) {
+            setNombreForo(foro?.pregunta || "Foro desconocido");
+          }
+        } catch (error) {
+          console.error("Error al obtener foro:", error);
+          if (activo) setNombreForo("Foro desconocido");
+        }
+      };
+
+      if (respuesta?.foro) {
+        cargarNombreForo();
+      }
+
+      return () => {
+        activo = false;
+      };
+    }, [respuesta.foro]);
+
+
 
     const handleUpvote = async () => {
 
@@ -94,22 +124,24 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
     }, [respuesta.voto_usuario]);
 
     const textoCorto =
-      textoRespuesta.length > limite
-        ? textoRespuesta.slice(0, limite) + "..."
+      textoRespuesta.length > limiteEnTexto
+        ? textoRespuesta.slice(0, limiteEnTexto) + "..."
         : textoRespuesta;
 
     return (
     <div className="bg-panel p-5 rounded-2xl border border-gray-700 shadow-md">
       
-      <p className="text-gray-200 whitespace-pre-line">
+      <p className="text-gray-200 whitespace-pre-line break-words break-all overflow-hidden">
         {expandido ? textoRespuesta : textoCorto}
       </p>
 
       {/* Botón Mostrar más / menos */}
-      {textoRespuesta.length > limite && (
+      {textoRespuesta.length > limiteEnMuestra && (
         <button
           onClick={() => setExpandido(!expandido)}
-          className="mt-1 text-gray-500 hover:underline text-sm"
+          className={`text-gray-200 whitespace-pre-line break-words break-all overflow-hidden transition-all duration-300 ${
+            expandido ? "max-h-none" : "max-h-24"
+          }`}
         >
           {expandido ? "Mostrar menos" : "Mostrar más"}
         </button>
@@ -147,8 +179,16 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
 
       <div className="flex justify-between items-center mt-4">
 
-        <span className="text-sm text-gray-400">Respuesta de {respuesta.autor || "Anonimo"}</span>
-        
+        <div className="flex flex-col">
+          <span className="text-sm text-gray-400">
+            Respuesta de {respuesta.autor || "Anónimo"}
+          </span>
+          <span className="text-sm text-gray-500 mt-2">
+            Del Foro {nombreForo || "Cargando..."}
+          </span>
+        </div>
+
+
         <div className="flex items-center gap-2">
           <button
             disabled={enviando || voto === 1}

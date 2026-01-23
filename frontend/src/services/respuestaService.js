@@ -62,4 +62,18 @@ export const respuestaService = {
       throw error;
     }
   },
+
+  // =============================
+  // OBTENER FORO DE PROCEDENCIA DE UNA RESPUESTA
+  // =============================
+  obtenerForoDeRespuesta: async (foroId) => {
+    const res = await api.get("/foros/");
+
+    if (!Array.isArray(res.data)) return null;
+
+    return res.data.find(
+      (foro) => foro.idForo === Number(foroId)
+    ) || null;
+  },
+
 };

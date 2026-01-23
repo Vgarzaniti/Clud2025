@@ -308,9 +308,15 @@ export default function Perfil() {
                 <EstadoVacio mensaje="Todavía no participaste en ningún foro." />
               ) : (
                 respuestasEnriquecidas.map((res) => (
-                  <div key={res.idRespuesta} className="relative">
-                    <RespuestaTarjeta respuesta={res} onVoto={handleVotoRespuesta} />
-                    <div className="absolute top-5 right-5 flex gap-2">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <RespuestaTarjeta
+                        respuesta={res}
+                        onVoto={handleVotoRespuesta}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-3 shrink-0 mt-1">
                       <button
                         onClick={() => {
                           setRespuestaSeleccionada(res);
@@ -320,6 +326,7 @@ export default function Perfil() {
                       >
                         Editar
                       </button>
+
                       <button
                         onClick={() => handleEliminarClick(res, "respuesta")}
                         className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700"
