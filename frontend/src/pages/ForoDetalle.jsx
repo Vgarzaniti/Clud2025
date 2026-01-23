@@ -19,22 +19,17 @@ export default function ForoDetalle() {
   const [mostrarRespuesta, setMostrarRespuesta] = useState(false);
   const [modoVista, setModoVista] = useState("normal");
   const [loading, setLoading] = useState(true);
-
   const cargarRespuestas = useCallback(async () => {
       const respuestasData = await respuestaService.obtenerPorForo(foroId);
-
       const ordenadas = [...respuestasData].sort(
         (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
       );
-
       setRespuestas(ordenadas);
     }, [foroId])
-
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setLoading(true);
-
         const foroData = await foroService.obtenerPorId(foroId);
         console.log(foroData);
         
@@ -43,36 +38,29 @@ export default function ForoDetalle() {
           setRespuestas([]);
           return;
         }
-
         const [respuestasData, materias] = await Promise.all([
           respuestaService.obtenerPorTodos(),
           materiaService.obtenerTodos(),
         ]);
-
         const respuestasForo = Array.isArray(respuestasData)
           ? respuestasData.filter((r) => r.foro === foroData.idForo)
           : [];
-
         const materia = materias.find(
           (m) => m.idMateria === foroData.materia
         );
-
         const usuario = "luz";/*await userService.obtenerPorId(foroData.usuario);*/
-
         const foroEnriquecido = {
           ...foroData,
           materia_nombre: materia ? materia.nombre : "Sin materia",
           carrera_nombre: materia ? materia.carrera_nombre : "Sin carrera",
           usuario_nombre: usuario/*?.nombreYapellido || "Anónimo"*/,
         };
-
         setForo(foroEnriquecido);
         
         const ordenadas = [...respuestasForo].sort(
           (a, b) => new Date(a.fecha_creacion) - new Date(b.fecha_creacion)
         );
         setRespuestas(ordenadas); 
-
       } catch (e) {
         console.error(e);
       } finally {
@@ -81,7 +69,6 @@ export default function ForoDetalle() {
     }
     cargarDatos();
   }, [foroId, cargarRespuestas]);
-
   if (loading){
     return (
       <p className="text-center text-gray-400 mt-10">
@@ -89,7 +76,6 @@ export default function ForoDetalle() {
       </p>
     );
   }
-
   if (!foro) {
     return (
       <p className="text-center text-red-400 mt-10">
@@ -97,13 +83,11 @@ export default function ForoDetalle() {
       </p>
     );
   }
-
   const respuestasOrdenadas = [...respuestas].sort((a, b) => {
     return modoVista === "ranking"
     ? b.puntaje_neto - a.puntaje_neto
     : new Date(a.fecha_creacion) - new Date(b.fecha_creacion);
   });
-
   const manejarVoto = (idRespuesta, delta, nuevoVoto) => {
     setRespuestas(prev =>
       prev.map(r =>
@@ -117,7 +101,6 @@ export default function ForoDetalle() {
       )
     );
   };
-
   return (
     <div className="max-w-7xl mx-auto mt-8 px-4 text-texto grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Columna principal */}
@@ -125,24 +108,20 @@ export default function ForoDetalle() {
         {/* Pregunta */}
         <div className="bg-cyan-950 p-5 rounded-2xl border border-gray-700 shadow-md">
           <h1 className="text-2xl font-bold mb-2">{foro.pregunta}</h1>
-
           <p className="text-gray-400 text-sm mb-2">
             Materia: {foro.materia_nombre}
           </p>
-
           {/* Archivos adjuntos */}
           {foro.archivos && foro.archivos.length > 0 && (
             <div className="mt-4 border-t border-gray-700 pt-3">
               <p className="text-sm text-gray-400 mb-2">
                 Archivos adjuntos:
               </p>
-
               <ul className="space-y-2">
                 {foro.archivos.map((fa) => {
                   const nombreArchivo = fa.archivo_url
                     ? fa.archivo_url.split("/").pop()
                     : "Archivo";
-
                   return (
                     <li
                       key={fa.id}
@@ -164,7 +143,6 @@ export default function ForoDetalle() {
               </ul>
             </div>
           )}
-
           <p className="text-gray-500 text-xs mt-3">
             Creado el{" "}
             {foro.fecha_creacion
@@ -172,7 +150,6 @@ export default function ForoDetalle() {
               : "Fecha desconocida"}
           </p>
         </div>
-
         {/* Filtros */}
         <div className="flex gap-3">
           <button
@@ -185,7 +162,6 @@ export default function ForoDetalle() {
           >
             Filtros
           </button>
-
           <button
             onClick={() => setModoVista("ranking")}
             className={`px-4 py-2 rounded-full font-semibold transition ${
@@ -197,7 +173,6 @@ export default function ForoDetalle() {
             Ranking
           </button>
         </div>
-
         {/* Respuestas */}
         <AnimatePresence mode="wait">
           <motion.div
@@ -224,7 +199,6 @@ export default function ForoDetalle() {
           </motion.div>
         </AnimatePresence>
       </div>
-
       {/* Columna lateral */}
       <div className="flex flex-col gap-4">
         <aside className="bg-panel p-4 rounded-2xl border border-gray-700 h-fit space-y-4">
@@ -252,7 +226,6 @@ export default function ForoDetalle() {
             </p>
           </div>
         </aside>
-
         <button
           onClick={() => setMostrarRespuesta(true)}
           className="w-full bg-azulUTN text-white py-3 rounded-xl font-semibold hover:bg-blue-500 transition text-lg shadow-lg"
@@ -260,7 +233,6 @@ export default function ForoDetalle() {
           Responder
         </button>
       </div>
-
       {/* Modal */}
       <Modal
         visible={mostrarRespuesta}

@@ -31,7 +31,8 @@ class RespuestaSerializer(serializers.ModelSerializer):
         required=False
     )
     puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
-
+    voto_usuario = serializers.SerializerMethodField()
+    
     # 🔥 FIX DEFINITIVO
     materia = serializers.PrimaryKeyRelatedField(read_only=True)
 

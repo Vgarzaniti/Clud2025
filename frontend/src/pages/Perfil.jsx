@@ -52,8 +52,7 @@ export default function Perfil() {
       )
     );
   };
-
-
+  
     useEffect(() => {
         if (!usuario.idUsuario) return;
 
@@ -316,7 +315,7 @@ export default function Perfil() {
                       />
                     </div>
 
-                    <div className="flex flex-col gap-3 shrink-0 mt-1">
+                    <div className="flex flex-col gap-4 shrink-0 bg-blue-950 border border-gray-700 rounded-lg p-3 items-center">
                       <button
                         onClick={() => {
                           setRespuestaSeleccionada(res);
