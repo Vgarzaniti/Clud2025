@@ -55,9 +55,9 @@ export default function Home() {
     if (!foros.length || !materias.length) return [];
 
     return foros.map((foro) => {
-      const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
+      const materiaInfo = materias.find((m) => m.idMateria === Number(foro.materia));
       const carreraInfo = carreras.find(
-        (c) => c.idCarrera === materiaInfo?.carrera
+        (c) => c.idCarrera === Number(materiaInfo?.carrera)
       );
       return {
          ...foro,

@@ -222,7 +222,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
 
       {/* Archivos */}
       <div className="w-full">
-        <label className="block text-m mb-2">Archivos adjuntos</label>
+        <label className="block text-m mb-2">Archivos adjuntos (.jpng/.png/.pdf/.word)</label>
 
         <label
           htmlFor="file-upload"

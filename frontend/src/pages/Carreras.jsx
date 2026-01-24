@@ -5,14 +5,20 @@ import CarreraTarjeta from '../components/CarreraTarjeta.jsx';
 
 export default function Carreras() {
   const [carreras, setCarreras] = useState([]);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    setCargando(true);
     const cargarCarreras = async () => {
       try {
         const data = await carreraService.obtenerTodos();
         setCarreras(data);
       } catch (error) {
         console.error("Error al cargar carreras:", error);
+        setError("No se pudieron cargar las carreras. Por favor, intente nuevamente más tarde.");
+      } finally {
+        setCargando(false);
       }
     };
     cargarCarreras();
@@ -28,14 +34,21 @@ export default function Carreras() {
 
       {carreras.length > 0 ? (
         <div className="space-y-10">
-          {carreras.map((carrera) => (
-            <CarreraTarjeta key={carrera.idCarrera} carrera={carrera} />
-          ))}
+          {cargando ? (
+            <p className="text-gray-400 text-center mt-10">Cargando carreras...</p>
+          ) : (
+            carreras.map((carrera) => (
+              <CarreraTarjeta key={carrera.idCarrera} carrera={carrera} />
+            ))
+          )}
         </div>
       ) : (
         <p className="text-gray-400 text-center mt-10">
-          No hay carreras disponibles.
+          Cargando carreras...
         </p>
+      )}
+      {error && (
+        <p className="text-red-500 text-center mt-10">{error}</p>
       )}
     </div>
   );

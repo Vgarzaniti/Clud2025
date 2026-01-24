@@ -110,7 +110,7 @@ export default function CrearRespuesta({ foroId, onClose, onSave }) {
       </h2>
 
       <div>
-        <label className="block text-sm mb-1">Respuesta</label>
+        <label className="block text-m mb-1">Respuesta</label>
         <textarea
           ref={textareaRef}
           value={formData.respuesta}
@@ -142,7 +142,7 @@ export default function CrearRespuesta({ foroId, onClose, onSave }) {
 
       {/* Archivos */}
       <div className="w-full">
-        <label className="block text-m mb-2">Archivos adjuntos</label>
+        <label className="block text-m mb-2">Archivos adjuntos (.jpng/.png/.pdf/.word)</label>
         <label
           htmlFor="file-upload"
           className="flex flex-col items-center justify-center w-full p-2 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer bg-gray-800 hover:bg-gray-700 transition"

@@ -5,12 +5,14 @@ import CrearForo from "../components/CrearForo.jsx";
 import Modal from "../components/Modal.jsx";
 import { foroService } from "../services/foroService.js";
 import { materiaService } from "../services/materiaService.js";
+import { carreraService } from "../services/carreraService.js";
 import "../input.css";
 
 export default function Materia() {
     const { nombre } = useParams();
     const [mostrarForo, setMostrarForo] = useState(false);
     const [foros, setForos] = useState([]);
+    const [carrera, setCarrera] = useState([]);
     const [carga, setCarga] = useState(true);
     const [error, setError] = useState(null);
     const [busqueda, setBusqueda] = useState("");
@@ -25,10 +27,13 @@ export default function Materia() {
     useEffect(() => {
         const cargarDatos = async () => {
             try {
-                const [dataForos, dataMaterias] = await Promise.all([
+                const [dataForos, dataMaterias, dataCarreras] = await Promise.all([
                     foroService.obtenerTodos(),
                     materiaService.obtenerTodos(),
+                    carreraService.obtenerTodos(),
                 ]);
+
+                setCarrera(dataCarreras);
 
                 const materiaEncontrada = dataMaterias.find(
                     (m) => formatoNombre(m.nombre) === formatoNombre(nombre)
@@ -59,11 +64,22 @@ export default function Materia() {
     const forosPorMateria = useMemo(() => {
         if (!materiaActual) return [];
 
-        return foros.filter(
-            (foro) => foro.materia === materiaActual.idMateria
-        );
-        
-    }, [foros, materiaActual]);
+          return foros
+            .filter((foro) => Number(foro.materia) === materiaActual.idMateria)
+            .map((foro) => {
+            const carreraInfo = carrera.find(
+                (c) => c.idCarrera === Number(materiaActual.carrera)
+            );
+
+            return {
+                ...foro,
+                materia_nombre: materiaActual.nombre,
+                carrera_nombre: carreraInfo?.nombre || "Sin carrera",
+                carreraId: carreraInfo?.idCarrera,
+                materiaId: materiaActual.idMateria,
+            };
+            });
+        }, [foros, materiaActual, carrera]);
 
     const forosFiltrados = useMemo(() => {
         return forosPorMateria.filter((foro) =>
