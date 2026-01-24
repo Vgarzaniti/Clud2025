@@ -106,7 +106,7 @@ export default function Materia() {
                 Foros de {formatoNombre(nombre).replace(/\b\w/g, (c) => c.toUpperCase())}
             </h1>
 
-            <hr className="w-3/4 mx-auto border-t-2 border-gray-700" />
+            <hr className="w-3/4 mx-auto border-t-2 border-gray-700 mb-2" />
 
             <div className="flex">
                 <input

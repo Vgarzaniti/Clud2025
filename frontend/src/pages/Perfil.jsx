@@ -117,11 +117,49 @@ export default function Perfil() {
 
 
     if (carga) {
-        return (
-        <div className="flex justify-center items-center h-64">
-            <p className="text-gray-400 animate-pulse">Cargando tus datos...</p>
+      return (
+        <div className="max-w-7xl mx-auto mt-10 px-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto self-start animate-pulse">
+            <div className="w-24 h-24 bg-gray-700 rounded-full absolute -top-12 left-1/2 transform -translate-x-1/2" />
+
+            <div className="mt-16 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i}>
+                  <div className="h-4 bg-gray-700 rounded w-1/2 mb-2" />
+                  <div className="h-4 bg-gray-600 rounded w-3/4 ml-2" />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="h-9 bg-gray-700 rounded-lg" />
+              <div className="h-9 bg-gray-700 rounded-lg" />
+            </div>
+          </aside>
+
+          {/* Contenido principal */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-8 bg-gray-700 rounded w-1/3" />
+              <div className="flex gap-3">
+                <div className="h-10 w-32 bg-gray-700 rounded-full" />
+                <div className="h-10 w-40 bg-gray-700 rounded-full" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700 animate-pulse space-y-3">
+                <div className="h-5 bg-gray-700 rounded w-3/4" />
+                <div className="h-4 bg-gray-700 rounded w-1/2" />
+                <div className="h-3 bg-gray-700 rounded w-full" />
+                <div className="h-3 bg-gray-700 rounded w-5/6" />
+              </div>
+            </div>
+          </div>
+
         </div>
-        );
+      );
     }
 
     if (error) {
