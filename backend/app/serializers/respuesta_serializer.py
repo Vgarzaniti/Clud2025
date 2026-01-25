@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from ..models import Respuesta, RespuestaArchivo, Puntaje
+from ..models import Respuesta, RespuestaArchivo, Puntaje, Archivo
+from ..utils.s3_utils import generar_url
 
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
@@ -7,20 +8,21 @@ class PuntajeRespuestaSerializer(serializers.ModelSerializer):
         default=serializers.CurrentUserDefault()
     )
     
+    
     class Meta:
         model = Puntaje
         fields = ['respuesta', 'valor', 'usuario']
 
 # 🔹 Serializador para los archivos
 class RespuestaArchivoSerializer(serializers.ModelSerializer):
-    archivo_url = serializers.CharField(
-        source='archivo.archivo.url',
-        read_only=True
-    )
+    url = serializers.SerializerMethodField()
 
     class Meta:
-        model = RespuestaArchivo
-        fields = ['id', 'archivo_url']
+        model = Archivo
+        fields = ["id", "s3_key", "url", "tamaño", "content_type"]
+
+    def get_url(self, obj):
+        return generar_url(obj)
 
 
 # 🔹 Serializador principal de la Respuesta

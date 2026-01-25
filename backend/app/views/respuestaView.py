@@ -4,6 +4,10 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from ..utils.s3 import subir_a_s3
+import boto3
+from uuid import uuid4
+from django.conf import settings
 
 from ..models import (
     Respuesta,
@@ -18,6 +22,7 @@ from ..serializers.respuesta_serializer import (
 )
 from .hash import file_hash
 
+s3 = boto3.client("s3")
 
 class RespuestaViewSet(viewsets.ModelViewSet):
     serializer_class = RespuestaSerializer
@@ -38,15 +43,20 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     def _procesar_archivo(archivo_file, respuesta):
         try:
             hash_archivo = file_hash(archivo_file)
+            archivo_file.seek(0)
 
             archivo_global = Archivo.objects.filter(
                 hash=hash_archivo
             ).first()
 
             if not archivo_global:
+                s3_key = subir_a_s3(archivo_file, hash_archivo)
+
                 archivo_global = Archivo.objects.create(
-                    archivo=archivo_file,
-                    hash=hash_archivo
+                    hash=hash_archivo,
+                    s3_key=s3_key,
+                    tamaño=archivo_file.size,
+                    content_type=archivo_file.content_type
                 )
 
             RespuestaArchivo.objects.get_or_create(

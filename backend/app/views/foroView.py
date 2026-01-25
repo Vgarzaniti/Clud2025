@@ -6,7 +6,12 @@ from rest_framework.decorators import action
 from ..models import Foro, ForoArchivo, Archivo
 from ..serializers.foro_serializer import ForoSerializer
 from .hash import file_hash
+from ..utils.s3 import subir_a_s3
+import boto3
+from uuid import uuid4
+from django.conf import settings
 
+s3 = boto3.client("s3")
 
 class ForoViewSet(viewsets.ModelViewSet):
     queryset = Foro.objects.all()
@@ -28,28 +33,29 @@ class ForoViewSet(viewsets.ModelViewSet):
     @staticmethod
     def _procesar_archivo(archivo_file, foro):
         try:
-            # 🔥 hash + reset del puntero
             hash_archivo = file_hash(archivo_file)
             archivo_file.seek(0)
 
-            # 🔹 buscar archivo global
             archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
 
-            # 🔹 si no existe, subir UNA sola vez a Cloudinary
             if not archivo_global:
+                s3_key = subir_a_s3(archivo_file, hash_archivo)
+
                 archivo_global = Archivo.objects.create(
-                    archivo=archivo_file,
-                    hash=hash_archivo
+                    hash=hash_archivo,
+                    s3_key=s3_key,
+                    tamaño=archivo_file.size,
+                    content_type=archivo_file.content_type
                 )
 
-            # 🔥 SIEMPRE asociar al foro
             ForoArchivo.objects.get_or_create(
                 foro=foro,
                 archivo=archivo_global
             )
 
         except Exception as e:
-            print("❌ Error procesando archivo:", e)
+            print("❌ Error subiendo archivo a S3:", e)
+
 
     # 🔹 Procesar múltiples archivos
     def _subir_archivos(self, foro, archivos):

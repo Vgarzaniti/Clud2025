@@ -1,16 +1,17 @@
 from backend.app.serializers.usuario_serializer import UsuarioForoSerializer
 from rest_framework import serializers
-from ..models import Foro, ForoArchivo, Usuario
+from ..models import Foro, ForoArchivo, Usuario, Archivo
+from ..utils.s3_utils import generar_url
 
 class ForoArchivoSerializer(serializers.ModelSerializer):
-    archivo_url = serializers.CharField(
-        source='archivo.archivo.url',
-        read_only=True
-    )
+    url = serializers.SerializerMethodField()
 
     class Meta:
-        model = ForoArchivo
-        fields = ['id', 'archivo_url']
+        model = Archivo
+        fields = ["id", "s3_key", "url", "tamaño", "content_type"]
+
+    def get_url(self, obj):
+        return generar_url(obj)
 
 
 class ForoSerializer(serializers.ModelSerializer):
