@@ -1,13 +1,12 @@
 from rest_framework import serializers
 from ..models import Respuesta, RespuestaArchivo, Puntaje, Archivo
-from ..utils.s3_utils import generar_url
+from ..utils.s3_utils import generar_url, eliminar_de_s3
 
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
     usuario = serializers.HiddenField(
         default=serializers.CurrentUserDefault()
     )
-    
     
     class Meta:
         model = Puntaje
@@ -19,10 +18,14 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Archivo
-        fields = ["id", "s3_key", "url", "tamaño", "content_type"]
+        fields = ["id", "s3_key", "nombre_original", "url", "tamaño", "content_type"]
 
     def get_url(self, obj):
         return generar_url(obj)
+
+    def eliminar_archivo(archivo):
+        eliminar_de_s3(archivo.s3_key)
+        archivo.delete()
 
 
 # 🔹 Serializador principal de la Respuesta
