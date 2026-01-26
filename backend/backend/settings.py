@@ -205,3 +205,5 @@ AWS_QUERYSTRING_AUTH = False
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 MEDIA_URL = f"https://{AWS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com/"
+
+LAMBDA_SECRET_TOKEN = os.getenv("LAMBDA_SECRET_TOKEN")

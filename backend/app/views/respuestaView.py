@@ -84,7 +84,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 raise ValidationError("Archivo demasiado grande")
 
         respuesta.refresh_from_db()
-
+    
     # ===============================
     # 🔹 CREATE (CORREGIDO)
     # ===============================
