@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -5,9 +6,9 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from ..utils.s3 import subir_a_s3
-import boto3
-from uuid import uuid4
+from django.db import transaction
 from django.conf import settings
+import logging
 
 from ..models import (
     Respuesta,
@@ -22,9 +23,10 @@ from ..serializers.respuesta_serializer import (
 )
 from .hash import file_hash
 
-s3 = boto3.client("s3")
+logger = logging.getLogger(__name__)
 
 class RespuestaViewSet(viewsets.ModelViewSet):
+    queryset = Respuesta.objects.all()
     serializer_class = RespuestaSerializer
     permission_classes = [IsAuthenticated]
     
@@ -50,11 +52,12 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             ).first()
 
             if not archivo_global:
-                s3_key = subir_a_s3(archivo_file, hash_archivo)
+                data = subir_a_s3(archivo_file, hash_archivo)
 
                 archivo_global = Archivo.objects.create(
                     hash=hash_archivo,
-                    s3_key=s3_key,
+                    s3_key=data["s3_key"],
+                    nombre_original=archivo_file.name,
                     tamaño=archivo_file.size,
                     content_type=archivo_file.content_type
                 )
@@ -65,8 +68,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            print("❌ Error procesando archivo de respuesta:", e)
-
+            logger.error("Error subiendo archivo", exc_info=e)
+            raise ValidationError("Error al subir archivo")
+        
     # ===============================
     # 🔹 PROCESAR MULTIPLES ARCHIVOS
     # ===============================
@@ -76,6 +80,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
         for archivo in archivos:
             self._procesar_archivo(archivo, respuesta)
+            if archivo.size > settings.MAX_UPLOAD_SIZE:
+                raise ValidationError("Archivo demasiado grande")
 
         respuesta.refresh_from_db()
 

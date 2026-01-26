@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import boto3
 from django.conf import settings
+from .utils.s3 import eliminar_de_s3
 
 class Archivo(models.Model):
     s3_key = models.CharField(
@@ -17,15 +18,14 @@ class Archivo(models.Model):
     tamaño = models.BigIntegerField()
     content_type = models.CharField(max_length=100)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    nombre_original = models.CharField(max_length=255)
 
     def __str__(self):
         return self.s3_key
-    def eliminar_de_s3(self):
-        s3 = boto3.client("s3")
-        s3.delete_object(
-            Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-            Key=self.s3_key
-        )
+    
+    def eliminar(self):
+        eliminar_de_s3(self.s3_key)
+        self.delete()
     
 # -------------------- CARRERA --------------------
 class Carrera(models.Model):
