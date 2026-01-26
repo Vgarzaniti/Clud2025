@@ -6,6 +6,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from ..utils.s3 import subir_a_s3
+from notificaciones.services.sns_suscripciones import suscribir_usuario_a_sns
 from django.db import transaction
 from django.conf import settings
 import logging
@@ -118,6 +119,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
         # 🔥 SUBIDA REAL DE ARCHIVOS
         self._subir_archivos(respuesta, archivos)
+
+        # 🔥 SUSCRIPCIONES A NOTIFICACIONES
+        suscribir_usuario_a_sns(respuesta.usuario.email)
 
         Puntaje.objects.create(
             respuesta=respuesta,

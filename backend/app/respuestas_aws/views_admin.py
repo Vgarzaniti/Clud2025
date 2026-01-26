@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from django.conf import settings
 
-from respuestas_lambda.services.limpieza_respuestas import (
+from respuestas_aws.services.limpieza_respuestas import (
     obtener_respuestas_inactivas,
     obtener_respuestas_para_aviso,
     marcar_aviso_enviado,

@@ -1,5 +1,5 @@
 from django.urls import path
-from respuestas_lambda.views_admin import LimpiezaRespuestasView
+from respuestas_aws.views_admin import LimpiezaRespuestasView
 
 urlpatterns = [
     path(

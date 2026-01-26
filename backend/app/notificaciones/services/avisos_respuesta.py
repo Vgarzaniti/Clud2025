@@ -1,5 +1,5 @@
 from django.conf import settings
-from notificaciones.services.sns_service import publicar_mensaje
+from backend.app.notificaciones.services.sns_notificacion import publicar_mensaje
 
 def enviar_aviso_respuesta(respuesta):
     """

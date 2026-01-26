@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'respuestas',
+    'notificaciones'
 ]
 
 REST_FRAMEWORK = {
@@ -206,4 +208,9 @@ AWS_QUERYSTRING_AUTH = False
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 MEDIA_URL = f"https://{AWS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com/"
 
+# Conexion lambda
 LAMBDA_SECRET_TOKEN = os.getenv("LAMBDA_SECRET_TOKEN")
+
+# Conexion con SNS
+AWS_SNS_TOPIC_ARN = os.getenv("AWS_SNS_TOPIC_ARN")
+AWS_REGION = os.getenv("AWS_DEFAULT_REGION")
