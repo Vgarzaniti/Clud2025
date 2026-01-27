@@ -1,9 +1,15 @@
+from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from ..utils.s3 import subir_a_s3
+from notificaciones.services.sns_suscripciones import suscribir_usuario_a_sns, notificar_nueva_respuesta
+from django.db import transaction
+from django.conf import settings
+import logging
 
 from ..models import (
     Respuesta,
@@ -18,8 +24,10 @@ from ..serializers.respuesta_serializer import (
 )
 from .hash import file_hash
 
+logger = logging.getLogger(__name__)
 
 class RespuestaViewSet(viewsets.ModelViewSet):
+    queryset = Respuesta.objects.all()
     serializer_class = RespuestaSerializer
     permission_classes = [IsAuthenticated]
     
@@ -38,15 +46,21 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     def _procesar_archivo(archivo_file, respuesta):
         try:
             hash_archivo = file_hash(archivo_file)
+            archivo_file.seek(0)
 
             archivo_global = Archivo.objects.filter(
                 hash=hash_archivo
             ).first()
 
             if not archivo_global:
+                data = subir_a_s3(archivo_file, hash_archivo)
+
                 archivo_global = Archivo.objects.create(
-                    archivo=archivo_file,
-                    hash=hash_archivo
+                    hash=hash_archivo,
+                    s3_key=data["s3_key"],
+                    nombre_original=archivo_file.name,
+                    tamaño=archivo_file.size,
+                    content_type=archivo_file.content_type
                 )
 
             RespuestaArchivo.objects.get_or_create(
@@ -55,8 +69,9 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            print("❌ Error procesando archivo de respuesta:", e)
-
+            logger.error("Error subiendo archivo", exc_info=e)
+            raise ValidationError("Error al subir archivo")
+        
     # ===============================
     # 🔹 PROCESAR MULTIPLES ARCHIVOS
     # ===============================
@@ -66,9 +81,11 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
         for archivo in archivos:
             self._procesar_archivo(archivo, respuesta)
+            if archivo.size > settings.MAX_UPLOAD_SIZE:
+                raise ValidationError("Archivo demasiado grande")
 
         respuesta.refresh_from_db()
-
+    
     # ===============================
     # 🔹 CREATE (CORREGIDO)
     # ===============================
@@ -102,6 +119,12 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
         # 🔥 SUBIDA REAL DE ARCHIVOS
         self._subir_archivos(respuesta, archivos)
+
+        # 🔥 SUSCRIPCION A NOTIFICACIONES
+        suscribir_usuario_a_sns(respuesta.usuario.email)
+
+        # 🔥 NOTIFICAR A CREADOR DEL FORO LA NUEVA RESPUESTA
+        notificar_nueva_respuesta(foro, respuesta)
 
         Puntaje.objects.create(
             respuesta=respuesta,

@@ -1,23 +1,32 @@
 from django.db import models
-from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+import boto3
+from django.conf import settings
+from .utils.s3 import eliminar_de_s3
 
 class Archivo(models.Model):
-    archivo = CloudinaryField(
-        'archivo',
-        resource_type='raw',
-        null=False,
-        blank=False
+    s3_key = models.CharField(
+        max_length=255,
+        unique=True
     )
     hash = models.CharField(
         max_length=32,
         unique=True,
         db_index=True
     )
+    tamaño = models.BigIntegerField()
+    content_type = models.CharField(max_length=100)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    nombre_original = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.hash
+        return self.s3_key
+    
+    def eliminar(self):
+        eliminar_de_s3(self.s3_key)
+        self.delete()
+    
 # -------------------- CARRERA --------------------
 class Carrera(models.Model):
     idCarrera = models.AutoField(primary_key=True)
@@ -144,6 +153,12 @@ class Respuesta(models.Model):
     respuesta_texto = models.TextField(null=True, blank=True)
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
+    fecha_ultima_revision = models.DateTimeField(null=True, blank=True)
+    ultimo_cambio_puntaje = models.DateTimeField(null=True, blank=True)
+    foro = models.ForeignKey(Foro, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    ultimo_aviso = models.DateTimeField(null=True, blank=True)
+    eliminada = models.BooleanField(default=False)
     total_likes = models.IntegerField(default=0)
     total_dislikes = models.IntegerField(default=0)
     total_votos = models.IntegerField(default=0)
