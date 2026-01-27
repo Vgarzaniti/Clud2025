@@ -27,7 +27,6 @@ def subir_a_s3(file_obj, hash_archivo):
             "nombre_original": file_obj.name
         }
 
-
     except (BotoCoreError, ClientError) as e:
         raise RuntimeError(f"Error subiendo archivo a S3: {str(e)}")
 

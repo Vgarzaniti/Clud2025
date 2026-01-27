@@ -2,11 +2,13 @@ from datetime import timedelta
 from django.utils import timezone
 from models import Respuesta
 from notificaciones.services.sns_notificacion import enviar_aviso_respuesta
+from app.permissions.lambda_permissions import IsLambdaAuthorized
 
 # Configurable
 DIAS_INACTIVIDAD = 30
 DIAS_AVISO = 7
 
+permission_classes = [IsLambdaAuthorized]
 
 def obtener_respuestas_inactivas():
     limite = timezone.now() - timedelta(days=DIAS_INACTIVIDAD)
@@ -14,7 +16,6 @@ def obtener_respuestas_inactivas():
         fecha_actualizacion__lt=limite,
         eliminada=False
     )
-
 
 def obtener_respuestas_para_aviso():
     limite = timezone.now() - timedelta(days=DIAS_INACTIVIDAD - DIAS_AVISO)

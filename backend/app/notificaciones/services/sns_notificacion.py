@@ -27,3 +27,15 @@ Foro Estudiantil
         Subject="Aviso de respuesta inactiva en foro"
     )
 
+# notificaciones/services/sns_publicador.py
+def notificar_nueva_respuesta(foro, respuesta):
+    sns_client.publish(
+        TopicArn=settings.AWS_SNS_TOPIC_ARN,
+        Subject="Nueva respuesta en el foro",
+        Message=f"""
+        Se publicó una nueva respuesta en el foro "{foro.pregunta}"
+
+        Autor: {respuesta.usuario.email}
+        """
+    )
+
