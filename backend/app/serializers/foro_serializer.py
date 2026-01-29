@@ -1,24 +1,20 @@
 from backend.app.serializers.usuario_serializer import UsuarioForoSerializer
 from rest_framework import serializers
-from ..models import Foro, ForoArchivo, Usuario, Archivo
-from ..utils.s3_utils import generar_url, eliminar_de_s3
+from ..models import Foro, ForoArchivo, Usuario
 
 class ForoArchivoSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
+    
+    archivo_url = serializers.CharField(
+        source='archivo.cloudinary_url',
+        read_only=True
+    )
 
     class Meta:
-        model = Archivo
-        fields = ["id", "s3_key", "nombre_original", "url", "tamaño", "content_type"]
-
-    def get_url(self, obj):
-        return generar_url(obj)
-
-    def eliminar_archivo(archivo):
-        eliminar_de_s3(archivo.s3_key)
-        archivo.delete()
-
+        model = ForoArchivo
+        fields = ['id', 'archivo_url']
 
 class ForoSerializer(serializers.ModelSerializer):
+    
     archivos = serializers.ListField(
         child=serializers.FileField(),
         write_only=True,

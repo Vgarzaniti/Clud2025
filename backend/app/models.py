@@ -1,31 +1,23 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
-import boto3
-from django.conf import settings
-from .utils.s3 import eliminar_de_s3
 
 class Archivo(models.Model):
-    s3_key = models.CharField(
-        max_length=255,
-        unique=True
+    archivo = CloudinaryField(
+        'archivo',
+        resource_type='raw',
+        null=False,
+        blank=False
     )
     hash = models.CharField(
         max_length=32,
         unique=True,
         db_index=True
     )
-    tamaño = models.BigIntegerField()
-    content_type = models.CharField(max_length=100)
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    nombre_original = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.s3_key
-    
-    def eliminar(self):
-        eliminar_de_s3(self.s3_key)
-        self.delete()
+        return self.hash
     
 # -------------------- CARRERA --------------------
 class Carrera(models.Model):
@@ -184,7 +176,7 @@ class RespuestaArchivo(models.Model):
     archivo = models.ForeignKey(
         Archivo,
         on_delete=models.CASCADE,
-        related_name='respuesta'
+        related_name='respuestas'
     )
 
     class Meta:

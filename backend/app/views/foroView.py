@@ -1,18 +1,14 @@
-from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from ..models import Foro, ForoArchivo, Archivo
+from rest_framework.exceptions import ValidationError
 from ..serializers.foro_serializer import ForoSerializer
 from .hash import file_hash
-from ..utils.s3 import subir_a_s3
 from django.db import transaction
-from django.conf import settings
-import logging
 
-logger = logging.getLogger(__name__)
 
 class ForoViewSet(viewsets.ModelViewSet):
     queryset = Foro.objects.all()
@@ -32,44 +28,38 @@ class ForoViewSet(viewsets.ModelViewSet):
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod
-    def _procesar_archivo(self, archivo_file, foro):
+    def _procesar_archivo(archivo_file, foro):
         try:
+            # 🔥 hash + reset del puntero
             hash_archivo = file_hash(archivo_file)
             archivo_file.seek(0)
 
+            # 🔹 buscar archivo global
             archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
-            
-            if not archivo_global:
-                data = subir_a_s3(archivo_file, hash_archivo)
 
+            # 🔹 si no existe, subir UNA sola vez a Cloudinary
+            if not archivo_global:
                 archivo_global = Archivo.objects.create(
-                    hash=hash_archivo,
-                    s3_key=data["s3_key"],
-                    nombre_original=archivo_file.name,
-                    tamaño=archivo_file.size,
-                    content_type=archivo_file.content_type
+                    archivo=archivo_file,
+                    hash=hash_archivo
                 )
 
+            # 🔥 SIEMPRE asociar al foro
             ForoArchivo.objects.get_or_create(
                 foro=foro,
                 archivo=archivo_global
             )
 
-        except Exception as e:
-            logger.error("Error subiendo archivo", exc_info=e)
-            raise ValidationError("Error al subir archivo")
-
+        except Exception:  # noqa: F841
+            raise ValidationError("Error al subir el archivo")
 
     # 🔹 Procesar múltiples archivos
-    @transaction.atomic
     def _subir_archivos(self, foro, archivos):
         if not archivos:
             return
 
         for archivo in archivos:
             self._procesar_archivo(archivo, foro)
-            if archivo.size > settings.MAX_UPLOAD_SIZE:
-                raise ValidationError("Archivo demasiado grande")
 
         foro.refresh_from_db()
 
@@ -80,6 +70,7 @@ class ForoViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     # 🔹 Create
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         archivos = request.FILES.getlist('archivos')
@@ -98,6 +89,7 @@ class ForoViewSet(viewsets.ModelViewSet):
         )
 
     # 🔹 Update
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
         #partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -123,6 +115,10 @@ class ForoViewSet(viewsets.ModelViewSet):
                     foro=foro
                 )
                 foro_archivo.delete()
+
+                if not ForoArchivo.objects.filter(archivo=foro_archivo.archivo).exists():
+                    foro_archivo.archivo.delete()
+                    
             except ForoArchivo.DoesNotExist:
                 pass
 

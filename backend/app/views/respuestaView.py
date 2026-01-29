@@ -5,7 +5,6 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from ..utils.s3 import subir_a_s3
 from notificaciones.services.sns_suscripciones import suscribir_usuario_a_sns, notificar_nueva_respuesta
 from django.db import transaction
 from django.conf import settings
@@ -49,18 +48,14 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             archivo_file.seek(0)
 
             archivo_global = Archivo.objects.filter(
-                hash=hash_archivo
+                #hash=hash_archivo
             ).first()
 
             if not archivo_global:
-                data = subir_a_s3(archivo_file, hash_archivo)
 
                 archivo_global = Archivo.objects.create(
-                    hash=hash_archivo,
-                    s3_key=data["s3_key"],
-                    nombre_original=archivo_file.name,
-                    tamaño=archivo_file.size,
-                    content_type=archivo_file.content_type
+                    archivo=archivo_file,
+                    #hash=hash_archivo,
                 )
 
             RespuestaArchivo.objects.get_or_create(
@@ -118,7 +113,13 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         )
 
         # 🔥 SUBIDA REAL DE ARCHIVOS
-        self._subir_archivos(respuesta, archivos)
+        try:
+            self._subir_archivos(respuesta, archivos)
+        except RuntimeError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         # 🔥 SUSCRIPCION A NOTIFICACIONES
         suscribir_usuario_a_sns(respuesta.usuario.email)
@@ -169,7 +170,13 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             except RespuestaArchivo.DoesNotExist:
                 pass
 
-        self._subir_archivos(respuesta, archivos_nuevos)
+        try:
+            self._subir_archivos(respuesta, archivos_nuevos)
+        except RuntimeError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data)
