@@ -87,26 +87,34 @@ class ForoViewSet(viewsets.ModelViewSet):
     # 🔹 Create
     @transaction.atomic
     def create(self, request, *args, **kwargs):
-        logger.error("DATA RECIBIDA: %s", request.data)
-        logger.error("FILES RECIBIDOS: %s", request.FILES)
+        try:
+            data = request.data.copy()
+            data.pop('archivos', None)
+            archivos = request.FILES.getlist('archivos')
 
-        data = request.data.copy()
-        data.pop('archivos', None)
-        archivos = request.FILES.getlist('archivos')
+            serializer = ForoCreateSerializer(data=data)
+            serializer.is_valid(raise_exception=True)
 
-        serializer = ForoCreateSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
+            foro = serializer.save(usuario=request.user)
 
-        foro = serializer.save(usuario=request.user)
+            self._subir_archivos(foro, archivos)
 
-        self._subir_archivos(foro, archivos)
-        foro.refresh_from_db()
+            foro.refresh_from_db()
 
-        return Response(
-            ForoReadSerializer(foro, context={"request": request}).data,
-            status=status.HTTP_201_CREATED
-        )
+            return Response(
+                ForoReadSerializer(foro, context={"request": request}).data,
+                status=status.HTTP_201_CREATED
+            )
 
+        except Exception as e:
+            # 🔥 ESTO ES CLAVE
+            return Response(
+                {
+                    "error": str(e),
+                    "tipo": type(e).__name__,
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     # 🔹 Update
     @transaction.atomic

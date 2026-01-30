@@ -103,7 +103,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
     setErroresCampos(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -125,6 +125,11 @@ export default function CrearForo({ onClose, onForoCreado }) {
       archivos.forEach((archivo) => {
         data.append("archivos", archivo);
       });
+
+      console.log("FormData contenido:");
+      for (let pair of data.entries()) {
+        console.log(pair[0], pair[1]);
+      }
 
       const foroCreado = await foroService.crear(data);
 
