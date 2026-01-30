@@ -24,7 +24,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
     carrera: "",
     materia: "",
     pregunta: "",
-    archivos: "",
   });
 
   useEffect(() => {
@@ -53,8 +52,18 @@ export default function CrearForo({ onClose, onForoCreado }) {
     cargarDatos();
   }, []);
 
+  useEffect(() => {
+    if (!formData.carrera) {
+      setMateriasFiltradas(materias);
+    } else {
+      setMateriasFiltradas(
+        materias.filter(m => m.carrera === parseInt(formData.carrera))
+      );
+    }
+  }, [formData.carrera, materias]);
 
-  const hadleArchivoChange = (e) => {
+
+  const handleArchivoChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
     let totalSize = archivos.reduce((acc, file) => acc + file.size, 0);
     let errores = [];
@@ -239,7 +248,8 @@ export default function CrearForo({ onClose, onForoCreado }) {
             id="file-upload"
             type="file"
             multiple
-            onChange={hadleArchivoChange}
+            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+            onChange={handleArchivoChange}
             className="hidden"
           />
         </label>
