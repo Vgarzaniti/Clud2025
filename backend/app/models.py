@@ -15,6 +15,13 @@ class Archivo(models.Model):
         unique=True,
         db_index=True
     )
+    migrado = models.BooleanField(default=False)
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+    fecha_creacion = s3_key = models.CharField(max_length=255, null=True, blank=True)
+    s3_key = models.CharField(max_length=255, null=True, blank=True)
+
+    def cloudinary_url(self):
+        return self.archivo.url
 
     def __str__(self):
         return self.hash
