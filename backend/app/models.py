@@ -1,3 +1,4 @@
+from backend.backend import settings
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser
@@ -15,9 +16,9 @@ class Archivo(models.Model):
         unique=True,
         db_index=True
     )
+
     migrado = models.BooleanField(default=False)
-    fecha_subida = models.DateTimeField(auto_now_add=True)
-    fecha_creacion = s3_key = models.CharField(max_length=255, null=True, blank=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
     s3_key = models.CharField(max_length=255, null=True, blank=True)
 
     def cloudinary_url(self):
@@ -25,6 +26,11 @@ class Archivo(models.Model):
 
     def __str__(self):
         return self.hash
+    
+    def url_activa(self):
+        if self.migrado_s3:
+            return f"https://{settings.AWS_S3_BUCKET_NAME}/{self.s3_key}"
+        return self.cloudinary_url
     
 # -------------------- CARRERA --------------------
 class Carrera(models.Model):

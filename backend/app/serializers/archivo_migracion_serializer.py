@@ -14,3 +14,13 @@ class ArchivoMigracionSerializer(serializers.ModelSerializer):
 
     def get_s3_key(self, obj):
         return f"{obj.hash}"
+
+class ArchivoSerializer(serializers.ModelSerializer):
+    archivo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Archivo
+        fields = ["id", "archivo_url"]
+
+    def get_archivo_url(self, obj):
+        return obj.url_activa()
