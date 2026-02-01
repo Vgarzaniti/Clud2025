@@ -64,6 +64,16 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             self._procesar_archivo(archivo, respuesta)
 
         respuesta.refresh_from_db()
+    
+    # ===============================
+    # 🔹 RETRIEVE (GET individual)
+    # ===============================
+    def retrieve(self, request, pk=None):
+        respuesta = self.get_object()  # obtiene la instancia
+        data = RespuestaSerializer(respuesta).data  # serializa como siempre
+        data['usuario_username'] = respuesta.usuario.username if respuesta.usuario else None
+        return Response(data, status=status.HTTP_200_OK)
+
 
     # ===============================
     # 🔹 CREATE (CORREGIDO)

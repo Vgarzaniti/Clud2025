@@ -58,8 +58,10 @@ class ForoViewSet(viewsets.ModelViewSet):
     # 🔹 Retrieve
     def retrieve(self, request, pk=None):
         foro = self.get_object()
-        serializer = ForoSerializer(foro)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = ForoSerializer(foro).data
+        data['usuario_username'] = foro.usuario.username if foro.usuario else None
+        return Response(data, status=status.HTTP_200_OK)
+
 
     # 🔹 Create
     def create(self, request, *args, **kwargs):
