@@ -1,4 +1,4 @@
-from usuario_serializer import UsuarioSerializer
+from .usuario_serializer import UsuarioSerializer
 from rest_framework import serializers
 from ..models import Foro, ForoArchivo, Usuario
 
