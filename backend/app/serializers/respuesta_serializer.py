@@ -3,9 +3,23 @@ from ..models import Respuesta, RespuestaArchivo, Puntaje
 
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
+    usuario = serializers.PrimaryKeyRelatedField(queryset=Usuario.objects.all())
+    respuesta = serializers.PrimaryKeyRelatedField(queryset=Respuesta.objects.all())
+
     class Meta:
         model = Puntaje
-        fields = ['id', 'usuario', 'valor', 'respuesta']
+        fields = ['id', 'usuario', 'respuesta', 'valor']
+        extra_kwargs = {
+            'usuario': {'required': True},
+            'respuesta': {'required': True},
+            'valor': {'required': True},
+        }
+
+    def validate(self, attrs):
+        """
+        ⚡ No validar unique_together aquí, lo hacemos en la vista.
+        """
+        return attrs
 
 
 # 🔹 Serializador para los archivos
