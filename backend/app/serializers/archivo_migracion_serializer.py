@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from ..models import Archivo
 
+#Serializer para el uso de lambda
+
 class ArchivoMigracionSerializer(serializers.ModelSerializer):
     cloudinary_url = serializers.CharField(source="archivo.url")
     s3_key = serializers.SerializerMethodField()

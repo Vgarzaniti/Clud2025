@@ -18,7 +18,7 @@ class Archivo(models.Model):
     )
 
     migrado = models.BooleanField(default=False)
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True) #Fecha en la que se subio el archivo
     s3_key = models.CharField(max_length=255, null=True, blank=True)
 
     def cloudinary_url(self):

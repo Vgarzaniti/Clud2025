@@ -11,8 +11,10 @@ from ..models import Archivo
 from ..permissions import IsInternalLambda
 from ..serializers.archivo_migracion_serializer import ArchivoMigracionSerializer
 
+# Funciones para dar la informacion necesaria para lambda
+
 class ArchivosPendientesMigracion(APIView):
-    permission_classes = [IsInternalLambda]  # protegido por token manual
+    permission_classes = [IsInternalLambda]  
 
     def get(self, request):
         archivos = Archivo.objects.filter(
@@ -47,20 +49,19 @@ class ArchivosParaMigrarView(APIView):
 class MarcarArchivoMigrado(APIView):
     permission_classes = [IsInternalLambda]
 
-    def patch(self, request, archivo_id):
+    def patch(self, request, id):
 
-        archivo = get_object_or_404(Archivo, archivo_id=archivo_id)
+        archivo = get_object_or_404(Archivo,id=id)
 
-        if archivo.migrado_s3:
+        if archivo.migrado:
             return Response(
                 {"detail": "Archivo ya migrado"},
                 status=status.HTTP_200_OK
             )
 
-        archivo.migrado_s3 = True
-        archivo.fecha_migracion = now()
+        archivo.migrado = True
         archivo.save(
-            update_fields=["migrado_s3", "fecha_migracion"]
+            update_fields=["migrado"]
         )
 
         return Response(
