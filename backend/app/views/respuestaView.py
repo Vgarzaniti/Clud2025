@@ -247,4 +247,35 @@ class RespuestaPuntajeView(APIView):
             },
             status=status.HTTP_200_OK
         )
+    def patch(self, request):
+
+        serializer = PuntajeRespuestaSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        respuesta = serializer.validated_data["respuesta"]
+        valor = serializer.validated_data["valor"]
+        usuario = request.user
+
+        puntaje = Puntaje.objects.filter(
+            usuario=usuario,
+            respuesta=respuesta
+        ).first()
+
+        if not puntaje:
+            return Response(
+                {"error": "No existe voto previo. Usá POST primero."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # toggle opcional
+        puntaje.valor = valor
+        puntaje.save()
+
+        return Response(
+            {"ok": "Voto actualizado", "nuevo_valor": puntaje.valor},
+            status=200
+        )
 
