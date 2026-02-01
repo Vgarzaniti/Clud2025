@@ -26,6 +26,25 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
     # 🔥 FIX CRÍTICO PARA ARCHIVOS
     parser_classes = (MultiPartParser, FormParser)
+    
+     # 🔹 NUEVO MÉTODO para respuestas de un foro por URL
+    def respuestas_por_foro(self, request, foro_id=None):
+        """
+        GET /api/respuestas/por-foro/<foro_id>/
+        Devuelve todas las respuestas de un foro, con usuario_username agregado.
+        """
+        if not foro_id:
+            return Response({"error": "Debes enviar foro_id"}, status=400)
+
+        respuestas = self.get_queryset().filter(foro_id=foro_id).select_related('usuario')
+        serializer = RespuestaSerializer(respuestas, many=True)
+        data = serializer.data
+
+        # agregar username
+        for i, respuesta in enumerate(respuestas):
+            data[i]['usuario_username'] = respuesta.usuario.username if respuesta.usuario else None
+
+        return Response(data, status=200)
 
     # ===============================
     # 🔹 PROCESAR UN ARCHIVO
@@ -157,8 +176,20 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 # 🔹 PUNTAJES (SIN CAMBIOS)
 # =====================================================
 class RespuestaPuntajeView(APIView):
-
+    """
+    POST / PUT / PATCH
+    Modifica o crea un puntaje para una respuesta.
+    """
     def post(self, request):
+        return self._procesar_puntaje(request)
+
+    def put(self, request):
+        return self._procesar_puntaje(request)
+
+    def patch(self, request):
+        return self._procesar_puntaje(request)
+
+    def _procesar_puntaje(self, request):
         serializer = PuntajeRespuestaSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -172,10 +203,9 @@ class RespuestaPuntajeView(APIView):
         ).first()
 
         if puntaje_existente:
+            # 🔹 Si es el mismo valor, lo pone en NONE, si no, actualiza
             puntaje_existente.valor = (
-                Puntaje.NONE
-                if puntaje_existente.valor == nuevo_valor
-                else nuevo_valor
+                Puntaje.NONE if puntaje_existente.valor == nuevo_valor else nuevo_valor
             )
             puntaje_existente.save()
         else:
@@ -185,18 +215,11 @@ class RespuestaPuntajeView(APIView):
                 valor=nuevo_valor
             )
 
-        respuesta.total_likes = respuesta.puntajes.filter(
-            valor=Puntaje.LIKE
-        ).count()
-        respuesta.total_dislikes = respuesta.puntajes.filter(
-            valor=Puntaje.DISLIKE
-        ).count()
-        respuesta.total_votos = respuesta.puntajes.exclude(
-            valor=Puntaje.NONE
-        ).count()
-        respuesta.puntaje_neto = (
-            respuesta.total_likes - respuesta.total_dislikes
-        )
+        # 🔹 Actualizar totales de la respuesta
+        respuesta.total_likes = respuesta.puntajes.filter(valor=Puntaje.LIKE).count()
+        respuesta.total_dislikes = respuesta.puntajes.filter(valor=Puntaje.DISLIKE).count()
+        respuesta.total_votos = respuesta.puntajes.exclude(valor=Puntaje.NONE).count()
+        respuesta.puntaje_neto = respuesta.total_likes - respuesta.total_dislikes
         respuesta.save()
 
         return Response(

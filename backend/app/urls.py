@@ -17,7 +17,7 @@ router.register(r'respuestas', RespuestaViewSet, basename='respuesta')
 
 urlpatterns = [    
     path('', include(router.urls)),
-    
+    path('respuestas/por-foro/<int:foro_id>/', RespuestaViewSet.as_view({'get': 'respuestas_por_foro'})),
     path('puntaje/', RespuestaPuntajeView.as_view(), name='respuesta-puntaje'),
     path('login/', UsuarioView.as_view(), name='usuario'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
