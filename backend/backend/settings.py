@@ -47,12 +47,15 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'storages',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'respuestas',
+    'notificaciones'
 ]
 
 REST_FRAMEWORK = {
@@ -189,3 +192,26 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Conexion con AWS S3 para almacenamiento de archivos estáticos y media
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+
+AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION")
+AWS_S3_BUCKET_NAME = os.environ.get("AWS_S3_BUCKET_NAME")
+AWS_SNS_TOPIC_ARN = os.environ.get("AWS_SNS_TOPIC_ARN")
+
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = False
+
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+MEDIA_URL = f"https://{AWS_S3_BUCKET_NAME}.s3.{AWS_DEFAULT_REGION}.amazonaws.com/"
+
+# Conexion lambda
+LAMBDA_SECRET_TOKEN = os.environ.get("LAMBDA_SECRET_TOKEN")
+INTERNAL_LAMBDA_TOKEN = os.environ.get("INTERNAL_LAMBDA_TOKEN")
+
+# Conexion con SNS
+AWS_SNS_TOPIC_ARN = os.environ.get("AWS_SNS_TOPIC_ARN")
+AWS_REGION = os.environ.get("AWS_DEFAULT_REGION")

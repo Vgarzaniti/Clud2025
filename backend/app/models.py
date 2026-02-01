@@ -1,3 +1,4 @@
+from backend.backend import settings
 from django.db import models
 from cloudinary.models import CloudinaryField
 from django.contrib.auth.models import AbstractUser
@@ -16,8 +17,21 @@ class Archivo(models.Model):
         db_index=True
     )
 
+    migrado = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField(auto_now_add=True) #Fecha en la que se subio el archivo
+    s3_key = models.CharField(max_length=255, null=True, blank=True)
+
+    def cloudinary_url(self):
+        return self.archivo.url
+
     def __str__(self):
         return self.hash
+    
+    def url_activa(self):
+        if self.migrado_s3:
+            return f"https://{settings.AWS_S3_BUCKET_NAME}/{self.s3_key}"
+        return self.cloudinary_url
+    
 # -------------------- CARRERA --------------------
 class Carrera(models.Model):
     idCarrera = models.AutoField(primary_key=True)
@@ -144,6 +158,12 @@ class Respuesta(models.Model):
     respuesta_texto = models.TextField(null=True, blank=True)
     fecha_creacion = models.DateTimeField(default=timezone.now)
     fecha_actualizacion = models.DateTimeField(auto_now=True)
+    fecha_ultima_revision = models.DateTimeField(null=True, blank=True)
+    ultimo_cambio_puntaje = models.DateTimeField(null=True, blank=True)
+    foro = models.ForeignKey(Foro, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    ultimo_aviso = models.DateTimeField(null=True, blank=True)
+    eliminada = models.BooleanField(default=False)
     total_likes = models.IntegerField(default=0)
     total_dislikes = models.IntegerField(default=0)
     total_votos = models.IntegerField(default=0)
@@ -169,7 +189,7 @@ class RespuestaArchivo(models.Model):
     archivo = models.ForeignKey(
         Archivo,
         on_delete=models.CASCADE,
-        related_name='respuesta'
+        related_name='respuestas'
     )
 
     class Meta:
