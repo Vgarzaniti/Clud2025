@@ -2,8 +2,6 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 
 from ..models import (
     Respuesta,
@@ -20,13 +18,11 @@ from .hash import file_hash
 
 
 class RespuestaViewSet(viewsets.ModelViewSet):
+    queryset = Respuesta.objects.prefetch_related(
+        'archivos__archivo'
+    ).order_by('-fecha_creacion')
+
     serializer_class = RespuestaSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return Respuesta.objects.prefetch_related(
-            'archivos__archivo'
-        ).order_by('-fecha_creacion')
 
     # 🔥 FIX CRÍTICO PARA ARCHIVOS
     parser_classes = (MultiPartParser, FormParser)
@@ -103,12 +99,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         # 🔥 SUBIDA REAL DE ARCHIVOS
         self._subir_archivos(respuesta, archivos)
 
-        Puntaje.objects.create(
-            respuesta=respuesta,
-            usuario=respuesta.usuario,
-            valor=0
-        )
-
         respuesta.refresh_from_db()
 
         return Response(
@@ -120,9 +110,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     # 🔹 UPDATE
     # ===============================
     def update(self, request, *args, **kwargs):
-        #partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        data = request.data.copy()
 
         archivos_nuevos = request.FILES.getlist("archivos")
         archivos_a_eliminar = request.data.get("archivos_a_eliminar", [])
@@ -132,9 +121,11 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 int(x) for x in archivos_a_eliminar.split(',')
             ]
 
-        serializer = RespuestaSerializer(instance, data=data, partial=True)
+        serializer = RespuestaSerializer(
+            instance, data=request.data, partial=partial
+        )
         serializer.is_valid(raise_exception=True)
-        respuesta = serializer.save(usuario=request.user)
+        respuesta = serializer.save()
 
         for archivo_id in archivos_a_eliminar:
             try:
@@ -150,30 +141,20 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data)
-    
-    def get_serializer_context(self):
-            context = super().get_serializer_context()
-            context['request'] = self.request
-            return context
+
 
 # =====================================================
 # 🔹 PUNTAJES (SIN CAMBIOS)
 # =====================================================
 class RespuestaPuntajeView(APIView):
 
-    permission_classes = [IsAuthenticated]
-    
     def post(self, request):
-        serializer = PuntajeRespuestaSerializer(
-            data=request.data,
-            context={'request': request}
-        )
+        serializer = PuntajeRespuestaSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         respuesta = serializer.validated_data['respuesta']
+        usuario = serializer.validated_data['usuario']
         nuevo_valor = serializer.validated_data['valor']
-
-        usuario = request.user
 
         puntaje_existente = Puntaje.objects.filter(
             respuesta=respuesta,
@@ -187,14 +168,12 @@ class RespuestaPuntajeView(APIView):
                 else nuevo_valor
             )
             puntaje_existente.save()
-            voto_final = puntaje_existente.valor
         else:
-            puntaje_existente = Puntaje.objects.create(
+            Puntaje.objects.create(
                 respuesta=respuesta,
                 usuario=usuario,
                 valor=nuevo_valor
             )
-            voto_final = nuevo_valor
 
         respuesta.total_likes = respuesta.puntajes.filter(
             valor=Puntaje.LIKE
@@ -212,9 +191,10 @@ class RespuestaPuntajeView(APIView):
 
         return Response(
             {
+                "total_likes": respuesta.total_likes,
+                "total_dislikes": respuesta.total_dislikes,
+                "total_votos": respuesta.total_votos,
                 "puntaje_neto": respuesta.puntaje_neto,
-                "voto_usuario": voto_final
             },
             status=status.HTTP_200_OK
         )
-

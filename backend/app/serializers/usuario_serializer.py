@@ -15,9 +15,6 @@ class UsuarioSerializer(serializers.ModelSerializer):
         validated_data['password'] = make_password(validated_data['password'])
         return super().create(validated_data)
 
-    def get_nombreYapellido(self, obj):
-        # Ajustá esto según tu modelo
-        return f"{obj.first_name} {obj.last_name}".strip()
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
