@@ -172,13 +172,10 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         return Response(RespuestaSerializer(respuesta).data)
 
 
-# =====================================================
-# 🔹 PUNTAJES (SIN CAMBIOS)
-# =====================================================
 class RespuestaPuntajeView(APIView):
     """
     POST / PUT / PATCH
-    Modifica o crea un puntaje para una respuesta.
+    Crea o actualiza un puntaje para una respuesta.
     """
     def post(self, request):
         return self._procesar_puntaje(request)
@@ -190,6 +187,7 @@ class RespuestaPuntajeView(APIView):
         return self._procesar_puntaje(request)
 
     def _procesar_puntaje(self, request):
+        # Validar datos
         serializer = PuntajeRespuestaSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -197,18 +195,21 @@ class RespuestaPuntajeView(APIView):
         usuario = serializer.validated_data['usuario']
         nuevo_valor = serializer.validated_data['valor']
 
+        # Buscar puntaje existente
         puntaje_existente = Puntaje.objects.filter(
             respuesta=respuesta,
             usuario=usuario
         ).first()
 
         if puntaje_existente:
-            # 🔹 Si es el mismo valor, lo pone en NONE, si no, actualiza
-            puntaje_existente.valor = (
-                Puntaje.NONE if puntaje_existente.valor == nuevo_valor else nuevo_valor
-            )
+            # 🔹 Si el valor enviado es igual al actual, poner NONE
+            if puntaje_existente.valor == nuevo_valor:
+                puntaje_existente.valor = Puntaje.NONE
+            else:
+                puntaje_existente.valor = nuevo_valor
             puntaje_existente.save()
         else:
+            # 🔹 Crear si no existe
             Puntaje.objects.create(
                 respuesta=respuesta,
                 usuario=usuario,
