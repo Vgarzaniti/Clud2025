@@ -1,4 +1,3 @@
-from backend.app.serializers.usuario_serializer import UsuarioForoSerializer
 from rest_framework import serializers
 from ..models import Foro, ForoArchivo, Usuario
 
