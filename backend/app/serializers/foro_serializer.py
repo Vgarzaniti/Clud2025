@@ -14,11 +14,7 @@ class ForoArchivoSerializer(serializers.ModelSerializer):
 
 
 class ForoSerializer(serializers.ModelSerializer):
-    archivos = serializers.ListField(
-        child=serializers.FileField(),
-        write_only=True,
-        required=False
-    )
+    archivos = ForoArchivoSerializer(many=True, read_only=True)
     usuario = UsuarioSerializer(read_only=True)
     totalRespuestas = serializers.SerializerMethodField()
 
