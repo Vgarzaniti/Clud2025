@@ -1,3 +1,4 @@
+from usaurio_serializer import UsuarioSerializer
 from rest_framework import serializers
 from ..models import Foro, ForoArchivo, Usuario
 
@@ -18,7 +19,7 @@ class ForoSerializer(serializers.ModelSerializer):
         write_only=True,
         required=False
     )
-    usuario = UsuarioForoSerializer(read_only=True)
+    usuario = UsuarioSerializer(read_only=True)
     totalRespuestas = serializers.SerializerMethodField()
 
     usuario_id = serializers.PrimaryKeyRelatedField(
