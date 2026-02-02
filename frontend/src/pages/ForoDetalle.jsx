@@ -116,6 +116,39 @@ export default function ForoDetalle() {
             <p className="text-gray-400 text-sm">
               Materia: {foro.materia_nombre}
             </p>
+
+            {foro.archivos && foro.archivos.length > 0 && (
+              <div className="mt-4 border-t border-gray-700 pt-3">
+                <p className="text-sm text-gray-400 mb-2">
+                  Archivos adjuntos:
+                </p>
+                <ul className="space-y-2">
+                  {foro.archivos.map((fa) => {
+                    const nombreArchivo = fa.archivo_url
+                      ? fa.archivo_url.split("/").pop()
+                      : "Archivo";
+                    return (
+                      <li
+                        key={fa.id}
+                        className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg"
+                      >
+                        <span>📎</span>
+                        <a
+                          href={fa.archivo_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="text-azulUTN hover:underline break-all"
+                        >
+                          {nombreArchivo}
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+
             <p className="text-gray-500 text-xs mt-2">
               {new Date(foro.fecha_creacion).toLocaleString("es-AR")}
             </p>
@@ -170,7 +203,7 @@ export default function ForoDetalle() {
               ))
             ) : (
               <p className="text-gray-400 italic">
-                No hay respuestas todavía.
+                No hay respuestas todavía. ¡Se el primero en responder!
               </p>
             )}
           </motion.div>
@@ -183,9 +216,18 @@ export default function ForoDetalle() {
             <h3 className="text-xl font-semibold text-azulUTN mb-2">
               Información del Foro
             </h3>
-            <p className="text-l font-semibold mb-1"><b>Materia:</b> {foro.materia_nombre}</p>
-            <p className="text-l font-semibold mb-1"><b>Carrera:</b> {foro.carrera_nombre}</p>
-            <p className="text-l font-semibold mb-1"><b>Autor:</b> {foro.usuario_nombre}</p>
+            <p className="text-l">
+              <span className="font-semibold">Materia:</span>{" "}
+              {foro.materia_nombre}
+            </p>
+            <p className="text-l">
+              <span className="font-semibold">Carrera:</span>{" "}
+              {foro.carrera_nombre}
+            </p>
+            <p className="text-l">
+              <span className="font-semibold">Autor:</span>{" "}
+              {foro.usuario_nombre}
+            </p>
           </aside>
 
           <button

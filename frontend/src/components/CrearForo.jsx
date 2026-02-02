@@ -10,7 +10,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
-  // eslint-disable-next-line no-unused-vars
   const [materias, setMaterias] = useState([]);
   const [carreras, setCarreras] = useState([]);
   const [materiasFiltradas, setMateriasFiltradas] = useState([]);
@@ -236,7 +235,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
 
       {/* Archivos */}
       <div className="w-full">
-        <label className="block text-m mb-2">Archivos adjuntos (.jpng/.png/.pdf/.word)</label>
+        <label className="block text-m mb-2">Archivos adjuntos (.jpg/.pdf/.word)</label>
 
         <label
           htmlFor="file-upload"
