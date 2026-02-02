@@ -65,15 +65,19 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
         setVoto(nuevoValor);
         setPuntaje(data.puntaje_neto);
         onVoto(respuesta.idRespuesta, delta, nuevoValor);
+
       } catch (error) {
+
         console.error("Error al votar 👍", error);
         setMensajeModal("Ya votaste esta respuesta.");
         setMostrarModal(true);
         return;
+        
       } finally {
         setEnviando(false);
       }
     };
+
     const handleDownvote = async () => {
       if (enviando) return;
       const nuevoValor = voto === -1 ? 0 : -1;
@@ -126,9 +130,9 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
       {Array.isArray(respuesta.archivos) && respuesta.archivos.length > 0 && (
         <div className="mt-2 space-y-2">
           {respuesta.archivos.map((archivo, i) => {
-            // Maneja diferentes estructuras posibles de archivo
+
             const enlace = archivo.archivo_url || archivo.archivo || (archivo instanceof File ? URL.createObjectURL(archivo) : archivo);
-            // Extrae un nombre legible desde el link o el objeto File
+
             const nombreArchivo =
               archivo.nombre ||
               (archivo instanceof File ? archivo.name : enlace.split("/").pop() || "archivo_descargable");
@@ -137,7 +141,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
                 <Paperclip size={16} />
                 <a
                   href={enlace}
-                  download={nombreArchivo} //permite descargar directamente
+                  download={nombreArchivo}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-azulUTN hover:underline truncate max-w-[200px]"
@@ -149,15 +153,17 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           })}
         </div>
       )}
+      
       <div className="flex justify-between items-center mt-4">
         <div className="flex flex-col">
             <span className="text-sm text-gray-400">
-              Respuesta de {respuesta.autor || "Anónimo"}
+              Respuesta de {respuesta.usuario_username || "Anónimo"}
             </span>
             <span className="text-sm text-gray-500 mt-2">
               Del Foro {nombreForo || "Cargando..."}
             </span>
           </div>        
+        
         <div className="flex items-center gap-2">
           <button
             disabled={enviando || voto === 1}
@@ -194,6 +200,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           </button>
         </div>
       </div>
+      
       <Modal
         visible={mostrarModal}
         onClose={() => setMostrarModal(false)}
