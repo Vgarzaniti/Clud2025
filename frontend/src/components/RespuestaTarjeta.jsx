@@ -166,7 +166,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
         
         <div className="flex items-center gap-2">
           <button
-            disabled={enviando || voto === 1}
+            disabled={enviando}
             onClick={handleUpvote}
             className={`p-2 rounded-lg border transition-all duration-150
               ${voto === 1
@@ -188,7 +188,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
             {puntaje}
           </span>
           <button
-            disabled={enviando || voto === -1}
+            disabled={enviando}
             onClick={handleDownvote}
             className={`p-2 rounded-lg border transition-all duration-150
               ${voto === -1
