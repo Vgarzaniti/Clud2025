@@ -109,11 +109,12 @@ export default function Perfil() {
 
         return {
           ...res,
+          usuario_username: usuario.username,
           materiaNombre: materiaInfo?.nombre || "Sin materia",
           carreraNombre: carreraInfo?.nombre || "Sin carrera",
         };
       });
-    }, [respuestas, materias, carreras]);
+    }, [respuestas, materias, carreras, usuario.username]);
 
 
     if (carga) {
