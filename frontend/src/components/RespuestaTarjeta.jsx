@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ThumbsUp, ThumbsDown, Paperclip } from "lucide-react";
 import { puntajeService } from "../services/puntajeService.js";
 import { respuestaService} from "../services/respuestaService.js";
+import usePersistedVote from "../hooks/usePersistedVote";
 import { useAuth } from "../context/useAuth.js";
 import Modal from "./Modal";
 
@@ -11,7 +12,13 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
     const textoRespuesta = respuesta.respuesta_texto || respuesta.respuesta || respuesta.contenido || "";
     const [enviando, setEnviando] = useState(false);
     const [puntaje, setPuntaje] = useState(respuesta.puntaje_neto ?? 0);
-    const [voto, setVoto] = useState(respuesta.voto_usuario ?? 0);
+    
+    const { voto, setVoto } = usePersistedVote({
+      userId: usuario.idUsuario,
+      respuestaId: respuesta.idRespuesta,
+      backendVote: respuesta.voto_usuario,
+    });
+    
     const [nombreForo, setNombreForo] = useState("");
     const [expandido, setExpandido] = useState(false);
     const [mostrarModal, setMostrarModal] = useState(false);
@@ -65,49 +72,59 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
         setVoto(nuevoValor);
         setPuntaje(data.puntaje_neto);
         onVoto(respuesta.idRespuesta, delta, nuevoValor);
+      
       } catch (error) {
         console.error("Error al votar 👍", error);
         setMensajeModal("Ya votaste esta respuesta.");
         setMostrarModal(true);
+        
         return;
+      
       } finally {
         setEnviando(false);
       }
     };
+    
     const handleDownvote = async () => {
       if (enviando) return;
       const nuevoValor = voto === -1 ? 0 : -1;
       const delta = nuevoValor - voto;
+      
       try {
         setEnviando(true);
         const data = await puntajeService.votar({
           respuestaId: respuesta.idRespuesta,
           usuarioId: usuario.idUsuario,
           valor: nuevoValor,
+        
         });
+        
         setVoto(nuevoValor);
         setPuntaje(data.puntaje_neto);
         onVoto(respuesta.idRespuesta, delta, nuevoValor);
+      
       } catch (error) {
         console.error("Error al votar 👍", error);
         setMensajeModal("Ya votaste esta respuesta.");
         setMostrarModal(true);
+        
         return;
+      
       } finally {
         setEnviando(false);
       }
     };
+    
     useEffect(() => {
       setPuntaje(respuesta.puntaje_neto ?? 0);
     }, [respuesta.puntaje_neto]);
-    useEffect(() => {
-      setVoto(respuesta.voto_usuario ?? 0);
-    }, [respuesta.voto_usuario]);
+    
     const textoCorto =
       textoRespuesta.length > limite
         ? textoRespuesta.slice(0, limite) + "..."
         : textoRespuesta;
-    return (
+    
+  return (
     <div className="bg-panel p-5 rounded-2xl border border-gray-700 shadow-md">
       
       <p className="text-gray-200 whitespace-pre-line break-words break-all overflow-hidden">
@@ -160,7 +177,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           </div>        
         <div className="flex items-center gap-2">
           <button
-            disabled={enviando || voto === 1}
+            disabled={enviando}
             onClick={handleUpvote}
             className={`p-2 rounded-lg border transition-all duration-150
               ${voto === 1
@@ -182,7 +199,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
             {puntaje}
           </span>
           <button
-            disabled={enviando || voto === -1}
+            disabled={enviando}
             onClick={handleDownvote}
             className={`p-2 rounded-lg border transition-all duration-150
               ${voto === -1
