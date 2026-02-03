@@ -11,7 +11,6 @@ from .views.respuestaView import RespuestaViewSet, RespuestaPuntajeView
 from .views.userView import UsuarioMeView, LogoutView, UsuarioDetailView, UsuariosListView
 from .views import awsView
 
-
 router = DefaultRouter()
 router.register(r'foros', ForoViewSet, basename='foro')
 router.register(r'respuestas', RespuestaViewSet, basename='respuesta')
@@ -20,6 +19,9 @@ urlpatterns = [
     path('', include(router.urls)),
     path('internal/archivos/pendientes-migracion/', awsView.archivos_pendientes),
     path('internal/archivos/<int:id>/marcar-migrado/', awsView.marcar_migrado),
+    path("api/internal/", include("app.urls_internal")),
+    
+    path('respuestas/por-foro/<int:foro_id>/', RespuestaViewSet.as_view({'get': 'respuestas_por_foro'})),
     path('puntaje/', RespuestaPuntajeView.as_view(), name='respuesta-puntaje'),
     path('login/', UsuarioView.as_view(), name='usuario'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
@@ -31,5 +33,6 @@ urlpatterns = [
     path('carreras/', CarreraListCreateView.as_view(), name='carrera-list'),
     path('carreras/<int:idCarrera>/', CarreraRetrieveUpdateDestroyView.as_view(), name='carrera-detail'),
     path('materias/', MateriaListCreateView.as_view(), name='materia-list'),
-    path('materias/<int:idMateria>/', MateriaRetrieveUpdateDestroyView.as_view(), name='materia-detail'),
+    path('materias/<int:idMateria>/', MateriaRetrieveUpdateDestroyView.as_view(), name='materia-detail'), 
+
 ]

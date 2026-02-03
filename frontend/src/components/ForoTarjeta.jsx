@@ -14,13 +14,9 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
       try {
         setLoadingResp(true);
 
-        const respuestas = await respuestaService.obtenerPorTodos();
+        const respuestas = await respuestaService.obtenerRespuestasPorForo(foro.idForo);
+        setTotalRespuestas(respuestas?.length ?? 0);
 
-        const total = (respuestas || []).filter(
-          (r) => r.foro === foro.idForo
-        ).length;
-
-        setTotalRespuestas(total);
       } catch (err) {
         console.error("Error al cargar respuestas:", err);
       } finally {
@@ -31,6 +27,7 @@ export default function ForoTarjeta({ foro, mostrarAcciones, onEditar, onElimina
     if (foro?.idForo) {
       cargarTotalRespuestas();
     }
+    
   }, [foro.idForo]);
 
   return (

@@ -1,11 +1,25 @@
 from rest_framework import serializers
-from ..models import Respuesta, RespuestaArchivo, Puntaje
+from ..models import Respuesta, RespuestaArchivo, Puntaje, Usuario
 
 
 class PuntajeRespuestaSerializer(serializers.ModelSerializer):
+    usuario = serializers.PrimaryKeyRelatedField(queryset=Usuario.objects.all())
+    respuesta = serializers.PrimaryKeyRelatedField(queryset=Respuesta.objects.all())
+
     class Meta:
         model = Puntaje
-        fields = ['id', 'usuario', 'valor', 'respuesta']
+        fields = ['id', 'usuario', 'respuesta', 'valor']
+        extra_kwargs = {
+            'usuario': {'required': True},
+            'respuesta': {'required': True},
+            'valor': {'required': True},
+        }
+
+    def validate(self, attrs):
+        """
+        ⚡ No validar unique_together aquí, lo hacemos en la vista.
+        """
+        return attrs
 
 
 # 🔹 Serializador para los archivos
@@ -22,11 +36,7 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
 
 # 🔹 Serializador principal de la Respuesta
 class RespuestaSerializer(serializers.ModelSerializer):
-    archivos = serializers.ListField(
-        child=serializers.FileField(),
-        write_only=True,
-        required=False
-    )
+    archivos = RespuestaArchivoSerializer(many=True, read_only=True)
     puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
 
     # 🔥 FIX DEFINITIVO

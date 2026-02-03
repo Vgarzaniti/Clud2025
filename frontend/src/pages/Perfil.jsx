@@ -30,7 +30,11 @@ export default function Perfil() {
   const [materias, setMaterias] = useState([]);
   const [respuestas, setRespuestas] = useState([]);
   const [eliminando, setEliminando] = useState(false);
-  const [carga, setCarga] = useState(true);
+  
+  const [cargandoActividad, setCargandoActividad] = useState(true);
+  // eslint-disable-next-line no-unused-vars
+  const [cargandoMetadata, setCargandoMetadata] = useState(true);
+  
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -39,75 +43,143 @@ export default function Perfil() {
       .filter((e) => e.fecha_creacion)
       .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
 
-    useEffect(() => {
-        if (!usuario.idUsuario) return;
+  const handleVotoRespuesta = (idRespuesta, delta, nuevoVoto) => {
+    setRespuestas(prev =>
+      prev.map(r =>
+        r.idRespuesta === idRespuesta
+          ? {
+              ...r,
+              puntaje_neto: (r.puntaje_neto ?? 0) + delta,
+              voto_usuario: nuevoVoto
+            }
+          : r
+      )
+    );
+  };
+  
+  useEffect(() => {
+    if (!usuario.idUsuario) return;
 
-        const cargarDatos = async () => {
-            try {
-                console.log("Usuario completo:", usuario);
-                setCarga(true);
+    const cargarActividad = async () => {
+      try {
+        setCargandoActividad(true);
 
-                const [forosUsuario, respuestasUsuario, materiasBD, carrerasBD] = await Promise.all([
-                    foroService.obtenerForosPorUsuario(usuario.idUsuario),
-                    respuestaService.obtenerRespuestasPorUsuario(usuario.idUsuario),
-                    materiaService.obtenerTodos(),
-                    carreraService.obtenerTodos(),
-                ]);
+        const [forosUsuario, respuestasUsuario] = await Promise.all([
+          foroService.obtenerForosPorUsuario(usuario.idUsuario),
+          respuestaService.obtenerRespuestasPorUsuario(usuario.idUsuario),
+        ]);
 
-                setCarreras(carrerasBD);
-                setMaterias(materiasBD);
+        setForos(ordenarPorFecha(forosUsuario));
+        setRespuestas(ordenarPorFecha(respuestasUsuario));
+      } catch (err) {
+        console.error(err);
+        setError("No se pudo cargar tu actividad.");
+      } finally {
+        setCargandoActividad(false);
+      }
+    };
 
-                setForos(ordenarPorFecha(forosUsuario));
-                setRespuestas(ordenarPorFecha(respuestasUsuario));
-                
-                } catch (err) {
-                  console.error("❌ Error al cargar datos del perfil:", err);
-                  setError("No se pudieron cargar tus foros y respuestas.");
-                } finally {
-                  setCarga(false);
-                }
-            };
+    cargarActividad();
+  }, [usuario.idUsuario]);
 
-        cargarDatos();
-    },  [usuario.idUsuario]);
+  useEffect(() => {
+    const cargarMetadata = async () => {
+      try {
+        setCargandoMetadata(true);
 
-    const forosEnriquecidos = useMemo(() => {
-        if (!foros.length || !materias.length) return [];
-    
-        return foros.map((foro) => {
-          const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
-          const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+        const [materiasBD, carrerasBD] = await Promise.all([
+          materiaService.obtenerTodos(),
+          carreraService.obtenerTodos(),
+        ]);
 
-          return {
-            ...foro,
-            materiaNombre: materiaInfo?.nombre || "Sin materia",
-            carreraNombre: carreraInfo?.nombre || "Sin carrera",
-          };
-        });
-    }, [foros, materias, carreras]);
+        setMaterias(materiasBD);
+        setCarreras(carrerasBD);
+      } catch (err) {
+        console.error("Error cargando metadata", err);
+      } finally {
+        setCargandoMetadata(false);
+      }
+    };
 
-    const respuestasEnriquecidas = useMemo(() => {
-      if (!respuestas.length || !materias.length) return [];
+    cargarMetadata();
+  }, []);
 
-      return respuestas.map((res) => {
-        const materiaInfo = materias.find((m) => m.idMateria === res.materia);
-        const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+  const forosEnriquecidos = useMemo(() => {
+    if (!foros.length) return [];
 
-        return {
-          ...res,
-          materiaNombre: materiaInfo?.nombre || "Sin materia",
-          carreraNombre: carreraInfo?.nombre || "Sin carrera",
-        };
-      });
-    }, [respuestas, materias, carreras]);
+    return foros.map((foro) => {
+      const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
+      const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+
+      return {
+        ...foro,
+        materiaNombre: materiaInfo?.nombre || "Cargando materia...",
+        carreraNombre: carreraInfo?.nombre || "Cargando carrera...",
+      };
+    });
+  }, [foros, materias, carreras]);
+
+  const respuestasEnriquecidas = useMemo(() => {
+    if (!respuestas.length) return [];
+
+    return respuestas.map((res) => {
+      const materiaInfo = materias.find((m) => m.idMateria === res.materia);
+      const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+
+      return {
+        ...res,
+        usuario_username: usuario.username, // Perfil → OK
+        materiaNombre: materiaInfo?.nombre || "Cargando materia...",
+        carreraNombre: carreraInfo?.nombre || "Cargando carrera...",
+      };
+    });
+  }, [respuestas, materias, carreras, usuario.username]);
 
 
-    if (carga) {
-        return (
-        <div className="flex justify-center items-center h-64">
-            <p className="text-gray-400 animate-pulse">Cargando tus datos...</p>
+    if (cargandoActividad) {
+      return (
+        <div className="max-w-7xl mx-auto mt-10 px-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <aside className="bg-perfilPanel p-8 pt-20 mt-10 rounded-2xl border border-gray-700 relative w-72 mx-auto self-start animate-pulse">
+            <div className="w-24 h-24 bg-gray-700 rounded-full absolute -top-12 left-1/2 transform -translate-x-1/2" />
+
+            <div className="mt-16 space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i}>
+                  <div className="h-4 bg-gray-700 rounded w-1/2 mb-2" />
+                  <div className="h-4 bg-gray-600 rounded w-3/4 ml-2" />
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="h-9 bg-gray-700 rounded-lg" />
+              <div className="h-9 bg-gray-700 rounded-lg" />
+            </div>
+          </aside>
+
+          {/* Contenido principal */}
+          <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-4 animate-pulse">
+              <div className="h-8 bg-gray-700 rounded w-1/3" />
+              <div className="flex gap-3">
+                <div className="h-10 w-32 bg-gray-700 rounded-full" />
+                <div className="h-10 w-40 bg-gray-700 rounded-full" />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-gray-800 p-4 rounded-2xl border border-gray-700 animate-pulse space-y-3">
+                <div className="h-5 bg-gray-700 rounded w-3/4" />
+                <div className="h-4 bg-gray-700 rounded w-1/2" />
+                <div className="h-3 bg-gray-700 rounded w-full" />
+                <div className="h-3 bg-gray-700 rounded w-5/6" />
+              </div>
+            </div>
+          </div>
+
         </div>
-        );
+      );
     }
 
     if (error) {
@@ -293,9 +365,15 @@ export default function Perfil() {
                 <EstadoVacio mensaje="Todavía no participaste en ningún foro." />
               ) : (
                 respuestasEnriquecidas.map((res) => (
-                  <div key={res.idRespuesta} className="relative">
-                    <RespuestaTarjeta respuesta={res} />
-                    <div className="absolute top-5 right-5 flex gap-2">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <RespuestaTarjeta
+                        respuesta={res}
+                        onVoto={handleVotoRespuesta}
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-4 shrink-0 bg-blue-950 border border-gray-700 rounded-lg p-3 items-center">
                       <button
                         onClick={() => {
                           setRespuestaSeleccionada(res);
@@ -305,6 +383,7 @@ export default function Perfil() {
                       >
                         Editar
                       </button>
+
                       <button
                         onClick={() => handleEliminarClick(res, "respuesta")}
                         className="text-sm bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700"

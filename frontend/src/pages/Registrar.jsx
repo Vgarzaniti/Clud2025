@@ -76,24 +76,18 @@ export default function Register() {
                 texto: "Registro exitoso. Redirigiendo..."
             });
 
-            setTimeout(() => navigate("/inicio-sesion"), 1200);
-
+            setTimeout(() => {
             navigate("/inicio-sesion");
+            }, 1500);
 
         } catch (error) {
-
             setMensaje({
-                tipo: "error",
-                texto:
-                    "Usuario o correo ya registrado. Intente con otro."
-                });
-
-            setErrores({
-                general:
-                    error.response?.data?.mensaje ||
-                    "Error al registrar usuario"
+            tipo: "error",
+            texto:
+                error.response?.data?.mensaje ||
+                "Usuario o correo ya registrado. Intente con otro."
             });
-        } finally {
+
             setCarga(false);
         }
     };
@@ -109,6 +103,7 @@ export default function Register() {
                     
                     <div>
                         <input
+                            disabled={carga}
                             type="text"
                             name="nombreCompleto"
                             placeholder="Nombre completo *"
@@ -125,6 +120,7 @@ export default function Register() {
 
                     <div>
                         <input
+                            disabled={carga}
                             type="text"
                             name="nombreUsuario"
                             placeholder="Nombre de usuario"
@@ -141,6 +137,7 @@ export default function Register() {
 
                     <div>
                         <input
+                            disabled={carga}
                             type="email"
                             name="email"
                             placeholder="Mail *"
@@ -157,6 +154,7 @@ export default function Register() {
                     
                     <div className="relative">
                         <input
+                            disabled={carga}
                             type={mostrarContrasena? "text" : "password"}
                             name="password"
                             placeholder="Contraseña"
@@ -181,6 +179,7 @@ export default function Register() {
                     
                     <div className="relative">
                         <input
+                            disabled={carga}
                             type={mostrarConfirmarContrasena ? "text" : "password"}
                             name="confirmarPassword"
                             placeholder="Confirmar contraseña"

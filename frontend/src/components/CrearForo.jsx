@@ -10,7 +10,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
   const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState(null);
   const [erroresCampos, setErroresCampos] = useState({});
-  // eslint-disable-next-line no-unused-vars
   const [materias, setMaterias] = useState([]);
   const [carreras, setCarreras] = useState([]);
   const [materiasFiltradas, setMateriasFiltradas] = useState([]);
@@ -24,7 +23,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
     carrera: "",
     materia: "",
     pregunta: "",
-    archivos: "",
   });
 
   useEffect(() => {
@@ -53,8 +51,18 @@ export default function CrearForo({ onClose, onForoCreado }) {
     cargarDatos();
   }, []);
 
+  useEffect(() => {
+    if (!formData.carrera) {
+      setMateriasFiltradas(materias);
+    } else {
+      setMateriasFiltradas(
+        materias.filter(m => m.carrera === parseInt(formData.carrera))
+      );
+    }
+  }, [formData.carrera, materias]);
 
-  const hadleArchivoChange = (e) => {
+
+  const handleArchivoChange = (e) => {
     const nuevosArchivos = Array.from(e.target.files);
     let totalSize = archivos.reduce((acc, file) => acc + file.size, 0);
     let errores = [];
@@ -94,7 +102,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
     setErroresCampos(nuevosErrores);
     return Object.keys(nuevosErrores).length === 0;
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -116,6 +124,11 @@ export default function CrearForo({ onClose, onForoCreado }) {
       archivos.forEach((archivo) => {
         data.append("archivos", archivo);
       });
+
+      console.log("FormData contenido:");
+      for (let pair of data.entries()) {
+        console.log(pair[0], pair[1]);
+      }
 
       const foroCreado = await foroService.crear(data);
 
@@ -222,7 +235,7 @@ export default function CrearForo({ onClose, onForoCreado }) {
 
       {/* Archivos */}
       <div className="w-full">
-        <label className="block text-m mb-2">Archivos adjuntos</label>
+        <label className="block text-m mb-2">Archivos adjuntos (.jpg/.pdf/.word)</label>
 
         <label
           htmlFor="file-upload"
@@ -239,7 +252,8 @@ export default function CrearForo({ onClose, onForoCreado }) {
             id="file-upload"
             type="file"
             multiple
-            onChange={hadleArchivoChange}
+            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+            onChange={handleArchivoChange}
             className="hidden"
           />
         </label>

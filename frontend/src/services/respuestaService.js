@@ -8,8 +8,12 @@ export const respuestaService = {
   },
 
   obtenerPorForo: async (foroId) => {
-    const res = await api.get(`/respuestas/?foro=${foroId}`);
-    return res.data;
+    const res = await api.get(`/respuestas/`);
+
+    const respuestasForo = Array.isArray(res.data)
+      ? res.data.filter((r) => r.foro === parseInt(foroId))
+      : [];
+    return respuestasForo;
   },
 
   async crear(formData) {
@@ -58,4 +62,30 @@ export const respuestaService = {
       throw error;
     }
   },
+
+  // =============================
+  // OBTENER FORO DE PROCEDENCIA DE UNA RESPUESTA
+  // =============================
+  obtenerForoDeRespuesta: async (foroId) => {
+    const res = await api.get("/foros/");
+
+    if (!Array.isArray(res.data)) return null;
+
+    return res.data.find(
+      (foro) => foro.idForo === Number(foroId)
+    ) || null;
+  },
+
+  // =============================
+  // OBTENER RESPUESTAS DE UN FORO
+  // =============================
+  obtenerRespuestasPorForo: async (foroId) => {
+    const res = await api.get(`/respuestas/por-foro/${foroId}`);
+
+    if (!Array.isArray(res.data)) return [];
+
+    return Array.isArray(res.data) ? res.data : [];
+  },
+
+
 };

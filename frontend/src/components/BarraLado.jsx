@@ -66,7 +66,7 @@ export default function BarraLado({
   return (
     <aside className="w-1/4 space-y-6">
       {/* FILTROS */}
-      <div className="bg-panel p-4 rounded-2xl shadow-md border border-gray-600">
+      <div className="bg-sky-950 p-4 rounded-2xl shadow-md border border-gray-600">
         <h2 className="text-lg font-semibold mb-3 text-azulUTN">Filtros</h2>
 
         {/* Filtro Carrera */}
@@ -105,7 +105,7 @@ export default function BarraLado({
       </div>
 
       {/* RANKING */}
-      <div className="bg-panel p-4 rounded-2xl shadow-md border border-gray-600">
+      <div className="bg-blue-950 p-4 rounded-2xl shadow-md border border-gray-600">
         <h2 className="text-lg font-semibold mb-3 text-azulUTN">
           Ranking de Foros
         </h2>

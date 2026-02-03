@@ -2,8 +2,6 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 
 from ..models import (
     Respuesta,
@@ -20,16 +18,33 @@ from .hash import file_hash
 
 
 class RespuestaViewSet(viewsets.ModelViewSet):
+    queryset = Respuesta.objects.prefetch_related(
+        'archivos__archivo'
+    ).order_by('-fecha_creacion')
+
     serializer_class = RespuestaSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return Respuesta.objects.prefetch_related(
-            'archivos__archivo'
-        ).order_by('-fecha_creacion')
 
     # 🔥 FIX CRÍTICO PARA ARCHIVOS
     parser_classes = (MultiPartParser, FormParser)
+    
+     # 🔹 NUEVO MÉTODO para respuestas de un foro por URL
+    def respuestas_por_foro(self, request, foro_id=None):
+        """
+        GET /api/respuestas/por-foro/<foro_id>/
+        Devuelve todas las respuestas de un foro, con usuario_username agregado.
+        """
+        if not foro_id:
+            return Response({"error": "Debes enviar foro_id"}, status=400)
+
+        respuestas = self.get_queryset().filter(foro_id=foro_id).select_related('usuario')
+        serializer = RespuestaSerializer(respuestas, many=True)
+        data = serializer.data
+
+        # agregar username
+        for i, respuesta in enumerate(respuestas):
+            data[i]['usuario_username'] = respuesta.usuario.username if respuesta.usuario else None
+
+        return Response(data, status=200)
 
     # ===============================
     # 🔹 PROCESAR UN ARCHIVO
@@ -68,6 +83,16 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             self._procesar_archivo(archivo, respuesta)
 
         respuesta.refresh_from_db()
+    
+    # ===============================
+    # 🔹 RETRIEVE (GET individual)
+    # ===============================
+    def retrieve(self, request, pk=None):
+        respuesta = self.get_object()  # obtiene la instancia
+        data = RespuestaSerializer(respuesta).data  # serializa como siempre
+        data['usuario_username'] = respuesta.usuario.username if respuesta.usuario else None
+        return Response(data, status=status.HTTP_200_OK)
+
 
     # ===============================
     # 🔹 CREATE (CORREGIDO)
@@ -114,9 +139,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     # 🔹 UPDATE
     # ===============================
     def update(self, request, *args, **kwargs):
-        #partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        data = request.data.copy()
 
         archivos_nuevos = request.FILES.getlist("archivos")
         archivos_a_eliminar = request.data.get("archivos_a_eliminar", [])
@@ -126,9 +150,11 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 int(x) for x in archivos_a_eliminar.split(',')
             ]
 
-        serializer = RespuestaSerializer(instance, data=data, partial=True)
+        serializer = RespuestaSerializer(
+            instance, data=request.data, partial=partial
+        )
         serializer.is_valid(raise_exception=True)
-        respuesta = serializer.save(usuario=request.user)
+        respuesta = serializer.save()
 
         for archivo_id in archivos_a_eliminar:
             try:
@@ -146,58 +172,56 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         return Response(RespuestaSerializer(respuesta).data)
 
 
-# =====================================================
-# 🔹 PUNTAJES (SIN CAMBIOS)
-# =====================================================
 class RespuestaPuntajeView(APIView):
-
+    """
+    POST / PUT / PATCH
+    Crea o actualiza un puntaje para una respuesta.
+    """
     def post(self, request):
-        serializer = PuntajeRespuestaSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        return self._procesar_puntaje(request)
 
-        respuesta = serializer.validated_data['respuesta']
-        usuario = serializer.validated_data['usuario']
-        nuevo_valor = serializer.validated_data['valor']
+    def put(self, request):
+        return self._procesar_puntaje(request)
 
-        puntaje_existente = Puntaje.objects.filter(
-            respuesta=respuesta,
-            usuario=usuario
-        ).first()
+    def patch(self, request):
+        return self._procesar_puntaje(request)
+
+    def _procesar_puntaje(self, request):
+        # Validar datos del request
+        respuesta = request.data.get("respuesta")
+        usuario = request.data.get("usuario")
+        nuevo_valor = request.data.get("valor")
+
+        if not all([respuesta, usuario, nuevo_valor is not None]):
+            return Response({"error": "Debe enviar 'respuesta', 'usuario' y 'valor'"}, status=400)
+
+        # Buscar puntaje existente
+        puntaje_existente = Puntaje.objects.filter(respuesta_id=respuesta, usuario_id=usuario).first()
 
         if puntaje_existente:
-            puntaje_existente.valor = (
-                Puntaje.NONE
-                if puntaje_existente.valor == nuevo_valor
-                else nuevo_valor
-            )
-            puntaje_existente.save()
+            # Si existe, actualizar solo valor
+            serializer = PuntajeRespuestaSerializer(puntaje_existente, data={"valor": nuevo_valor}, partial=True)
         else:
-            Puntaje.objects.create(
-                respuesta=respuesta,
-                usuario=usuario,
-                valor=nuevo_valor
-            )
+            # Si no existe, crear uno nuevo
+            serializer = PuntajeRespuestaSerializer(data={"respuesta": respuesta, "usuario": usuario, "valor": nuevo_valor})
 
-        respuesta.total_likes = respuesta.puntajes.filter(
-            valor=Puntaje.LIKE
-        ).count()
-        respuesta.total_dislikes = respuesta.puntajes.filter(
-            valor=Puntaje.DISLIKE
-        ).count()
-        respuesta.total_votos = respuesta.puntajes.exclude(
-            valor=Puntaje.NONE
-        ).count()
-        respuesta.puntaje_neto = (
-            respuesta.total_likes - respuesta.total_dislikes
-        )
-        respuesta.save()
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Actualizar totales de la respuesta
+        respuesta_obj = serializer.instance.respuesta
+        respuesta_obj.total_likes = respuesta_obj.puntajes.filter(valor=Puntaje.LIKE).count()
+        respuesta_obj.total_dislikes = respuesta_obj.puntajes.filter(valor=Puntaje.DISLIKE).count()
+        respuesta_obj.total_votos = respuesta_obj.puntajes.exclude(valor=Puntaje.NONE).count()
+        respuesta_obj.puntaje_neto = respuesta_obj.total_likes - respuesta_obj.total_dislikes
+        respuesta_obj.save()
 
         return Response(
             {
-                "total_likes": respuesta.total_likes,
-                "total_dislikes": respuesta.total_dislikes,
-                "total_votos": respuesta.total_votos,
-                "puntaje_neto": respuesta.puntaje_neto,
+                "total_likes": respuesta_obj.total_likes,
+                "total_dislikes": respuesta_obj.total_dislikes,
+                "total_votos": respuesta_obj.total_votos,
+                "puntaje_neto": respuesta_obj.puntaje_neto,
             },
-            status=status.HTTP_200_OK
+            status=200
         )

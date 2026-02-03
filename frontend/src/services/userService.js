@@ -10,7 +10,6 @@ const userService = {
     obtenerPorId: async (id) => {
         const res = await api.get("/usuarios/");
         const usuarios = res.data;
-            
 
         const usuario = usuarios.find(
             (u) => String(u.idUsuario) === String(id)
