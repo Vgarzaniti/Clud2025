@@ -9,6 +9,7 @@ from .views.foroView import ForoViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 from .views.respuestaView import RespuestaViewSet, RespuestaPuntajeView
 from .views.userView import UsuarioMeView, LogoutView, UsuarioDetailView, UsuariosListView
+from .views import awsView
 
 router = DefaultRouter()
 router.register(r'foros', ForoViewSet, basename='foro')
@@ -16,6 +17,8 @@ router.register(r'respuestas', RespuestaViewSet, basename='respuesta')
 
 urlpatterns = [    
     path('', include(router.urls)),
+    path('internal/archivos/pendientes-migracion/', awsView.archivos_pendientes),
+    path('internal/archivos/<int:id>/marcar-migrado/', awsView.marcar_migrado),
     path("api/internal/", include("app.urls_internal")),
     
     path('respuestas/por-foro/<int:foro_id>/', RespuestaViewSet.as_view({'get': 'respuestas_por_foro'})),
