@@ -30,7 +30,11 @@ export default function Perfil() {
   const [materias, setMaterias] = useState([]);
   const [respuestas, setRespuestas] = useState([]);
   const [eliminando, setEliminando] = useState(false);
-  const [carga, setCarga] = useState(true);
+  
+  const [cargandoActividad, setCargandoActividad] = useState(true);
+  // eslint-disable-next-line no-unused-vars
+  const [cargandoMetadata, setCargandoMetadata] = useState(true);
+  
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -53,70 +57,86 @@ export default function Perfil() {
     );
   };
   
-    useEffect(() => {
-        if (!usuario.idUsuario) return;
+  useEffect(() => {
+    if (!usuario.idUsuario) return;
 
-        const cargarDatos = async () => {
-            try {
-                console.log("Usuario completo:", usuario);
-                setCarga(true);
+    const cargarActividad = async () => {
+      try {
+        setCargandoActividad(true);
 
-                const [forosUsuario, respuestasUsuario, materiasBD, carrerasBD] = await Promise.all([
-                    foroService.obtenerForosPorUsuario(usuario.idUsuario),
-                    respuestaService.obtenerRespuestasPorUsuario(usuario.idUsuario),
-                    materiaService.obtenerTodos(),
-                    carreraService.obtenerTodos(),
-                ]);
+        const [forosUsuario, respuestasUsuario] = await Promise.all([
+          foroService.obtenerForosPorUsuario(usuario.idUsuario),
+          respuestaService.obtenerRespuestasPorUsuario(usuario.idUsuario),
+        ]);
 
-                setCarreras(carrerasBD);
-                setMaterias(materiasBD);
+        setForos(ordenarPorFecha(forosUsuario));
+        setRespuestas(ordenarPorFecha(respuestasUsuario));
+      } catch (err) {
+        console.error(err);
+        setError("No se pudo cargar tu actividad.");
+      } finally {
+        setCargandoActividad(false);
+      }
+    };
 
-                setForos(ordenarPorFecha(forosUsuario));
-                setRespuestas(ordenarPorFecha(respuestasUsuario));
-                
-                } catch (err) {
-                  console.error("❌ Error al cargar datos del perfil:", err);
-                  setError("No se pudieron cargar tus foros y respuestas.");
-                } finally {
-                  setCarga(false);
-                }
-            };
+    cargarActividad();
+  }, [usuario.idUsuario]);
 
-        cargarDatos();
-    },  [usuario.idUsuario]);
+  useEffect(() => {
+    const cargarMetadata = async () => {
+      try {
+        setCargandoMetadata(true);
 
-    const forosEnriquecidos = useMemo(() => {
-        if (!foros.length || !materias.length) return [];
-    
-        return foros.map((foro) => {
-          const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
-          const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+        const [materiasBD, carrerasBD] = await Promise.all([
+          materiaService.obtenerTodos(),
+          carreraService.obtenerTodos(),
+        ]);
 
-          return {
-            ...foro,
-            materiaNombre: materiaInfo?.nombre || "Sin materia",
-            carreraNombre: carreraInfo?.nombre || "Sin carrera",
-          };
-        });
-    }, [foros, materias, carreras]);
+        setMaterias(materiasBD);
+        setCarreras(carrerasBD);
+      } catch (err) {
+        console.error("Error cargando metadata", err);
+      } finally {
+        setCargandoMetadata(false);
+      }
+    };
 
-    const respuestasEnriquecidas = useMemo(() => {
-      if (!respuestas.length || !materias.length) return [];
+    cargarMetadata();
+  }, []);
 
-      return respuestas.map((res) => {
-        const materiaInfo = materias.find((m) => m.idMateria === res.materia);
-        const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+  const forosEnriquecidos = useMemo(() => {
+    if (!foros.length) return [];
 
-        return {
-          ...res,
-          materiaNombre: materiaInfo?.nombre || "Sin materia",
-          carreraNombre: carreraInfo?.nombre || "Sin carrera",
-        };
-      });
-    }, [respuestas, materias, carreras]);
+    return foros.map((foro) => {
+      const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
+      const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+
+      return {
+        ...foro,
+        materiaNombre: materiaInfo?.nombre || "Cargando materia...",
+        carreraNombre: carreraInfo?.nombre || "Cargando carrera...",
+      };
+    });
+  }, [foros, materias, carreras]);
+
+  const respuestasEnriquecidas = useMemo(() => {
+    if (!respuestas.length) return [];
+
+    return respuestas.map((res) => {
+      const materiaInfo = materias.find((m) => m.idMateria === res.materia);
+      const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
+
+      return {
+        ...res,
+        usuario_username: usuario.username, // Perfil → OK
+        materiaNombre: materiaInfo?.nombre || "Cargando materia...",
+        carreraNombre: carreraInfo?.nombre || "Cargando carrera...",
+      };
+    });
+  }, [respuestas, materias, carreras, usuario.username]);
 
 
-    if (carga) {
+    if (cargandoActividad) {
       return (
         <div className="max-w-7xl mx-auto mt-10 px-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
