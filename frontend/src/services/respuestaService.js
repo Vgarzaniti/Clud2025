@@ -76,4 +76,16 @@ export const respuestaService = {
     ) || null;
   },
 
+  // =============================
+  // OBTENER RESPUESTAS DE UN FORO
+  // =============================
+  obtenerRespuestasPorForo: async (foroId) => {
+    const res = await api.get(`/respuestas/por-foro/${foroId}`);
+
+    if (!Array.isArray(res.data)) return [];
+
+    return Array.isArray(res.data) ? res.data : [];
+  },
+
+
 };

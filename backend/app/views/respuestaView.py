@@ -1,14 +1,7 @@
-from django.forms import ValidationError
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from notificaciones.services.sns_suscripciones import suscribir_usuario_a_sns, notificar_nueva_respuesta
-from django.db import transaction
-from django.conf import settings
-import logging
 
 from ..models import (
     Respuesta,
@@ -23,20 +16,35 @@ from ..serializers.respuesta_serializer import (
 )
 from .hash import file_hash
 
-logger = logging.getLogger(__name__)
 
 class RespuestaViewSet(viewsets.ModelViewSet):
-    queryset = Respuesta.objects.all()
+    queryset = Respuesta.objects.prefetch_related(
+        'archivos__archivo'
+    ).order_by('-fecha_creacion')
+
     serializer_class = RespuestaSerializer
-    permission_classes = [IsAuthenticated]
-    
-    def get_queryset(self):
-        return Respuesta.objects.prefetch_related(
-            'archivos__archivo'
-        ).order_by('-fecha_creacion')
 
     # 🔥 FIX CRÍTICO PARA ARCHIVOS
     parser_classes = (MultiPartParser, FormParser)
+    
+     # 🔹 NUEVO MÉTODO para respuestas de un foro por URL
+    def respuestas_por_foro(self, request, foro_id=None):
+        """
+        GET /api/respuestas/por-foro/<foro_id>/
+        Devuelve todas las respuestas de un foro, con usuario_username agregado.
+        """
+        if not foro_id:
+            return Response({"error": "Debes enviar foro_id"}, status=400)
+
+        respuestas = self.get_queryset().filter(foro_id=foro_id).select_related('usuario')
+        serializer = RespuestaSerializer(respuestas, many=True)
+        data = serializer.data
+
+        # agregar username
+        for i, respuesta in enumerate(respuestas):
+            data[i]['usuario_username'] = respuesta.usuario.username if respuesta.usuario else None
+
+        return Response(data, status=200)
 
     # ===============================
     # 🔹 PROCESAR UN ARCHIVO
@@ -45,17 +53,15 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     def _procesar_archivo(archivo_file, respuesta):
         try:
             hash_archivo = file_hash(archivo_file)
-            archivo_file.seek(0)
 
             archivo_global = Archivo.objects.filter(
-                #hash=hash_archivo
+                hash=hash_archivo
             ).first()
 
             if not archivo_global:
-
                 archivo_global = Archivo.objects.create(
                     archivo=archivo_file,
-                    #hash=hash_archivo,
+                    hash=hash_archivo
                 )
 
             RespuestaArchivo.objects.get_or_create(
@@ -64,9 +70,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            logger.error("Error subiendo archivo", exc_info=e)
-            raise ValidationError("Error al subir archivo")
-        
+            print("❌ Error procesando archivo de respuesta:", e)
+
     # ===============================
     # 🔹 PROCESAR MULTIPLES ARCHIVOS
     # ===============================
@@ -76,11 +81,19 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
         for archivo in archivos:
             self._procesar_archivo(archivo, respuesta)
-            if archivo.size > settings.MAX_UPLOAD_SIZE:
-                raise ValidationError("Archivo demasiado grande")
 
         respuesta.refresh_from_db()
     
+    # ===============================
+    # 🔹 RETRIEVE (GET individual)
+    # ===============================
+    def retrieve(self, request, pk=None):
+        respuesta = self.get_object()  # obtiene la instancia
+        data = RespuestaSerializer(respuesta).data  # serializa como siempre
+        data['usuario_username'] = respuesta.usuario.username if respuesta.usuario else None
+        return Response(data, status=status.HTTP_200_OK)
+
+
     # ===============================
     # 🔹 CREATE (CORREGIDO)
     # ===============================
@@ -113,25 +126,7 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         )
 
         # 🔥 SUBIDA REAL DE ARCHIVOS
-        try:
-            self._subir_archivos(respuesta, archivos)
-        except RuntimeError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        # 🔥 SUSCRIPCION A NOTIFICACIONES
-        suscribir_usuario_a_sns(respuesta.usuario.email)
-
-        # 🔥 NOTIFICAR A CREADOR DEL FORO LA NUEVA RESPUESTA
-        notificar_nueva_respuesta(foro, respuesta)
-
-        Puntaje.objects.create(
-            respuesta=respuesta,
-            usuario=respuesta.usuario,
-            valor=0
-        )
+        self._subir_archivos(respuesta, archivos)
 
         respuesta.refresh_from_db()
 
@@ -144,9 +139,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
     # 🔹 UPDATE
     # ===============================
     def update(self, request, *args, **kwargs):
-        #partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        data = request.data.copy()
 
         archivos_nuevos = request.FILES.getlist("archivos")
         archivos_a_eliminar = request.data.get("archivos_a_eliminar", [])
@@ -156,9 +150,11 @@ class RespuestaViewSet(viewsets.ModelViewSet):
                 int(x) for x in archivos_a_eliminar.split(',')
             ]
 
-        serializer = RespuestaSerializer(instance, data=data, partial=True)
+        serializer = RespuestaSerializer(
+            instance, data=request.data, partial=partial
+        )
         serializer.is_valid(raise_exception=True)
-        respuesta = serializer.save(usuario=request.user)
+        respuesta = serializer.save()
 
         for archivo_id in archivos_a_eliminar:
             try:
@@ -170,112 +166,62 @@ class RespuestaViewSet(viewsets.ModelViewSet):
             except RespuestaArchivo.DoesNotExist:
                 pass
 
-        try:
-            self._subir_archivos(respuesta, archivos_nuevos)
-        except RuntimeError as e:
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        self._subir_archivos(respuesta, archivos_nuevos)
 
         respuesta.refresh_from_db()
         return Response(RespuestaSerializer(respuesta).data)
-    
-    def get_serializer_context(self):
-            context = super().get_serializer_context()
-            context['request'] = self.request
-            return context
 
-# =====================================================
-# 🔹 PUNTAJES (SIN CAMBIOS)
-# =====================================================
+
 class RespuestaPuntajeView(APIView):
-
-    permission_classes = [IsAuthenticated]
-    
+    """
+    POST / PUT / PATCH
+    Crea o actualiza un puntaje para una respuesta.
+    """
     def post(self, request):
-        serializer = PuntajeRespuestaSerializer(
-            data=request.data,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
+        return self._procesar_puntaje(request)
 
-        respuesta = serializer.validated_data['respuesta']
-        nuevo_valor = serializer.validated_data['valor']
+    def put(self, request):
+        return self._procesar_puntaje(request)
 
-        usuario = request.user
+    def patch(self, request):
+        return self._procesar_puntaje(request)
 
-        puntaje_existente = Puntaje.objects.filter(
-            respuesta=respuesta,
-            usuario=usuario
-        ).first()
+    def _procesar_puntaje(self, request):
+        # Validar datos del request
+        respuesta = request.data.get("respuesta")
+        usuario = request.data.get("usuario")
+        nuevo_valor = request.data.get("valor")
+
+        if not all([respuesta, usuario, nuevo_valor is not None]):
+            return Response({"error": "Debe enviar 'respuesta', 'usuario' y 'valor'"}, status=400)
+
+        # Buscar puntaje existente
+        puntaje_existente = Puntaje.objects.filter(respuesta_id=respuesta, usuario_id=usuario).first()
 
         if puntaje_existente:
-            puntaje_existente.valor = (
-                Puntaje.NONE
-                if puntaje_existente.valor == nuevo_valor
-                else nuevo_valor
-            )
-            puntaje_existente.save()
-            voto_final = puntaje_existente.valor
+            # Si existe, actualizar solo valor
+            serializer = PuntajeRespuestaSerializer(puntaje_existente, data={"valor": nuevo_valor}, partial=True)
         else:
-            puntaje_existente = Puntaje.objects.create(
-                respuesta=respuesta,
-                usuario=usuario,
-                valor=nuevo_valor
-            )
-            voto_final = nuevo_valor
+            # Si no existe, crear uno nuevo
+            serializer = PuntajeRespuestaSerializer(data={"respuesta": respuesta, "usuario": usuario, "valor": nuevo_valor})
 
-        respuesta.total_likes = respuesta.puntajes.filter(
-            valor=Puntaje.LIKE
-        ).count()
-        respuesta.total_dislikes = respuesta.puntajes.filter(
-            valor=Puntaje.DISLIKE
-        ).count()
-        respuesta.total_votos = respuesta.puntajes.exclude(
-            valor=Puntaje.NONE
-        ).count()
-        respuesta.puntaje_neto = (
-            respuesta.total_likes - respuesta.total_dislikes
-        )
-        respuesta.save()
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        # Actualizar totales de la respuesta
+        respuesta_obj = serializer.instance.respuesta
+        respuesta_obj.total_likes = respuesta_obj.puntajes.filter(valor=Puntaje.LIKE).count()
+        respuesta_obj.total_dislikes = respuesta_obj.puntajes.filter(valor=Puntaje.DISLIKE).count()
+        respuesta_obj.total_votos = respuesta_obj.puntajes.exclude(valor=Puntaje.NONE).count()
+        respuesta_obj.puntaje_neto = respuesta_obj.total_likes - respuesta_obj.total_dislikes
+        respuesta_obj.save()
 
         return Response(
             {
-                "puntaje_neto": respuesta.puntaje_neto,
-                "voto_usuario": voto_final
+                "total_likes": respuesta_obj.total_likes,
+                "total_dislikes": respuesta_obj.total_dislikes,
+                "total_votos": respuesta_obj.total_votos,
+                "puntaje_neto": respuesta_obj.puntaje_neto,
             },
-            status=status.HTTP_200_OK
-        )
-    def patch(self, request):
-
-        serializer = PuntajeRespuestaSerializer(
-            data=request.data,
-            context={'request': request}
-        )
-        serializer.is_valid(raise_exception=True)
-
-        respuesta = serializer.validated_data["respuesta"]
-        valor = serializer.validated_data["valor"]
-        usuario = request.user
-
-        puntaje = Puntaje.objects.filter(
-            usuario=usuario,
-            respuesta=respuesta
-        ).first()
-
-        if not puntaje:
-            return Response(
-                {"error": "No existe voto previo. Usá POST primero."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # toggle opcional
-        puntaje.valor = valor
-        puntaje.save()
-
-        return Response(
-            {"ok": "Voto actualizado", "nuevo_valor": puntaje.valor},
             status=200
         )
-

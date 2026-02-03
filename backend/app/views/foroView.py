@@ -1,72 +1,49 @@
-import hashlib
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
+
 from ..models import Foro, ForoArchivo, Archivo
-from rest_framework.exceptions import ValidationError
-from ..serializers.foro_serializer import ForoCreateSerializer, ForoReadSerializer
+from ..serializers.foro_serializer import ForoSerializer
 from .hash import file_hash
-from django.db import transaction
-from django.core.files.base import ContentFile
 
-import logging
-
-logger = logging.getLogger(__name__)
 
 class ForoViewSet(viewsets.ModelViewSet):
-    queryset = Foro.objects.all()
-
-    def get_serializer_class(self):
-        if self.action in ["create", "update", "partial_update"]:
-            return ForoCreateSerializer
-        return ForoReadSerializer
-    
-    permission_classes = [IsAuthenticated]
+    serializer_class = ForoSerializer
 
     # 🔥 CLAVE: permite multipart/form-data
     parser_classes = (MultiPartParser, FormParser)
 
     # 🔥 CLAVE: optimiza carga de archivos
-    def get_queryset(self):
-        return Foro.objects.select_related(
-            "usuario", "materia"
-        ).prefetch_related(
-            "archivos__archivo"
-        ).order_by("-fecha_creacion")
+    queryset = Foro.objects.prefetch_related(
+        'archivos__archivo'
+    ).order_by('-fecha_creacion')
 
     # 🔹 Procesar UN archivo (deduplicación GLOBAL)
     @staticmethod
     def _procesar_archivo(archivo_file, foro):
         try:
-            logger.error("Procesando archivo: %s", archivo_file.name)
+            # 🔥 hash + reset del puntero
+            hash_archivo = file_hash(archivo_file)
+            archivo_file.seek(0)
 
-            archivo_bytes = archivo_file.read()
-            logger.error("Bytes leídos: %s", len(archivo_bytes))
-
-            hash_archivo = hashlib.md5(archivo_bytes).hexdigest()
-            logger.error("Hash generado: %s", hash_archivo)
-
+            # 🔹 buscar archivo global
             archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
-            logger.error("Archivo existente: %s", archivo_global)
 
+            # 🔹 si no existe, subir UNA sola vez a Cloudinary
             if not archivo_global:
                 archivo_global = Archivo.objects.create(
-                    archivo=ContentFile(archivo_bytes, name=archivo_file.name),
+                    archivo=archivo_file,
                     hash=hash_archivo
                 )
-                logger.error("Archivo creado ID: %s", archivo_global.id)
 
+            # 🔥 SIEMPRE asociar al foro
             ForoArchivo.objects.get_or_create(
                 foro=foro,
                 archivo=archivo_global
             )
 
-        except Exception:
-            logger.exception("🔥 ERROR SUBIENDO ARCHIVO")
-            raise
-
+        except Exception as e:
+            print("❌ Error procesando archivo:", e)
 
     # 🔹 Procesar múltiples archivos
     def _subir_archivos(self, foro, archivos):
@@ -81,66 +58,62 @@ class ForoViewSet(viewsets.ModelViewSet):
     # 🔹 Retrieve
     def retrieve(self, request, pk=None):
         foro = self.get_object()
-        serializer = ForoReadSerializer(foro, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        data = ForoSerializer(foro).data
+        data['usuario_username'] = foro.usuario.username if foro.usuario else None
+        return Response(data, status=status.HTTP_200_OK)
+
 
     # 🔹 Create
-    @transaction.atomic
     def create(self, request, *args, **kwargs):
-        try:
-            data = request.data.copy()
-            data.pop('archivos', None)
-            archivos = request.FILES.getlist('archivos')
+        data = request.data.copy()
+        archivos = request.FILES.getlist('archivos')
 
-            serializer = ForoCreateSerializer(data=data)
-            serializer.is_valid(raise_exception=True)
-
-            foro = serializer.save(usuario=request.user)
+        serializer = ForoSerializer(data=data)
+        if serializer.is_valid():
+            foro = serializer.save()
 
             self._subir_archivos(foro, archivos)
 
             foro.refresh_from_db()
 
             return Response(
-                ForoReadSerializer(foro, context={"request": request}).data,
+                ForoSerializer(foro).data,
                 status=status.HTTP_201_CREATED
             )
 
-        except Exception as e:
-            # 🔥 ESTO ES CLAVE
-            return Response(
-                {
-                    "error": str(e),
-                    "tipo": type(e).__name__,
-                },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # 🔹 Update
-    @transaction.atomic
     def update(self, request, *args, **kwargs):
-        #partial = kwargs.pop('partial', False)
+        partial = kwargs.pop('partial', False)
         instance = self.get_object()
         data = request.data.copy()
 
         archivos_nuevos = request.FILES.getlist("archivos")
         archivos_a_eliminar = data.get("archivos_a_eliminar", [])
 
-        if isinstance(archivos_a_eliminar, str):
-            archivos_a_eliminar = [int(x) for x in archivos_a_eliminar.split(",")]
+        if archivos_a_eliminar and isinstance(archivos_a_eliminar, str):
+            archivos_a_eliminar = [
+                int(x) for x in archivos_a_eliminar.split(',')
+            ]
 
-        serializer = ForoCreateSerializer(instance, data=data, partial=True)
+        serializer = ForoSerializer(instance, data=data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        foro = serializer.save(usuario=request.user)
+        foro = serializer.save()
 
         # 🔹 Eliminar relación foro ↔ archivo (NO borra Cloudinary)
         for archivo_id in archivos_a_eliminar:
-            ForoArchivo.objects.filter(id=archivo_id, foro=foro).delete()
+            try:
+                foro_archivo = ForoArchivo.objects.get(
+                    id=archivo_id,
+                    foro=foro
+                )
+                foro_archivo.delete()
+            except ForoArchivo.DoesNotExist:
+                pass
 
+        # 🔹 Subir / reutilizar archivos nuevos
         self._subir_archivos(foro, archivos_nuevos)
-        foro.refresh_from_db()
 
-        return Response(
-            ForoReadSerializer(foro, context={"request": request}).data,
-            status=status.HTTP_200_OK
-        )
+        foro.refresh_from_db()
+        return Response(ForoSerializer(foro).data)
