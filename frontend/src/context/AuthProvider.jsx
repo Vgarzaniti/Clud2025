@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import authService from "../services/userService";
 import { AuthContext } from "./AuthContext";
+import { clearStoredVotes } from "../utils/voteStorage";
 
 export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
@@ -26,6 +27,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     await authService.logout();
+    clearStoredVotes(usuario.idUsuario);
     setUsuario(null);
   };
 
