@@ -27,6 +27,16 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
     
     const limite = 100;
 
+    const [expandidoForo, setExpandidoForo] = useState(false);
+    const limiteForo = 80;
+
+    const tituloForoCorto =
+      foro?.pregunta?.length > limiteForo
+        ? foro.pregunta.slice(0, limiteForo) + "..."
+        : foro?.pregunta;
+
+
+
     useEffect(() => {
       let activo = true;
 
@@ -174,21 +184,34 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
             <span className="text-sm text-gray-400">
               Respuesta de {respuesta.usuario_username || "Anónimo"}
             </span>
-            <span className="text-sm text-gray-500 mt-2">
-              Del Foro: {" "}
+           <span className="text-sm text-gray-500 mt-2 mr-3">
+              Del Foro:{" "}
               {foro ? (
-                <span
-                  onClick={() => navigate(`/foro/${foro.idForo}`)}
-                  className="text-blue-300 hover:underline cursor-pointer"
-                >
-                  {foro.pregunta}
+                <span className="inline">
+                  <span
+                    onClick={() => navigate(`/foro/${foro.idForo}`)}
+                    className="text-blue-300 cursor-pointer break-all"
+                  >
+                    {expandidoForo ? foro.pregunta : tituloForoCorto}
+                  </span>
+
+                  {foro.pregunta.length > limiteForo && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandidoForo(!expandidoForo);
+                      }}
+                      className="ml-1 text-xs text-gray-400 hover:underline"
+                    >
+                      {expandidoForo ? "Mostrar menos" : "Mostrar más"}
+                    </button>
+                  )}
                 </span>
               ) : (
                 "Cargando..."
               )}
             </span>
           </div>        
-        
         <div className="flex items-center gap-2">
           <button
             disabled={enviando}

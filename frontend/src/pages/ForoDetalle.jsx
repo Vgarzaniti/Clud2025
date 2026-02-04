@@ -31,6 +31,15 @@ export default function ForoDetalle() {
     setRespuestas(ordenadas);
   }, [foroId]);
 
+  const [expandidoTitulo, setExpandidoTitulo] = useState(false);
+  const LIMITE_TITULO = 150;
+
+  const tituloCorto =
+    foro?.pregunta?.length > LIMITE_TITULO
+      ? foro.pregunta.slice(0, LIMITE_TITULO) + "..."
+      : foro?.pregunta;
+
+
   useEffect(() => {
     const cargarForo = async () => {
       try {
@@ -112,10 +121,23 @@ export default function ForoDetalle() {
           <p className="text-red-400">Foro no encontrado</p>
         ) : (
           <div className="bg-cyan-950 p-5 rounded-2xl border border-gray-700">
-            <h1 className="text-2xl font-bold mb-2">{foro.pregunta}</h1>
-            <p className="text-gray-400 text-sm">
-              Materia: {foro.materia_nombre}
-            </p>
+            
+            <h1
+              className={`text-2xl font-bold mb-1 whitespace-pre-wrap break-all overflow-hidden ${
+                expandidoTitulo ? "" : "line-clamp-3"
+              }`}
+            >
+              {expandidoTitulo ? foro.pregunta : tituloCorto}
+            </h1>
+
+            {foro.pregunta.length > LIMITE_TITULO && (
+              <button
+                onClick={() => setExpandidoTitulo(!expandidoTitulo)}
+                className="text-sm text-gray-500 hover:underline mb-2"
+              >
+                {expandidoTitulo ? "Mostrar menos" : "Mostrar más"}
+              </button>
+            )}
 
             {foro.archivos && foro.archivos.length > 0 && (
               <div className="mt-4 border-t border-gray-700 pt-3">
@@ -138,7 +160,7 @@ export default function ForoDetalle() {
                           target="_blank"
                           rel="noopener noreferrer"
                           download
-                          className="text-azulUTN hover:underline break-all"
+                          className="text-azulUTN hover:underline break-all max-w-full truncate"
                         >
                           {nombreArchivo}
                         </a>
@@ -148,10 +170,6 @@ export default function ForoDetalle() {
                 </ul>
               </div>
             )}
-
-            <p className="text-gray-500 text-xs mt-2">
-              {new Date(foro.fecha_creacion).toLocaleString("es-AR")}
-            </p>
           </div>
         )}
 
@@ -185,7 +203,7 @@ export default function ForoDetalle() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="space-y-4"
+            className="space-y-4 pb-5"
           >
             {loadingRespuestas ? (
               <div className="bg-gray-800 p-4 rounded-2xl animate-pulse">
@@ -211,22 +229,29 @@ export default function ForoDetalle() {
       </div>
 
       {!loadingForo && foro && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 pb-5">
           <aside className="bg-blue-950 p-4 rounded-2xl border border-gray-700">
-            <h3 className="text-xl font-semibold text-azulUTN mb-2">
+            <h3 className="text-2xl font-semibold text-azulUTN mb-2">
               Información del Foro
             </h3>
-            <p className="text-l">
+
+            <hr className="mx-auto border-t-2 border-gray-700 mb-3 mt-3" />
+
+            <p className="text-lg">
               <span className="font-semibold">Materia:</span>{" "}
               {foro.materia_nombre}
             </p>
-            <p className="text-l">
+            <p className="text-lg">
               <span className="font-semibold">Carrera:</span>{" "}
               {foro.carrera_nombre}
             </p>
-            <p className="text-l">
+            <p className="text-lg">
               <span className="font-semibold">Autor:</span>{" "}
               {foro.usuario_nombre}
+            </p>
+            <p className="text-lg">
+              <span className="font-semibold">Creacion:</span>{" "}
+              {new Date(foro.fecha_creacion).toLocaleString("es-AR")}
             </p>
           </aside>
 

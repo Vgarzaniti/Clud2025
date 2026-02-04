@@ -73,8 +73,8 @@ export default function Materia() {
 
             return {
                 ...foro,
-                materia_nombre: materiaActual.nombre,
-                carrera_nombre: carreraInfo?.nombre || "Sin carrera",
+                materiaNombre: materiaActual.nombre,
+                carreraNombre: carreraInfo?.nombre || "Sin carrera",
                 carreraId: carreraInfo?.idCarrera,
                 materiaId: materiaActual.idMateria,
             };
@@ -125,7 +125,7 @@ export default function Materia() {
             
             {error && <p className="text-red-500 mt-3">{error}</p>}
 
-            <div className="space-y-4 mt-5"> 
+            <div className="space-y-4 mt-5 pb-5"> 
                 {forosFiltrados.length > 0 ? (
                     forosFiltrados.map((foro) => (
                         <ForoTarjeta key={foro.idForo} foro={foro} />
