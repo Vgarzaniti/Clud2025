@@ -26,10 +26,24 @@ export function AuthProvider({ children }) {
 
 
   const logout = async () => {
-    await authService.logout();
-    clearStoredVotes(usuario.idUsuario);
+    const idUsuario = usuario?.idUsuario;
+
+    // 🔥 cortar sesión inmediatamente
     setUsuario(null);
+
+    // limpiar datos locales
+    if (idUsuario) {
+      clearStoredVotes(idUsuario);
+    }
+
+    try {
+      await authService.logout();
+    } catch (error) {
+      // opcional: loggear error, pero NO restaurar sesión
+      console.error("Error al cerrar sesión", error);
+    }
   };
+
 
   return (
     <AuthContext.Provider value={{ usuario, login, actualizarUsuario,logout, loading }}>

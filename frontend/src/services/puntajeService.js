@@ -10,7 +10,6 @@ export const puntajeService = {
     };
 
     console.log("PUNTAJE SERVICE CARGADO");
-    console.log("📤 Enviando voto:", payload); 
 
     try {
       const { data } = await api.post("/puntaje/", payload);

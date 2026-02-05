@@ -125,11 +125,6 @@ export default function CrearForo({ onClose, onForoCreado }) {
         data.append("archivos", archivo);
       });
 
-      console.log("FormData contenido:");
-      for (let pair of data.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
       const foroCreado = await foroService.crear(data);
 
       alert("✅ Foro publicado correctamente.");

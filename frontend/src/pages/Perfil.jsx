@@ -108,7 +108,7 @@ export default function Perfil() {
     if (!foros.length) return [];
 
     return foros.map((foro) => {
-      const materiaInfo = materias.find((m) => m.idMateria === foro.materia);
+      const materiaInfo = materias.find((m) => m.idMateria === Number(foro.materia));
       const carreraInfo = carreras.find((c) => c.idCarrera === materiaInfo?.carrera);
 
       return {
@@ -208,7 +208,6 @@ export default function Perfil() {
 
     const handleGuardarUsuario = (nuevoUsuario) => {
         actualizarUsuario(nuevoUsuario);
-        console.log("Usuario editado:", nuevoUsuario);
         setMostrarEditarUsuario(false);
     };
 
@@ -333,7 +332,7 @@ export default function Perfil() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="space-y-4"
+              className="space-y-4 pb-5"
             >
               {forosEnriquecidos.length === 0 ? (
                 <EstadoVacio mensaje="Todavía no creaste foros. ¡Animate a crear uno!" />
@@ -359,7 +358,7 @@ export default function Perfil() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
-              className="space-y-4"
+              className="space-y-4 pb-5"
             >
               {respuestasEnriquecidas.length === 0 ? (
                 <EstadoVacio mensaje="Todavía no participaste en ningún foro." />

@@ -50,7 +50,7 @@ export default function BarraLado({
             totalRespuestas: conteo[foro.idForo] || 0,
           }))
           .sort((a, b) => b.totalRespuestas - a.totalRespuestas)
-          .slice(0, 5);
+          .slice(0, 10);
 
         setRankingForos(topForos);
       } catch (err) {

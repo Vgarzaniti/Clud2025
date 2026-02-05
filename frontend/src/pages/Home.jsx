@@ -61,8 +61,8 @@ export default function Home() {
       );
       return {
          ...foro,
-          materia_nombre: materiaInfo?.nombre || "Sin materia",
-          carrera_nombre: carreraInfo?.nombre || "Sin carrera",
+          materiaNombre: materiaInfo?.nombre || "Sin materia",
+          carreraNombre: carreraInfo?.nombre || "Sin carrera",
           carreraId: carreraInfo?.idCarrera,
           materiaId: materiaInfo?.idMateria,
       };
@@ -127,10 +127,13 @@ export default function Home() {
         {carga && <p className="text-gray-400">Cargando foros...</p>}
         {error && <p className="text-red-500">{error}</p>}
 
-        <div className="space-y-4">
+        <div className="space-y-4 pb-5" >
           {forosFiltrados.length > 0 ? (
             forosFiltrados.map((foro) => (
-              <ForoTarjeta key={foro.idForo} foro={foro} />
+              <ForoTarjeta 
+                key={foro.idForo} 
+                foro={foro} 
+              />
             ))
           ) : (
             <p className="text-gray-400">No se encontraron foros.</p>
