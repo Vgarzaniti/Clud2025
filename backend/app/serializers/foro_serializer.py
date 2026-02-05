@@ -2,17 +2,17 @@ from rest_framework import serializers
 from ..models import Foro, ForoArchivo
 
 
+
 class ForoArchivoSerializer(serializers.ModelSerializer):
-    archivo_url = serializers.SerializerMethodField()
+    archivo_url = serializers.CharField(
+        source='archivo.archivo.url',
+        read_only=True
+    )
 
     class Meta:
         model = ForoArchivo
         fields = ['id', 'archivo_url']
 
-    def get_archivo_url(self, obj):
-        archivo = obj.archivo
-        if not archivo:
-            return None
 
 
 class ForoSerializer(serializers.ModelSerializer):

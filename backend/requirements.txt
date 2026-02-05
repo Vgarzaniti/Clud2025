@@ -21,7 +21,3 @@ django-cloudinary-storage>=0.3.0
 # --- Servidor de producción ---
 gunicorn>=21.2.0
 python-decouple>=3.8
-
-# --- Conexion Django con S3 ---
-boto3>=1.26.0
-django-storages>=1.13.2
