@@ -88,9 +88,11 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
     "AUTH_COOKIE": "access_token",
     "AUTH_COOKIE_REFRESH": "refresh_token",
-    "AUTH_COOKIE_SECURE": ENV == "production",       # ✅ True porque Render usa HTTPS
-    "AUTH_COOKIE_HTTP_ONLY": True,    # ✅ No accesible por JS
-    "AUTH_COOKIE_SAMESITE": "None" if ENV == "production" else "Lax",   # ✅ Necesario para Vercel + Render
+    
+    # ⬇️ ESTO ES LO QUE DEBES CAMBIAR ⬇️
+    "AUTH_COOKIE_SECURE": False,  # Lo ponemos en False para que el HTTP de S3 lo acepte
+    "AUTH_COOKIE_HTTP_ONLY": True,
+    "AUTH_COOKIE_SAMESITE": "Lax", # "Lax" es compatible con el HTTP de tu S3
 }
 
 MIDDLEWARE = [
@@ -117,7 +119,13 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 # ✅ Permitir envío de cookies (necesario para JWT en cookies)
 CORS_ALLOW_CREDENTIALS = True
-
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+    "x-requested-with",
+    "accept",
+    "origin",
+]
 ROOT_URLCONF = 'backend.urls'
 
 TEMPLATES = [
