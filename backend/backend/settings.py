@@ -111,10 +111,19 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "https://clud2025.vercel.app",   # 👈 tu frontend en producción
     "http://localhost:5173",         # 👈 modo desarrollo local
+    "http://cloud2025-frontend-utn.s3-website-us-east-1.amazonaws.com"
 ]
 
 # ✅ Permitir envío de cookies (necesario para JWT en cookies)
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+    "x-requested-with",
+    "accept",
+    "origin",
+]
 
 ROOT_URLCONF = 'backend.urls'
 
