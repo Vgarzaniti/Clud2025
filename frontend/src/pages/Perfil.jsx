@@ -208,7 +208,6 @@ export default function Perfil() {
 
     const handleGuardarUsuario = (nuevoUsuario) => {
         actualizarUsuario(nuevoUsuario);
-        console.log("Usuario editado:", nuevoUsuario);
         setMostrarEditarUsuario(false);
     };
 

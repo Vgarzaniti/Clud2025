@@ -71,7 +71,6 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
       try {
         setEnviando(true);
 
-        console.log("Usuario votando:", usuario);
 
         const data = await puntajeService.votar({
           respuestaId: respuesta.idRespuesta,
@@ -79,7 +78,6 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           valor: nuevoValor
         });
         
-        console.log("Respuesta al votar 👍:", data);
         setVoto(nuevoValor);
         setPuntaje(data.puntaje_neto);
         onVoto(respuesta.idRespuesta, delta, nuevoValor);

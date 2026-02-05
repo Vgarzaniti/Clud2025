@@ -31,7 +31,6 @@ const userService = {
         const res = await api.post("/login/", {
             ...data,
         });
-        console.log("Usuario nuevo", res.data);
         return res.data;
         
     },
@@ -70,7 +69,6 @@ const userService = {
                 (u) => String(u.idUsuario) === String(usuarioId)
             );
             
-            console.log(usuario);
             if (usuario) {
                 return {
                     id: usuario.idUsuario,
