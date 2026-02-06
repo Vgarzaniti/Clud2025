@@ -8,6 +8,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     authService
       .me()
       .then(setUsuario)
@@ -28,18 +36,18 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     const idUsuario = usuario?.idUsuario;
 
-    // 🔥 cortar sesión inmediatamente
     setUsuario(null);
 
-    // limpiar datos locales
     if (idUsuario) {
       clearStoredVotes(idUsuario);
     }
 
     try {
+
       await authService.logout();
+    
     } catch (error) {
-      // opcional: loggear error, pero NO restaurar sesión
+
       console.error("Error al cerrar sesión", error);
     }
   };
