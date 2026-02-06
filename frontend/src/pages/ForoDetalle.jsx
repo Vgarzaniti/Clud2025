@@ -123,7 +123,7 @@ export default function ForoDetalle() {
           <div className="bg-cyan-950 p-5 rounded-2xl border border-gray-700">
             
             <h1
-              className={`text-2xl font-bold mb-1 whitespace-pre-wrap break-all overflow-hidden ${
+              className={`text-2xl font-bold mb-1 whitespace-pre-wrap break-words overflow-hidden ${
                 expandidoTitulo ? "" : "line-clamp-3"
               }`}
             >
@@ -160,7 +160,7 @@ export default function ForoDetalle() {
                           target="_blank"
                           rel="noopener noreferrer"
                           download
-                          className="text-azulUTN hover:underline break-all max-w-full truncate"
+                          className="text-azulUTN hover:underline break-words max-w-full truncate"
                         >
                           {nombreArchivo}
                         </a>
