@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { respuestaService } from "../services/respuestaService.js";
-
 export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   
   const [archivosExistentes, setArchivosExistentes] = useState(respuestaActual.archivos || []);
@@ -18,8 +17,11 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
   const fileInputRef = useRef(null);
 
   const textareaRef = useRef(null);
+
   const LIMITE_INDIVIDUAL_MB = 5;
   const LIMITE_TOTAL_MB = 20;
+
+  const extensionesPermitidas = [".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx"];
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -35,11 +37,22 @@ export default function EditarRespuesta({ respuestaActual, onClose, onSave }) {
     let errores = [];
 
     for (const file of nuevosArchivos) {
+      
+      const extension = file.name
+        .substring(file.name.lastIndexOf("."))
+        .toLowerCase();
+      
       const sizeMB = file.size / (1024 * 1024);
+      
       if (sizeMB > LIMITE_INDIVIDUAL_MB) {
         errores.push(`❌ ${file.name} excede el límite de ${LIMITE_INDIVIDUAL_MB}MB.`);
       }
+
       totalSize += file.size;
+
+      if (!extensionesPermitidas.includes(extension)) {
+        errores.push(`❌ ${file.name} no es un tipo permitido`);
+      }
     }
 
     if (totalSize / (1024 * 1024) > LIMITE_TOTAL_MB) {
