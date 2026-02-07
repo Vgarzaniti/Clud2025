@@ -54,6 +54,8 @@ export default function InicioSesion() {
             setCarga(true);
 
             await login(formData.email, formData.password);
+
+            navigate("/home");
             
             setMensaje({
                 tipo: "ok",

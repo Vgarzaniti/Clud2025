@@ -14,7 +14,7 @@ export default function RutaPrivada() {
   }
 
   // No autenticado → login
-  if (!usuario || !usuario.id) {
+  if (!usuario) {
     return <Navigate to="/inicio-sesion" replace />;
   }
 
