@@ -112,15 +112,34 @@ export const foroService = {
   },
 
   // =============================
-  // ELIMINAR
+  // ELIMINAR FORO + RESPUESTAS VINCULADAS A ESTE
   // =============================
   eliminar: async (id) => {
     try {
+
+      const respuestasDelForo = await respuestaService.obtenerRespuestasPorForo(id);
+      console.log("Respuestas del foro:", respuestasDelForo);
+
+      await Promise.all(
+        respuestasDelForo.map((respuesta) => {
+          if (!respuesta.idRespuesta) {
+          console.warn("⚠️ Respuesta sin idRespuesta:", respuesta);
+          return Promise.resolve();
+        }
+
+        return respuestaService.eliminar(respuesta.idRespuesta);
+        })
+      );
+
       await api.delete(`/foros/${id}/`);
+      
       return { success: true };
+
     } catch (error) {
+
       console.error(`❌ Error al eliminar foro ${id}`, error);
       throw error;
+
     }
   },
 

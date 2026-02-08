@@ -223,10 +223,17 @@ export default function Perfil() {
       setEliminando(true);
 
       if (elementoAEliminar.tipo === "foro") {
+        
         await foroService.eliminar(elementoAEliminar.idForo);
+        
         setForos((prev) =>
           prev.filter((f) => f.idForo !== elementoAEliminar.idForo)
         );
+
+        setRespuestas((prev) =>
+          prev.filter(r => r.foro !== elementoAEliminar.idForo)
+        )
+
       } else if (elementoAEliminar.tipo === "respuesta") {
         await respuestaService.eliminar(elementoAEliminar.idRespuesta);
         setRespuestas((prev) =>
