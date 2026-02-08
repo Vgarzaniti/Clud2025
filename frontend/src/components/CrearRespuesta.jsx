@@ -16,6 +16,8 @@ export default function CrearRespuesta({ foroId, onClose, onSave }) {
   const Limite_Individual_MB = 5;
   const Limite_Total_MB = 20;
 
+  const extensionesPermitidas = [".jpg", ".jpeg", ".png", ".pdf", ".doc", ".docx"];
+
   useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -30,13 +32,24 @@ export default function CrearRespuesta({ foroId, onClose, onSave }) {
     let errores = [];
 
     for (const file of nuevosArchivos) {
+
+      const extension = file.name
+        .substring(file.name.lastIndexOf("."))
+        .toLowerCase();
+      
       const sizeMB = file.size / (1024 * 1024);
+      
       if (sizeMB > Limite_Individual_MB) {
         errores.push(
           `❌ ${file.name} excede el límite de ${Limite_Individual_MB}MB.`
         );
       }
+      
       totalSize += file.size;
+
+      if (!extensionesPermitidas.includes(extension)) {
+        errores.push(`❌ ${file.name} no es un tipo permitido`);
+      }
     }
 
     if (totalSize / (1024 * 1024) > Limite_Total_MB) {

@@ -135,11 +135,12 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
         : textoRespuesta;
     
   return (
-    <div className="bg-panel p-5 rounded-2xl border border-gray-700 shadow-md">
+    <div className="bg-panel p-5 rounded-2xl border border-gray-700 shadow-md w-full max-w-full overflow-hidden">
       
-      <p className="text-gray-200 whitespace-pre-line break-words break-all overflow-hidden">
+      <p className="text-gray-200 whitespace-pre-line break-words overflow-hidden">
         {expandido ? textoRespuesta : textoCorto}
       </p>
+      
       {/* Botón Mostrar más / menos */}
       {textoRespuesta.length > limite && (
         <button
@@ -149,6 +150,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
           {expandido ? "Mostrar menos" : "Mostrar más"}
         </button>
       )}
+      
       {/* Archivos adjuntos */}
       {Array.isArray(respuesta.archivos) && respuesta.archivos.length > 0 && (
         <div className="mt-2 space-y-2">
@@ -188,7 +190,7 @@ export default function RespuestaTarjeta({ respuesta, onVoto }) {
                 <span className="inline">
                   <span
                     onClick={() => navigate(`/foro/${foro.idForo}`)}
-                    className="text-blue-300 cursor-pointer break-all"
+                    className="text-blue-300 cursor-pointer break-words"
                   >
                     {expandidoForo ? foro.pregunta : tituloForoCorto}
                   </span>

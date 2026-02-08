@@ -38,7 +38,7 @@ export const respuestaService = {
   },
 
   eliminar: async (id) => {
-    const response = await api.delete(`/respuestas/${id}`);
+    const response = await api.delete(`/respuestas/${id}/`);
     return response.data;
   },
 

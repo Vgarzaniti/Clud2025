@@ -12,7 +12,6 @@ export default function EncabezadoPublico() {
 
         <div className="flex gap-4 items-center">
 
-          {/* Botón destacado para iniciar sesión */}
           <Link
             to="/inicio-sesion"
             className={`text-white px-4 py-2 rounded-full transition 
@@ -24,7 +23,6 @@ export default function EncabezadoPublico() {
             Iniciar sesión
           </Link>
 
-          {/* Botón destacado para registrarse */}
           <Link 
             to="/registrar" 
             className={`text-white px-4 py-2 rounded-full transition 

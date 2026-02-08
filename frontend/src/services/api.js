@@ -7,7 +7,7 @@ const api = axios.create({
 });
 
   api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("access_token"); // o el nombre que uses
+    const token = localStorage.getItem("access_token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -15,6 +15,17 @@ const api = axios.create({
 
     return config;
   });
+
+  api.interceptors.response.use(
+    res => res,
+    err => {
+      if (err.response?.status === 401) {
+        localStorage.removeItem("access_token");
+        window.location.href = "/inicio-sesion";
+      }
+      return Promise.reject(err);
+    }
+  )
 
 export default api;
 

@@ -6,12 +6,12 @@ from ..models import Carrera, Materia
 class CarreraSerializer(serializers.ModelSerializer):
     class Meta:
         model = Carrera
-        fields = '__all__'  # Incluye todos los campos (idCarrera, nombre, cantidadAno)
+        fields = '__all__' 
 
 
 # -------------------- SERIALIZER DE MATERIA --------------------
 class MateriaSerializer(serializers.ModelSerializer):
-    # Mostrar el nombre de la carrera relacionada
+
     carrera_nombre = serializers.CharField(source='carrera.nombre', read_only=True)
 
     class Meta:

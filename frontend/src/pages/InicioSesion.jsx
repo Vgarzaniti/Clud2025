@@ -9,7 +9,7 @@ export default function InicioSesion() {
     const navigate = useNavigate();
 
     const [carga, setCarga] = useState(false);
-    const [mensaje, setMensaje] = useState(null); // { tipo: "ok" | "error", texto: "" }
+    const [mensaje, setMensaje] = useState(null);
 
     const [formData, setFormData] = useState({
         email: "",
