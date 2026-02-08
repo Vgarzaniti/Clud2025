@@ -264,7 +264,6 @@ export default function ForoDetalle() {
         </div>
       )}
 
-      {/* ================= Modal ================= */}
       <Modal
         visible={mostrarRespuesta}
         onClose={() => setMostrarRespuesta(false)}

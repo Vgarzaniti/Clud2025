@@ -24,10 +24,8 @@ class RespuestaViewSet(viewsets.ModelViewSet):
 
     serializer_class = RespuestaSerializer
 
-    # 🔥 FIX CRÍTICO PARA ARCHIVOS
     parser_classes = (MultiPartParser, FormParser)
     
-     # 🔹 NUEVO MÉTODO para respuestas de un foro por URL
     def respuestas_por_foro(self, request, foro_id=None):
         """
         GET /api/respuestas/por-foro/<foro_id>/
@@ -40,7 +38,6 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         serializer = RespuestaSerializer(respuestas, many=True)
         data = serializer.data
 
-        # agregar username
         for i, respuesta in enumerate(respuestas):
             data[i]['usuario_username'] = respuesta.usuario.username if respuesta.usuario else None
 
@@ -120,12 +117,10 @@ class RespuestaViewSet(viewsets.ModelViewSet):
         serializer = RespuestaSerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
-        # 🔥 LA MATERIA SE ASIGNA ACÁ (NO EN data)
         respuesta = serializer.save(
             materia=foro.materia
         )
 
-        # 🔥 SUBIDA REAL DE ARCHIVOS
         self._subir_archivos(respuesta, archivos)
 
         respuesta.refresh_from_db()
@@ -187,7 +182,7 @@ class RespuestaPuntajeView(APIView):
         return self._procesar_puntaje(request)
 
     def _procesar_puntaje(self, request):
-        # Validar datos del request
+
         respuesta = request.data.get("respuesta")
         usuario = request.data.get("usuario")
         nuevo_valor = request.data.get("valor")
@@ -195,7 +190,7 @@ class RespuestaPuntajeView(APIView):
         if not all([respuesta, usuario, nuevo_valor is not None]):
             return Response({"error": "Debe enviar 'respuesta', 'usuario' y 'valor'"}, status=400)
 
-        # Buscar puntaje existente
+
         puntaje_existente = Puntaje.objects.filter(respuesta_id=respuesta, usuario_id=usuario).first()
 
         if puntaje_existente:

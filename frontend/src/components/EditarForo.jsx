@@ -71,7 +71,7 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
     useEffect(() => {
         if (formData.carrera) {
             const filtradas = materias.filter(
-            (m) => m.carrera === parseInt(formData.carrera)
+                (m) => m.carrera === parseInt(formData.carrera)
             );
             setMateriasFiltradas(filtradas);
 

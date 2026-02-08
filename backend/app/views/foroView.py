@@ -10,33 +10,31 @@ from .hash import file_hash
 class ForoViewSet(viewsets.ModelViewSet):
     serializer_class = ForoSerializer
 
-    # 🔥 CLAVE: permite multipart/form-data
+
     parser_classes = (MultiPartParser, FormParser)
 
-    # 🔥 CLAVE: optimiza carga de archivos
+
     queryset = Foro.objects.prefetch_related(
         'archivos__archivo'
     ).order_by('-fecha_creacion')
 
-    # 🔹 Procesar UN archivo (deduplicación GLOBAL)
+
     @staticmethod
     def _procesar_archivo(archivo_file, foro):
         try:
-            # 🔥 hash + reset del puntero
+
             hash_archivo = file_hash(archivo_file)
             archivo_file.seek(0)
 
-            # 🔹 buscar archivo global
+
             archivo_global = Archivo.objects.filter(hash=hash_archivo).first()
 
-            # 🔹 si no existe, subir UNA sola vez a Cloudinary
             if not archivo_global:
                 archivo_global = Archivo.objects.create(
                     archivo=archivo_file,
                     hash=hash_archivo
                 )
 
-            # 🔥 SIEMPRE asociar al foro
             ForoArchivo.objects.get_or_create(
                 foro=foro,
                 archivo=archivo_global
@@ -45,7 +43,6 @@ class ForoViewSet(viewsets.ModelViewSet):
         except Exception as e:
             print("❌ Error procesando archivo:", e)
 
-    # 🔹 Procesar múltiples archivos
     def _subir_archivos(self, foro, archivos):
         if not archivos:
             return
@@ -55,7 +52,6 @@ class ForoViewSet(viewsets.ModelViewSet):
 
         foro.refresh_from_db()
 
-    # 🔹 Retrieve
     def retrieve(self, request, pk=None):
         foro = self.get_object()
         data = ForoSerializer(foro).data
@@ -63,7 +59,6 @@ class ForoViewSet(viewsets.ModelViewSet):
         return Response(data, status=status.HTTP_200_OK)
 
 
-    # 🔹 Create
     def create(self, request, *args, **kwargs):
         data = request.data.copy()
         archivos = request.FILES.getlist('archivos')
@@ -83,7 +78,6 @@ class ForoViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    # 🔹 Update
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
@@ -101,7 +95,7 @@ class ForoViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         foro = serializer.save()
 
-        # 🔹 Eliminar relación foro ↔ archivo (NO borra Cloudinary)
+
         for archivo_id in archivos_a_eliminar:
             try:
                 foro_archivo = ForoArchivo.objects.get(
@@ -112,7 +106,6 @@ class ForoViewSet(viewsets.ModelViewSet):
             except ForoArchivo.DoesNotExist:
                 pass
 
-        # 🔹 Subir / reutilizar archivos nuevos
         self._subir_archivos(foro, archivos_nuevos)
 
         foro.refresh_from_db()

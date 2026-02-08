@@ -365,7 +365,7 @@ export default function Perfil() {
               ) : (
                 respuestasEnriquecidas.map((res) => (
                   <div className="flex gap-4">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <RespuestaTarjeta
                         respuesta={res}
                         onVoto={handleVotoRespuesta}

@@ -22,7 +22,7 @@ class PuntajeRespuestaSerializer(serializers.ModelSerializer):
         return attrs
 
 
-# 🔹 Serializador para los archivos
+# Serializador para los archivos
 class RespuestaArchivoSerializer(serializers.ModelSerializer):
     archivo_url = serializers.CharField(
         source='archivo.archivo.url',
@@ -34,12 +34,11 @@ class RespuestaArchivoSerializer(serializers.ModelSerializer):
         fields = ['id', 'archivo_url']
 
 
-# 🔹 Serializador principal de la Respuesta
+#Serializador principal de la Respuesta
 class RespuestaSerializer(serializers.ModelSerializer):
     archivos = RespuestaArchivoSerializer(many=True, read_only=True)
     puntajes = PuntajeRespuestaSerializer(many=True, read_only=True)
 
-    # 🔥 FIX DEFINITIVO
     materia = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
