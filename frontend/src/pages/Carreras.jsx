@@ -55,7 +55,7 @@ export default function Carreras() {
       )}
 
       {!cargando && !error && carreras.length > 0 && (
-        <div className="space-y-10">
+        <div className="space-y-10 pb-5">
           {carreras.map((carrera) => (
             <CarreraTarjeta
               key={carrera.idCarrera}
