@@ -31,7 +31,7 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/home" element={<Home />} />
             <Route path="/carreras" element={<Carreras />} />
-            <Route path="/materia/:nombre" element={<Materia />} />
+            <Route path="/materia/:idMateria" element={<Materia />} />
             <Route path="/foro/:foroId" element={<ForoDetalle />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/ayuda" element={<Ayuda />} />

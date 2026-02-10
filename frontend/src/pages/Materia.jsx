@@ -9,16 +9,17 @@ import { carreraService } from "../services/carreraService.js";
 import "../input.css";
 
 export default function Materia() {
-    const { nombre } = useParams();
+    const { nombre, idMateria } = useParams();
     const [mostrarForo, setMostrarForo] = useState(false);
     const [foros, setForos] = useState([]);
-    const [carrera, setCarrera] = useState([]);
+    const [carreras, setCarreras] = useState([]);
     const [carga, setCarga] = useState(true);
     const [error, setError] = useState(null);
     const [busqueda, setBusqueda] = useState("");
     const [materiaActual, setMateriaActual] = useState(null);
 
     const formatoNombre = (texto) => {
+        if (!texto) return "";
         return texto
             .replace(/-/g, " ")
             .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -33,18 +34,18 @@ export default function Materia() {
                     carreraService.obtenerTodos(),
                 ]);
 
-                setCarrera(dataCarreras);
+                setCarreras(dataCarreras);
 
                 const materiaEncontrada = dataMaterias.find(
-                    (m) => formatoNombre(m.nombre) === formatoNombre(nombre)
+                    (m) => m.idMateria === Number(idMateria)
                 );
 
                 setMateriaActual(materiaEncontrada);
 
                 setForos(
-                dataForos
-                    .filter((f) => f.fecha_creacion)
-                    .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
+                    dataForos.sort(
+                        (a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
+                    )
                 );
 
             } catch (error) {
@@ -59,27 +60,30 @@ export default function Materia() {
             }
         };
         cargarDatos();
-    },);
+    }, [idMateria]);
 
     const forosPorMateria = useMemo(() => {
         if (!materiaActual) return [];
 
           return foros
+
             .filter((foro) => Number(foro.materia) === materiaActual.idMateria)
             .map((foro) => {
-            const carreraInfo = carrera.find(
-                (c) => c.idCarrera === Number(materiaActual.carrera)
-            );
+                const carreraInfo = carreras.find(
+                    (c) => c.idCarrera === Number(materiaActual.carrera)
+                );
 
-            return {
-                ...foro,
-                materiaNombre: materiaActual.nombre,
-                carreraNombre: carreraInfo?.nombre || "Sin carrera",
-                carreraId: carreraInfo?.idCarrera,
-                materiaId: materiaActual.idMateria,
-            };
+                return {
+                    ...foro,
+                    materiaNombre: materiaActual.nombre,
+                    carreraNombre: carreraInfo?.nombre || "Sin carrera",
+                    carreraId: carreraInfo?.idCarrera,
+                    materiaId: materiaActual.idMateria,
+                };
             });
-        }, [foros, materiaActual, carrera]);
+        }, [foros, materiaActual, carreras]);
+        console.log("Foros de materia", foros)
+        console.log(materiaActual)
 
     const forosFiltrados = useMemo(() => {
         return forosPorMateria.filter((foro) =>
@@ -103,7 +107,7 @@ export default function Materia() {
         <div className="max-w-7xl mx-auto mt-10 px-6 text-texto">
             
             <h1 className="text-3xl font-semibold mb-6 text-azulUTN">
-                Foros de {formatoNombre(nombre).replace(/\b\w/g, (c) => c.toUpperCase())}
+                Foros de {formatoNombre(nombre || materiaActual?.nombre)}
             </h1>
 
             <hr className="w-3/4 mx-auto border-t-2 border-gray-700 mb-2" />

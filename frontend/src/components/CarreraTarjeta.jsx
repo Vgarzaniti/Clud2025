@@ -4,17 +4,17 @@ import { materiaService } from "../services/materiaService.js";
 
 export default function CarreraTarjeta({ carrera }) {
     const [materias, setMaterias] = useState([]);
-    const [filtroAno, setFiltroAno] = useState(null);
+    const [filtroAno, setFiltroAno] = useState("");
     const [mostrarTodo, setMostrarTodo] = useState(false);
 
     useEffect(() => {
         const cargarMaterias = async () => {
-        try {
-            const todas = await materiaService.obtenerPorCarrera(carrera.idCarrera);
-            setMaterias(todas);
-        } catch (error) {
-            console.error("Error al cargar materias:", error);
-        }
+            try {
+                const todas = await materiaService.obtenerPorCarrera(carrera.idCarrera);
+                setMaterias(todas);
+            } catch (error) {
+                console.error("Error al cargar materias:", error);
+            }
         };
         cargarMaterias();
     }, [carrera.idCarrera]);
@@ -36,7 +36,7 @@ export default function CarreraTarjeta({ carrera }) {
 
                 {/* Selector de año */}
                 <select
-                    value={filtroAno}
+                    value={filtroAno ?? ""}
                     onChange={(e) => {
                         const valor = e.target.value;
                         setFiltroAno(valor === "" ? null : parseInt(valor));
@@ -55,7 +55,11 @@ export default function CarreraTarjeta({ carrera }) {
         {/* Materias */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-3">
             {materiasVisibles.map((m) => (
-                <MateriaTarjeta key={m.idMateria} nombre={m.nombre} />
+                <MateriaTarjeta 
+                    key={m.idMateria}
+                    idMateria={m.idMateria} 
+                    nombre={m.nombre} 
+                />
             ))}
         </div>
 
