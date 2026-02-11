@@ -129,7 +129,7 @@ El frontend queda accesible vía URL pública del bucket S3.
 * Servicio Web en Render
 * Variables de entorno configuradas
 * Migraciones automáticas
-* Base de datos conectada
+* Base de datos en la nube (Neon.tech)
 
 [URL del backend](https://clud2025.onrender.com)
 
