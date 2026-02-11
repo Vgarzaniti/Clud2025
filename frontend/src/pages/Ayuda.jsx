@@ -122,7 +122,7 @@ export default function Ayuda() {
                         )}
                     </button>
                     {faqAbierta === faq.id && (
-                    <p className="mt-3 text-gray-300 text-sm">{faq.respuesta}</p>
+                        <p className="mt-3 text-gray-300 text-sm">{faq.respuesta}</p>
                     )}
                 </div>
                 ))}
@@ -141,10 +141,10 @@ export default function Ayuda() {
                         className="border border-gray-700 rounded-lg p-4"
                     >
                         <button
-                        className="w-full flex justify-between items-center text-left"
-                        onClick={() =>
-                            setGuiaAbierta(guiaAbierta === guia.id ? null : guia.id)
-                        }
+                            className="w-full flex justify-between items-center text-left"
+                            onClick={() =>
+                                setGuiaAbierta(guiaAbierta === guia.id ? null : guia.id)
+                            }
                         >
                         <div className="flex items-center gap-2 text-white font-medium">
                             {guia.icono}
@@ -161,7 +161,7 @@ export default function Ayuda() {
                         {guiaAbierta === guia.id && (
                         <ol className="mt-4 list-decimal list-inside text-gray-300 text-sm space-y-1">
                             {guia.contenido.map((item, index) => (
-                            <li key={index}>{item}</li>
+                                <li key={index}>{item}</li>
                             ))}
                         </ol>
                         )}
@@ -178,7 +178,7 @@ export default function Ayuda() {
                 </h2>
 
                 <ul className="mt-4 text-gray-300 text-sm space-y-2 list-disc list-inside">
-                    <li>Formatos permitidos: <strong>PDF, DOCX, PPTX, JPG</strong></li>
+                    <li>Formatos permitidos: <strong>PDF, DOCX, JPG</strong></li>
                     <li>Tamaño máximo por archivo: <strong>5 MB</strong></li>
                     <li>Tamaño máximo en total por respuesta o foro: <strong>20 MB</strong></li>
                     <li>Podés adjuntar más de un archivo por publicación.</li>
@@ -212,21 +212,21 @@ export default function Ayuda() {
             {/* Contacto */}
             <div className="mt-10 text-center bg-fondo border border-gray-700 rounded-xl p-6 pb-5">
                 <h2 className="text-xl font-semibold text-azulUTN mb-2">
-                ¿Necesitás más ayuda?
+                    ¿Necesitás más ayuda?
                 </h2>
                 <p className="text-gray-300 mb-4">
-                Podés comunicarte con el equipo de soporte o con un docente
-                administrador.
+                    Podés comunicarte con el equipo de soporte o con un docente
+                    administrador.
                 </p>
                 <div className="flex justify-center gap-6">
-                <button className="flex items-center gap-2 bg-azulUTN text-white px-4 py-2 rounded-lg hover:bg-blue-500">
-                    <Mail size={18} />
-                    Enviar correo
-                </button>
-                <button className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                    <MessageCircle size={18} />
-                    Chat en línea
-                </button>
+                    <button className="flex items-center gap-2 bg-azulUTN text-white px-4 py-2 rounded-lg hover:bg-blue-500">
+                        <Mail size={18} />
+                        Enviar correo
+                    </button>
+                    <button className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        <MessageCircle size={18} />
+                        Chat en línea
+                    </button>
                 </div>
             </div>
         </div>

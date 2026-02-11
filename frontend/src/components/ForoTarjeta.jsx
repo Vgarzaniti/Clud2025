@@ -39,14 +39,14 @@ return (
       <div className="flex gap-3 items-start">
         <div className="flex-1 min-w-0">
           <h2
-            className={`text-lg font-semibold text-white whitespace-pre-wrap break-all overflow-hidden ${
+            className={`text-lg font-semibold text-white whitespace-pre-wrap break-word overflow-hidden ${
               expandido ? "" : "line-clamp-2"
             }`}
           >
             {foro.pregunta}
           </h2>
 
-          {foro.pregunta.length > 120 && (
+          {foro.pregunta.length > 190 && (
             <button
               onClick={(e) => {
                 e.stopPropagation();

@@ -89,6 +89,7 @@ export default function BarraLado({
         {/* Filtro Materia */}
         <div className="mb-5">
           <p className="font-medium mb-1">Materia</p>
+          <p className="font-medium text-gray-400 text-sm mb-1">(se recomienda seleccionar despues de elegir una carrera)</p>
           <select
             value={filtroMateria}
             onChange={(e) => onFiltroMateriaChange(e.target.value)}
@@ -120,8 +121,8 @@ export default function BarraLado({
                 className="leading-snug cursor-pointer hover:text-amber-500 transition"
                 onClick={() => navigate(`/foro/${foro.idForo}`)}
               >
-                <p className="font-medium text-white truncate">{foro.pregunta}</p>
-                <p className="text-gray-400 text-xs">
+                <p className="font-medium text-white truncate text-md mb-1">{foro.pregunta}</p>
+                <p className="text-gray-400 text-sm">
                   Respuestas: {foro.totalRespuestas}
                 </p>
               </li>

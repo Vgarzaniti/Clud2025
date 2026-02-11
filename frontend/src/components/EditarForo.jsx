@@ -273,7 +273,7 @@ export default function EditarForo({ foroActual, onClose, onSave }) {
             </div>
 
             <div className="w-full">
-                <label className="block text-m mb-2">Archivos adjuntos</label>
+                <label className="block text-m mb-2">Archivos adjuntos (.jpg/.pdf/.word)</label>
 
                 <label
                     htmlFor="file-upload"
